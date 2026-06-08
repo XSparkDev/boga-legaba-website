@@ -1,12 +1,11 @@
 import type { Metadata } from 'next'
 import { Check } from 'lucide-react'
-import { SiteImage } from '@v2/components/site-image'
+import { ConferencePageHeader } from '@v2/components/conference/conference-page-header'
 import { Reveal } from '@v2/components/reveal'
 import { Counter } from '@v2/components/counter'
 import { ConferencePackages } from '@v2/components/conference/conference-packages'
 import { ConferenceForm } from '@v2/components/forms/conference-form'
 import { WhatsAppIcon } from '@v2/components/whatsapp-icon'
-import { getSiteImage } from '@v2/data/images'
 import { PHONE, waLink } from '@v2/data/site'
 
 export const metadata: Metadata = {
@@ -31,40 +30,10 @@ const checkpoints = [
   'Dedicated event coordinator',
 ]
 
-const conferenceHero = getSiteImage('conference-hero')
-
 export default function ConferencePage() {
   return (
     <main>
-      <section className="relative h-[min(80vh,720px)] min-h-[min(560px,70svh)] w-full overflow-hidden">
-        <SiteImage
-          src={conferenceHero.src}
-          alt={conferenceHero.alt}
-          priority
-          className="absolute inset-0 h-full w-full"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-deep-earth via-deep-earth/40 to-transparent" />
-        <div className="pattern-stripe absolute top-1/2 left-0" />
-        <div className="absolute inset-x-0 bottom-0 mx-auto max-w-7xl px-6 pb-14 md:px-8">
-          <Reveal>
-            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-warm-sand">
-              Conference Venue
-            </p>
-            <h1 className="mt-4 max-w-3xl font-display text-5xl italic font-bold leading-[0.95] text-white text-balance md:text-7xl">
-              Your next event. Our best work.
-            </h1>
-            <p className="mt-5 max-w-xl text-lg text-cream/80">
-              Up to 80 delegates. Full AV. Catering. Accommodation on-site.
-            </p>
-            <a
-              href="#enquiry"
-              className="mt-7 inline-block rounded-full bg-terracotta px-7 py-4 font-sans font-medium text-white transition-colors hover:bg-terracotta-light"
-            >
-              Check Availability
-            </a>
-          </Reveal>
-        </div>
-      </section>
+      <ConferencePageHeader />
 
       <section className="bg-warm-sand py-12">
         <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-4 gap-y-8 px-6 sm:grid-cols-3 md:grid-cols-5 md:gap-y-10 md:px-8">

@@ -121,7 +121,7 @@ export const CONFERENCE_OFFERINGS: ConferenceOffering[] = [
   },
 ]
 
-export const CONFERENCE_SEARCH_SUGGESTIONS: string[] = [
+const CONFERENCE_SEARCH_SUGGESTION_RAW = [
   ...CONFERENCE_SETUPS,
   ...CONFERENCE_AV,
   ...CONFERENCE_CATERING,
@@ -132,13 +132,14 @@ export const CONFERENCE_SEARCH_SUGGESTIONS: string[] = [
   "Wi-Fi",
   "Parking",
   "80 delegates",
-  "Boardroom",
-  "Theatre",
-  "Lunch",
   "Video",
   "Government",
   "Corporate",
-]
+] as const
+
+export const CONFERENCE_SEARCH_SUGGESTIONS: string[] = CONFERENCE_SEARCH_SUGGESTION_RAW.filter(
+  (item, index, all) => all.findIndex((s) => s.toLowerCase() === item.toLowerCase()) === index,
+)
 
 function offeringSearchText(o: ConferenceOffering): string {
   return [

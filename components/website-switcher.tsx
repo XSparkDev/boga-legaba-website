@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ArrowLeftRight } from "lucide-react"
 import {
   detectSiteFromPath,
   getSwitchTargetPath,
@@ -13,66 +12,51 @@ import { cn } from "@/lib/utils"
 
 type SwitcherVariant = "dark" | "light"
 
-function SiteShortLabel({ siteId, fullLabel }: { siteId: SiteId; fullLabel: string }) {
-  if (siteId !== "alternate") return fullLabel
-  return (
-    <>
-      <span className="xl:hidden">Site 2</span>
-      <span className="hidden xl:inline">{fullLabel}</span>
-    </>
-  )
+function SwitcherLabel({ shortLabel }: { shortLabel: string }) {
+  return <span>{shortLabel}</span>
 }
 
 interface WebsiteSwitcherProps {
   variant?: SwitcherVariant
   className?: string
-  compact?: boolean
 }
 
-export function WebsiteSwitcher({ variant = "dark", className, compact = false }: WebsiteSwitcherProps) {
+export function WebsiteSwitcher({ variant = "dark", className }: WebsiteSwitcherProps) {
   const pathname = usePathname()
   const currentSite = detectSiteFromPath(pathname)
   const isDark = variant === "dark"
 
   return (
     <div
-      className={cn("flex items-center gap-2", className)}
+      className={cn("shrink-0", className)}
       role="group"
       aria-label="Switch website version"
     >
-      {!compact ? (
-        <span
-          className={cn(
-            "hidden items-center gap-1 font-mono text-[10px] uppercase tracking-wider xl:inline-flex",
-            isDark ? "text-white/45" : "text-body-brown/60",
-          )}
-        >
-          <ArrowLeftRight className="size-3" aria-hidden />
-          Site
-        </span>
-      ) : null}
-
       <div
         className={cn(
-          "inline-flex rounded-full p-0.5",
+          "inline-flex w-[11.5rem] rounded-full p-0.5 xl:w-[13.5rem]",
           isDark ? "bg-white/10 ring-1 ring-white/15" : "bg-warm-sand ring-1 ring-deep-earth/10",
         )}
       >
         {WEBSITE_OPTIONS.map((site) => {
           const active = site.id === currentSite
           const href = getSwitchTargetPath(pathname, site.id)
+          const pillClass = cn(
+            "flex flex-1 items-center justify-center rounded-full py-1 text-center text-[11px] font-medium leading-none sm:text-xs",
+            "min-w-[4.75rem] xl:min-w-[5.75rem]",
+          )
 
           if (active) {
             return (
               <span
                 key={site.id}
                 className={cn(
-                  "rounded-full px-2.5 py-1 text-[11px] font-medium sm:px-3 sm:text-xs",
+                  pillClass,
                   isDark ? "bg-gold text-[#0A0A0A]" : "bg-terracotta text-white",
                 )}
                 aria-current="true"
               >
-                <SiteShortLabel siteId={site.id} fullLabel={site.shortLabel} />
+                <SwitcherLabel shortLabel={site.shortLabel} />
               </span>
             )
           }
@@ -82,14 +66,15 @@ export function WebsiteSwitcher({ variant = "dark", className, compact = false }
               key={site.id}
               href={href}
               className={cn(
-                "rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors sm:px-3 sm:text-xs",
+                pillClass,
+                "transition-colors",
                 isDark
                   ? "text-white/70 hover:bg-white/10 hover:text-white"
                   : "text-body-brown/70 hover:bg-white/60 hover:text-deep-earth",
               )}
               title={`Switch to ${site.label}`}
             >
-              <SiteShortLabel siteId={site.id} fullLabel={site.shortLabel} />
+              <SwitcherLabel shortLabel={site.shortLabel} />
             </Link>
           )
         })}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Field, TextInput, TextArea, Select, SuccessMessage } from './form-atoms'
 import { SbdFormGenerator } from './sbd-form-generator'
 
@@ -24,6 +24,14 @@ export function CorporateForm() {
   function updateField(key: keyof typeof formData, value: string) {
     setFormData((prev) => ({ ...prev, [key]: value }))
   }
+
+  useEffect(() => {
+    function onPerDiem() {
+      setBookingType('Government Per Diem')
+    }
+    window.addEventListener('corporate-select-per-diem', onPerDiem)
+    return () => window.removeEventListener('corporate-select-per-diem', onPerDiem)
+  }, [])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()

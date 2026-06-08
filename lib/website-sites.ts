@@ -12,8 +12,8 @@ export interface WebsiteOption {
 export const WEBSITE_OPTIONS: WebsiteOption[] = [
   {
     id: "main",
-    label: "Main Website",
-    shortLabel: "Main",
+    label: "Website 1",
+    shortLabel: "Website 1",
     description: "Primary Boga Legaba site",
   },
   {

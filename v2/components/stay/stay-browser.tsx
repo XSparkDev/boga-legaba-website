@@ -8,6 +8,7 @@ import { RoomCard } from './room-card'
 import { properties } from '@v2/data/site'
 import { rooms, roomsByProperty, type Room } from '@v2/data/rooms'
 import { matchesAllCriteria } from '@v2/lib/match-criteria'
+import { NAV_STICKY_TOP_CLASS } from '@/lib/nav-shell'
 import { cn } from '@v2/lib/utils'
 
 const stayFilterSuggestions = [
@@ -59,7 +60,12 @@ export function StayBrowser() {
   return (
     <div className="bg-cream">
       {/* Pill carousel */}
-      <div className="sticky top-[4.5rem] z-30 border-b border-warm-sand/60 bg-cream/90 backdrop-blur-md md:top-20">
+      <div
+        className={cn(
+          'sticky z-50 border-b border-warm-sand/60 bg-cream/95 backdrop-blur-md',
+          NAV_STICKY_TOP_CLASS,
+        )}
+      >
         <div className="no-scrollbar mx-auto flex max-w-7xl gap-3 overflow-x-auto px-6 py-4 md:px-8">
           {properties.map((p) => {
             const isActive = active === p.key
@@ -118,7 +124,7 @@ export function StayBrowser() {
             <section
               key={p.key}
               id={`property-${p.key}`}
-              className="scroll-mt-24 pb-16 last:pb-0"
+              className="scroll-mt-[calc(4.5rem+5rem)] pb-16 last:pb-0 xl:scroll-mt-[calc(6rem+5rem)]"
             >
               <div className="flex items-center gap-3">
                 <span className="h-3 w-3 rounded-full" style={{ background: p.color }} />

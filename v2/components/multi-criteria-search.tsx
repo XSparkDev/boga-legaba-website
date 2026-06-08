@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Search, X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { cn } from '@v2/lib/utils'
 
 type MultiCriteriaSearchProps = {
@@ -34,7 +34,12 @@ export function MultiCriteriaSearch({
   }
 
   function removeCriterion(value: string) {
-    onCriteriaChange(criteria.filter((c) => c !== value))
+    onCriteriaChange(criteria.filter((c) => c.toLowerCase() !== value.toLowerCase()))
+  }
+
+  function clearAll() {
+    onCriteriaChange([])
+    setDraft('')
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -44,7 +49,11 @@ export function MultiCriteriaSearch({
     }
   }
 
-  const unusedSuggestions = suggestions.filter(
+  const uniqueSuggestions = suggestions.filter(
+    (s, index, all) => all.findIndex((item) => item.toLowerCase() === s.toLowerCase()) === index
+  )
+
+  const unusedSuggestions = uniqueSuggestions.filter(
     (s) => !criteria.some((c) => c.toLowerCase() === s.toLowerCase())
   )
 
@@ -67,37 +76,44 @@ export function MultiCriteriaSearch({
           onClick={() => addCriterion(draft)}
           className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-terracotta px-4 py-3 font-sans text-sm font-medium text-white transition-colors hover:bg-terracotta-light sm:w-auto"
         >
-          <Plus className="h-4 w-4" />
-          Add
+          <Search className="h-4 w-4" />
+          Search
         </button>
       </div>
 
       {criteria.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {criteria.map((c) => (
+        <div className="flex flex-wrap items-center gap-2">
+          {criteria.map((c, index) => (
             <span
-              key={c}
-              className="inline-flex items-center gap-1.5 rounded-full border border-deep-earth/15 bg-cream px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-body-brown"
+              key={`${c}-${index}`}
+              className="inline-flex items-center gap-1.5 rounded-full border border-terracotta bg-terracotta px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-white"
             >
               {c}
               <button
                 type="button"
                 onClick={() => removeCriterion(c)}
                 aria-label={`Remove filter ${c}`}
-                className="rounded-full p-0.5 transition-colors hover:bg-warm-sand"
+                className="rounded-full p-0.5 transition-colors hover:bg-white/20"
               >
                 <X className="h-3 w-3" />
               </button>
             </span>
           ))}
+          <button
+            type="button"
+            onClick={clearAll}
+            className="rounded-full border border-warm-sand bg-off-white px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-brown transition-colors hover:border-deep-earth/20 hover:text-deep-earth"
+          >
+            Clear
+          </button>
         </div>
       ) : null}
 
       {unusedSuggestions.length > 0 ? (
         <div className="flex flex-wrap gap-2">
-          {unusedSuggestions.map((s) => (
+          {unusedSuggestions.map((s, index) => (
             <button
-              key={s}
+              key={`${s}-${index}`}
               type="button"
               onClick={() => addCriterion(s)}
               className="rounded-full border border-warm-sand bg-off-white px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-brown transition-colors hover:border-deep-earth/20 hover:text-deep-earth"

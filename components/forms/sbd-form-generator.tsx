@@ -2,6 +2,8 @@
 
 import { useMemo } from "react"
 import { FileText, Printer } from "lucide-react"
+import { openHtmlInNewTab } from "@/lib/open-html-document"
+import { SBD_FORMS_ENABLED } from "@/lib/sbd-forms"
 
 export type SbdFormData = {
   contact: string
@@ -103,16 +105,11 @@ export function SbdFormGenerator({ formData }: { formData: SbdFormData }) {
   )
 
   function openForm(sbdId: string, title: string) {
-    const html = buildSbdDocument(formData, sbdId, title)
-    const win = window.open("", "_blank", "noopener,noreferrer")
-    if (!win) return
-    win.document.write(html)
-    win.document.close()
-    win.focus()
+    openHtmlInNewTab(buildSbdDocument(formData, sbdId, title))
   }
 
   return (
-    <div className="rounded-xl border border-gold/25 bg-gold/5 px-5 py-5">
+    <div id="sbd-form-generator" className="rounded-xl border border-gold/25 bg-gold/5 px-5 py-5">
       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gold">
         Government per diem · SBD forms
       </p>
@@ -135,7 +132,7 @@ export function SbdFormGenerator({ formData }: { formData: SbdFormData }) {
             </div>
             <button
               type="button"
-              disabled={!ready}
+              disabled={!SBD_FORMS_ENABLED || !ready}
               onClick={() => openForm(sbd.id, sbd.title)}
               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-[#0A0A0A] bg-[#0A0A0A] px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-gold hover:text-[#0A0A0A] disabled:cursor-not-allowed disabled:opacity-40"
             >

@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { PageHeader } from "@/components/page-header"
+import { StayPageHeader } from "@/components/stay/stay-page-header"
 import { StayRooms } from "@/components/stay/stay-rooms"
 import { NightsBridgeEmbed } from "@/components/nightsbridge-embed"
 
@@ -12,11 +12,7 @@ export const metadata: Metadata = {
 export default function StayPage() {
   return (
     <main>
-      <PageHeader
-        eyebrow="Stay & Rooms"
-        title="Find Your Perfect Room"
-        subtitle="27 rooms across 3 properties — each physically located at a different address. Select your property to begin."
-      />
+      <StayPageHeader />
       <StayRooms />
       <NightsBridgeEmbed />
     </main>

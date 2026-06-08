@@ -107,7 +107,15 @@ export function SiteFooter() {
             <span className="uppercase">www.bogalegaba.co.za</span>
             <span className="mx-2 hidden text-white/30 sm:inline">·</span>
             <span className="mt-1 block normal-case sm:mt-0 sm:inline">
-              Developed by <span className="text-white/70">X Spark</span>
+              Developed by{" "}
+              <a
+                href="https://www.xspark.co.za/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/70 transition-colors hover:text-white"
+              >
+                X Spark
+              </a>
             </span>
           </p>
         </div>

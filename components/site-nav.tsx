@@ -6,6 +6,14 @@ import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { SiteLogo } from "@/components/site-logo"
 import { WebsiteSwitcher, WebsiteSwitcherMobile } from "@/components/website-switcher"
+import {
+  NAV_ACTIONS_CLASS,
+  NAV_BAR_HEIGHT,
+  NAV_INNER_CLASS,
+  NAV_LINK_CLASS,
+  NAV_LINKS_ROW_CLASS,
+  NAV_LOGO_SLOT_CLASS,
+} from "@/lib/nav-shell"
 import { cn } from "@/lib/utils"
 
 const NAV_LINKS = [
@@ -47,28 +55,29 @@ export function SiteNav() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        "fixed top-0 left-0 right-0 z-50 transition-colors duration-300",
         scrolled
-          ? "bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/10"
+          ? "border-b border-white/10 bg-[#0A0A0A]/95 backdrop-blur-md"
           : "bg-transparent",
       )}
     >
-      <nav className="mx-auto flex h-[4.5rem] max-w-7xl items-center justify-between gap-2 px-4 sm:gap-3 sm:px-6 xl:h-24 xl:gap-4 xl:px-8">
-        <Link href="/" className="shrink-0" aria-label="Boga Legaba home">
+      <nav className={cn(NAV_INNER_CLASS, NAV_BAR_HEIGHT)}>
+        <Link href="/" className={NAV_LOGO_SLOT_CLASS} aria-label="Boga Legaba home">
           <SiteLogo size="nav" />
         </Link>
 
-        <ul className="no-scrollbar hidden min-w-0 flex-1 items-center justify-center gap-2 overflow-x-auto px-1 xl:flex xl:gap-4 2xl:gap-6">
+        <ul className={NAV_LINKS_ROW_CLASS}>
           {NAV_LINKS.map((link) => {
             const active = pathname === link.href
             return (
-              <li key={link.href} className="shrink-0">
+              <li key={link.href}>
                 <Link
                   href={link.href}
                   className={cn(
-                    "relative whitespace-nowrap font-body text-xs tracking-wide text-white/90 transition-colors duration-200 hover:text-white xl:text-sm",
+                    NAV_LINK_CLASS,
+                    "relative font-body text-white/90 hover:text-white",
                     "after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:bg-gold after:transition-all after:duration-300",
-                    active ? "after:w-full text-white" : "hover:after:w-full after:w-0",
+                    active ? "text-white after:w-full" : "after:w-0 hover:after:w-full",
                   )}
                 >
                   {link.label}
@@ -78,12 +87,12 @@ export function SiteNav() {
           })}
         </ul>
 
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <WebsiteSwitcher variant="dark" compact className="hidden md:flex" />
+        <div className={NAV_ACTIONS_CLASS}>
+          <WebsiteSwitcher variant="dark" className="hidden md:flex" />
           <Link
             href="/book-now"
             data-ga4-event="book_now_click"
-            className="btn-gold hidden text-xs hover:shadow-gold-glow sm:inline-flex sm:text-sm"
+            className="btn-gold hidden min-w-[5.5rem] justify-center text-xs sm:inline-flex sm:text-sm"
           >
             Book Now
           </Link>
@@ -99,7 +108,6 @@ export function SiteNav() {
         </div>
       </nav>
 
-      {/* Mobile full-screen menu */}
       <div
         className={cn(
           "fixed inset-0 top-[4.5rem] z-40 bg-[#0a0a0a] transition-all duration-300 xl:hidden",

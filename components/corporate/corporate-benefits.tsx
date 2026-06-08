@@ -2,6 +2,7 @@
 
 import type { LucideIcon } from "lucide-react"
 import { FileCheck2, FileText, CreditCard, Landmark, Layers, UserCog } from "lucide-react"
+import { SBD_FORMS_ENABLED } from "@/lib/sbd-forms"
 
 const BENEFITS: {
   Icon: LucideIcon
@@ -24,8 +25,11 @@ const BENEFITS: {
 
 export function CorporateBenefits() {
   function scrollToForm() {
-    document.getElementById("corporate-enquiry")?.scrollIntoView({ behavior: "smooth", block: "start" })
     window.dispatchEvent(new CustomEvent("corporate-select-per-diem"))
+    document.getElementById("corporate-enquiry")?.scrollIntoView({ behavior: "smooth", block: "start" })
+    window.setTimeout(() => {
+      document.getElementById("sbd-form-generator")?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+    }, 350)
   }
 
   return (
@@ -43,8 +47,9 @@ export function CorporateBenefits() {
               {sbdAction ? (
                 <button
                   type="button"
+                  disabled={!SBD_FORMS_ENABLED}
                   onClick={scrollToForm}
-                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gold/35 bg-gold/10 px-3 py-2 text-xs font-medium text-foreground transition-all hover:bg-gold/20 sm:w-auto"
+                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gold/35 bg-gold/10 px-3 py-2 text-xs font-medium text-foreground transition-all hover:bg-gold/20 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
                 >
                   <FileText className="size-3.5 text-gold" />
                   Auto-generate SBD Forms

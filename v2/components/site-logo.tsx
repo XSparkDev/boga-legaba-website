@@ -17,7 +17,7 @@ export function SiteLogo({ variant = 'dark', className, priority }: SiteLogoProp
       height={128}
       priority={priority}
       className={cn(
-        'h-14 w-auto sm:h-16 md:h-[4.5rem] lg:h-20',
+        'h-12 w-auto sm:h-14 xl:h-16',
         variant === 'light' && 'brightness-0 invert',
         className
       )}

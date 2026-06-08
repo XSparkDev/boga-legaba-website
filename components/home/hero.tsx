@@ -8,7 +8,7 @@ export function HomeHero() {
   const hero = getSiteImage("hero")
 
   return (
-    <section className="grain relative flex min-h-[100svh] items-center overflow-hidden">
+    <section className="grain relative flex min-h-[100svh] flex-col overflow-x-clip">
       <SiteImage
         src={hero.url}
         alt={hero.alt}
@@ -26,38 +26,46 @@ export function HomeHero() {
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-      <div className="relative z-[2] mx-auto w-full max-w-7xl px-4 pt-24 sm:px-6 lg:px-8">
+      <div className="relative z-[2] mx-auto flex w-full max-w-7xl flex-1 flex-col justify-start px-4 pb-8 pt-[calc(4.5rem+1rem)] sm:justify-center sm:px-6 sm:pb-10 sm:pt-[calc(4.5rem+1.75rem)] xl:px-8 xl:pt-[calc(6rem+2rem)]">
         <div className="max-w-3xl">
-          <SiteLogo size="hero" className="mb-6 sm:mb-8" />
+          <SiteLogo size="hero" className="mb-3 hidden sm:mb-8 sm:block" />
           <p className="font-mono text-[11px] tracking-[0.2em] text-gold uppercase">
             Mahikeng · North West Province
           </p>
-          <div className="w-[60px] h-[2px] bg-gold my-4" />
+          <div className="my-3 h-[2px] w-[60px] bg-gold sm:my-4" />
           <h1 className="heading-hero text-balance font-bold">
             Where Business Travel Meets African Hospitality
           </h1>
-          <p className="mt-7 max-w-xl text-pretty text-base leading-relaxed text-white/75 sm:text-lg font-body">
+          <p className="mt-5 max-w-xl text-pretty font-body text-base leading-relaxed text-white/75 sm:mt-7 sm:text-lg">
             Three unique properties. One seamless experience. Mahikeng&apos;s premier guest house and conference
             destination.
           </p>
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/book-now"
-              data-ga4-event="book_now_click"
-              className="btn-gold text-sm"
+          <div className="mt-7 space-y-6 sm:mt-9 sm:space-y-8">
+            <div className="flex w-full max-w-xl flex-col gap-3 sm:max-w-2xl sm:flex-row sm:items-stretch">
+              <Link
+                href="/book-now"
+                data-ga4-event="book_now_click"
+                className="btn-gold flex min-h-[3rem] w-full flex-1 items-center justify-center gap-2 border border-transparent px-5 py-3.5 text-center text-sm font-medium sm:px-6"
+              >
+                Book Your Stay <ArrowRight className="size-4 shrink-0" />
+              </Link>
+              <Link
+                href="/conference"
+                className="btn-glass flex min-h-[3rem] w-full flex-1 items-center justify-center px-5 py-3.5 text-center text-sm font-medium sm:px-6"
+              >
+                Enquire About Conferences
+              </Link>
+            </div>
+
+            <div
+              className="flex flex-col items-center gap-2 pb-[max(0.25rem,env(safe-area-inset-bottom))] sm:items-start"
+              aria-hidden
             >
-              Book Your Stay <ArrowRight className="size-4" />
-            </Link>
-            <Link href="/conference" className="btn-glass text-sm">
-              Enquire About Conferences
-            </Link>
+              <span className="font-mono text-[10px] tracking-[0.15em] text-gold uppercase">Scroll</span>
+              <div className="h-8 w-px bg-gold/60 animate-pulse" />
+            </div>
           </div>
         </div>
-      </div>
-
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[2] flex flex-col items-center gap-2">
-        <span className="font-mono text-[10px] tracking-[0.15em] text-gold uppercase">Scroll</span>
-        <div className="w-[1px] h-8 bg-gold/60 animate-pulse" />
       </div>
     </section>
   )

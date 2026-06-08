@@ -50,16 +50,6 @@ export default function AttractionsPage() {
             ))}
           </div>
 
-          {/* Map embed placeholder */}
-          <Reveal className="mt-12">
-            <div className="flex h-72 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-terracotta/30 bg-terracotta/5 text-center">
-              <MapPin className="h-8 w-8 text-terracotta" />
-              <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-brown">
-                [ Google Maps embed — Mahikeng &amp; surrounding attractions ]
-              </p>
-            </div>
-          </Reveal>
-
           <Reveal className="mt-12 text-center">
             <Link
               href="/book-now"

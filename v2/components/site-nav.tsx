@@ -9,22 +9,28 @@ import { SiteLogo } from '@v2/components/site-logo'
 import { WebsiteSwitcher, WebsiteSwitcherMobile } from '@/components/website-switcher'
 import { V2_PREFIX } from '@/lib/website-sites'
 import { v2Path } from '@v2/lib/paths'
+import {
+  NAV_ACTIONS_CLASS,
+  NAV_BAR_HEIGHT,
+  NAV_INNER_CLASS,
+  NAV_LINK_CLASS,
+  NAV_LINKS_ROW_CLASS,
+  NAV_LOGO_SLOT_CLASS,
+} from '@/lib/nav-shell'
 import { cn } from '@v2/lib/utils'
 
 export function SiteNav() {
   const [scrolled, setScrolled] = useState(false)
-  const [deepScroll, setDeepScroll] = useState(false)
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
   const isHome = pathname === V2_PREFIX
-  const lightHero = isHome && !scrolled
+  // Pages with a cream/light hero need dark nav text; dark-hero pages use light text at the top.
+  const isLightTopHero = isHome || pathname === v2Path('/dining')
+  const useLightChrome = scrolled || isLightTopHero
+  const solidHeader = scrolled || (isLightTopHero && !isHome)
 
   useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY
-      setScrolled(y > 60)
-      setDeepScroll(y > 280)
-    }
+    const onScroll = () => setScrolled(window.scrollY > 60)
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
@@ -45,24 +51,24 @@ export function SiteNav() {
     <>
       <header
         className={cn(
-          'nav-pill fixed z-50',
-          scrolled
-            ? cn(
-                'left-1/2 top-3 w-[min(1280px,calc(100%-1.5rem))] -translate-x-1/2 rounded-full bg-cream/95 px-4 py-3 backdrop-blur-md sm:px-5',
-                deepScroll ? 'nav-pill--scrolled-deep' : 'nav-pill--scrolled'
-              )
-            : 'left-0 top-0 w-full bg-transparent px-5 py-4 md:px-8 md:py-5'
+          'fixed top-0 left-0 right-0 z-50 overflow-hidden transition-colors duration-300',
+          NAV_BAR_HEIGHT,
+          solidHeader
+            ? 'border-b border-warm-sand/50 bg-cream/95 backdrop-blur-md'
+            : 'bg-transparent',
         )}
       >
-        <div className="flex min-w-0 w-full items-center justify-between gap-2 sm:gap-3">
-          <Link href={v2Path('/')} className="shrink-0" data-cursor="nav">
-            <SiteLogo
-              variant={scrolled || lightHero ? 'dark' : 'light'}
-              priority
-            />
+        <nav className={cn(NAV_INNER_CLASS, NAV_BAR_HEIGHT)}>
+          <Link
+            href={v2Path('/')}
+            className={NAV_LOGO_SLOT_CLASS}
+            aria-label="Boga Legaba home"
+            data-cursor="nav"
+          >
+            <SiteLogo variant={useLightChrome ? 'dark' : 'light'} priority />
           </Link>
 
-          <nav className="no-scrollbar hidden min-w-0 flex-1 items-center justify-center gap-1.5 overflow-x-auto px-1 lg:flex xl:gap-2 2xl:gap-3">
+          <div className={NAV_LINKS_ROW_CLASS}>
             {navLinks.map((l) => {
               const active = pathname === l.href
               return (
@@ -71,29 +77,34 @@ export function SiteNav() {
                   href={l.href}
                   data-cursor="nav"
                   className={cn(
-                    'shrink-0 whitespace-nowrap font-sans text-xs transition-colors hover:text-terracotta xl:text-sm',
+                    NAV_LINK_CLASS,
+                    'relative font-sans hover:text-terracotta',
                     active && 'text-terracotta',
                     !active &&
-                      (scrolled || lightHero ? 'text-body-brown' : 'text-cream/90')
+                      (useLightChrome
+                        ? 'text-body-brown'
+                        : 'text-cream/95 [text-shadow:0_1px_3px_rgba(0,0,0,0.55)]'),
+                    active
+                      ? 'after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-full after:bg-terracotta'
+                      : 'after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-terracotta after:transition-all after:duration-300 hover:after:w-full',
                   )}
                 >
                   {l.label}
                 </Link>
               )
             })}
-          </nav>
+          </div>
 
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <div className={NAV_ACTIONS_CLASS}>
             <WebsiteSwitcher
-              variant={scrolled || lightHero ? 'light' : 'dark'}
-              compact
+              variant={useLightChrome ? 'light' : 'dark'}
               className="hidden md:flex"
             />
             <Link
               href={v2Path('/book-now')}
               data-ga4-event="book_now_click"
               data-cursor="cta"
-              className="hidden shrink-0 rounded-full bg-terracotta px-3 py-2 font-sans text-[11px] font-medium text-white transition-colors hover:bg-terracotta-light lg:inline-block lg:px-4 lg:text-xs xl:px-5 xl:py-2.5 xl:text-sm"
+              className="hidden min-w-[5.5rem] shrink-0 items-center justify-center rounded-full bg-terracotta px-3 py-2 text-center text-xs font-medium text-white transition-colors hover:bg-terracotta-light sm:inline-flex sm:text-sm"
             >
               Book Now
             </Link>
@@ -102,22 +113,22 @@ export function SiteNav() {
               aria-label="Open menu"
               onClick={() => setOpen(true)}
               className={cn(
-                'flex h-10 w-10 items-center justify-center rounded-full transition-colors lg:hidden',
-                scrolled || lightHero
+                'inline-flex size-10 items-center justify-center rounded-full transition-colors xl:hidden',
+                useLightChrome
                   ? 'text-deep-earth hover:bg-warm-sand'
-                  : 'text-cream hover:bg-white/10'
+                  : 'text-cream hover:bg-white/10',
               )}
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="size-6" />
             </button>
           </div>
-        </div>
+        </nav>
       </header>
 
       <div
         className={cn(
-          'fixed inset-0 z-[60] flex flex-col bg-deep-earth transition-all duration-400 lg:hidden',
-          open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+          'fixed inset-0 z-[60] flex flex-col bg-deep-earth transition-all duration-300 xl:hidden',
+          open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0',
         )}
       >
         <div className="flex items-center justify-between px-5 py-5">
@@ -128,23 +139,20 @@ export function SiteNav() {
             type="button"
             aria-label="Close menu"
             onClick={() => setOpen(false)}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-white hover:bg-white/10"
+            className="flex size-10 items-center justify-center rounded-full text-white hover:bg-white/10"
           >
-            <X className="h-6 w-6" />
+            <X className="size-6" />
           </button>
         </div>
         <nav className="flex min-h-0 flex-1 flex-col justify-start gap-1 overflow-y-auto overscroll-contain px-6 py-6 pb-16">
           <WebsiteSwitcherMobile variant="dark" />
-          {navLinks.concat([{ href: v2Path('/book-now'), label: 'Book Now' }]).map((l, i) => (
+          {navLinks.concat([{ href: v2Path('/book-now'), label: 'Book Now' }]).map((l) => (
             <Link
               key={l.href}
               href={l.href}
               data-cursor="nav"
-              style={{
-                animationDelay: `${i * 50}ms`,
-                animation: open ? 'word-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'none',
-              }}
-              className="font-display text-3xl italic text-white opacity-0 sm:text-4xl"
+              onClick={() => setOpen(false)}
+              className="font-display text-3xl italic text-white sm:text-4xl"
             >
               {l.label}
             </Link>

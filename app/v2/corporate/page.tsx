@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Check } from 'lucide-react'
+import { CorporateSbdButton } from '@v2/components/corporate/corporate-sbd-button'
 import { PageHeader } from '@v2/components/page-header'
 import { Reveal } from '@v2/components/reveal'
 import { CorporateForm } from '@v2/components/forms/corporate-form'
@@ -55,11 +56,12 @@ export default function CorporatePage() {
                 long-term account relationships.
               </p>
             </div>
+            <CorporateSbdButton />
           </Reveal>
 
           {/* Right form */}
           <Reveal delay={120}>
-            <div className="rounded-2xl bg-off-white p-6 shadow-[0_4px_24px_rgba(44,26,14,0.08)] md:p-8">
+            <div id="corporate-enquiry" className="scroll-mt-24 rounded-2xl bg-off-white p-6 shadow-[0_4px_24px_rgba(44,26,14,0.08)] md:p-8">
               <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-terracotta">
                 Corporate Enquiry
               </p>

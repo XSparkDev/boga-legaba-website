@@ -28,7 +28,7 @@ export function CorporateForm() {
 
   useEffect(() => {
     function onPerDiem() {
-      set("type", "Government Per Diem")
+      setForm((f) => ({ ...f, type: "Government Per Diem" }))
     }
     window.addEventListener("corporate-select-per-diem", onPerDiem)
     return () => window.removeEventListener("corporate-select-per-diem", onPerDiem)

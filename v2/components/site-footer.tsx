@@ -112,7 +112,15 @@ export function SiteFooter() {
         <div className="mt-14 flex flex-col items-start justify-between gap-3 border-t border-white/10 pt-6 text-xs text-cream/50 md:flex-row md:items-center">
           <p>© 2026 Boga Legaba Guest House &amp; Conference Centre. All rights reserved.</p>
           <p className="font-mono tracking-widest uppercase">
-            {WEBSITE} · Developed by X Spark
+            {WEBSITE} · Developed by{" "}
+            <a
+              href="https://www.xspark.co.za/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="normal-case tracking-normal text-cream/70 transition-colors hover:text-white"
+            >
+              X Spark
+            </a>
           </p>
         </div>
       </div>

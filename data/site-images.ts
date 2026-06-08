@@ -65,8 +65,8 @@ export const siteImages = {
     alt: "A woman drying her hair in a hotel room.",
   },
   hero: {
-    url: "https://images.unsplash.com/photo-1694771169753-1bb0502a155e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHwyfHxsdXh1cnklMjBndWVzdCUyMGhvdXNlJTIwZXh0ZXJpb3IlMjBldmVuaW5nJTIwYWZyaWNhJTIwd2FybSUyMGxpZ2h0aW5nfGVufDB8MHx8fDE3ODA0ODgyNDl8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "a couple of chairs sitting outside of a building",
+    url: "/hero-exterior.png",
+    alt: "Boga Legaba guest house exterior at evening",
   },
   "property.chababa": {
     url: "https://images.unsplash.com/photo-1574931697692-f937f1a4134f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHwzfHxib3V0aXF1ZSUyMGd1ZXN0aG91c2UlMjBidWlsZGluZyUyMGV4dGVyaW9yJTIwYWZyaWNhfGVufDB8MHx8fDE3ODA0ODgyNTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
