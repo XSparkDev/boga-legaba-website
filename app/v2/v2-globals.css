@@ -1,0 +1,252 @@
+/* V2 site theme — scoped so it does not override the main site */
+[data-site="v2"] {
+  --cream: #fafafa;
+  --deep-earth: #0a0a0a;
+  --dark-brown: #141414;
+  --mid-brown: #404040;
+  --terracotta: #0a0a0a;
+  --terracotta-light: #404040;
+  --amber-pale: #e5e5e5;
+  --warm-sand: #e5e5e5;
+  --brass: #0a0a0a;
+  --sage: #525252;
+  --off-white: #ffffff;
+  --body-brown: #262626;
+  --muted-brown: #525252;
+
+  --background: var(--cream);
+  --foreground: var(--deep-earth);
+  --card: var(--off-white);
+  --card-foreground: var(--deep-earth);
+  --popover: var(--off-white);
+  --popover-foreground: var(--deep-earth);
+  --primary: var(--terracotta);
+  --primary-foreground: #ffffff;
+  --secondary: var(--warm-sand);
+  --secondary-foreground: var(--deep-earth);
+  --muted: var(--warm-sand);
+  --muted-foreground: var(--muted-brown);
+  --accent: var(--terracotta);
+  --accent-foreground: #ffffff;
+  --border: #d4d4d4;
+  --input: #d4d4d4;
+  --ring: var(--terracotta);
+  --radius: 0.875rem;
+
+  background-color: var(--cream);
+  color: var(--deep-earth);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+}
+
+[data-site="v2"] ::selection {
+  background: var(--terracotta);
+  color: #fff;
+}
+
+/* ============ Ambient grain on cream / light sections ============ */
+[data-site="v2"] .grain-surface {
+  position: relative;
+}
+[data-site="v2"] .grain-surface::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+  mix-blend-mode: multiply;
+}
+
+[data-site="v2"] .section-divider {
+  height: 1px;
+  width: 100%;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--terracotta) 0,
+    var(--terracotta) 6px,
+    transparent 6px,
+    transparent 14px
+  );
+  opacity: 0.35;
+}
+
+[data-site="v2"] .section-divider-dots {
+  height: 8px;
+  width: 100%;
+  background-image: radial-gradient(circle, var(--terracotta) 1px, transparent 1px);
+  background-size: 12px 8px;
+  background-position: center;
+  opacity: 0.3;
+}
+
+[data-site="v2"] .pattern-stripe {
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 8px,
+    var(--terracotta) 8px,
+    var(--terracotta) 10px,
+    transparent 10px,
+    transparent 18px,
+    var(--terracotta-light) 18px,
+    var(--terracotta-light) 20px
+  );
+  height: 6px;
+  width: 100%;
+}
+
+[data-site="v2"] .diagonal-texture {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.02) 1px,
+    transparent 1px,
+    transparent 14px
+  );
+}
+
+[data-site="v2"] .footer-dash-line {
+  height: 0;
+  border: none;
+  border-top: 2px dashed var(--terracotta);
+  opacity: 0.7;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-site="v2"] .reveal.is-visible .footer-dash-line,
+[data-site="v2"] .footer-dash-line.is-visible {
+  clip-path: inset(0 0 0 0);
+}
+
+[data-site="v2"] .hero-rule {
+  transform-origin: left center;
+  transform: scaleX(0);
+  animation: v2-hero-rule-draw 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 1.15s;
+}
+@keyframes v2-hero-rule-draw {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+[data-site="v2"] .hero-parallax-panel {
+  transition: transform 0.12s ease-out;
+  will-change: transform;
+}
+
+[data-site="v2"] .card-property {
+  transition:
+    transform 0.35s cubic-bezier(0.16,  1, 0.3, 1),
+    box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-site="v2"] .card-property:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 48px rgba(26, 14, 5, 0.28);
+}
+
+[data-site="v2"] .card-room {
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-site="v2"] .card-room:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.14);
+}
+
+[data-site="v2"] .card-testimonial {
+  position: relative;
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+[data-site="v2"] .card-testimonial::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0;
+  background: var(--terracotta);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-site="v2"] .card-testimonial:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(26, 14, 5, 0.2);
+}
+[data-site="v2"] .card-testimonial:hover::before {
+  width: 100%;
+}
+
+[data-site="v2"] .nav-pill {
+  transition:
+    backdrop-filter 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.5s ease;
+}
+[data-site="v2"] .nav-pill--scrolled {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 8px 32px rgba(26, 14, 5, 0.22),
+    0 2px 8px rgba(26, 14, 5, 0.08);
+}
+[data-site="v2"] .nav-pill--scrolled-deep {
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow:
+    0 12px 40px rgba(26, 14, 5, 0.28),
+    0 4px 12px rgba(26, 14, 5, 0.12);
+}
+
+@keyframes v2-word-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.55em);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-site="v2"] .reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-site="v2"] .reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+[data-site="v2"] .reveal-right {
+  opacity: 0;
+  transform: translateY(30px);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-site="v2"] .reveal-right.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+[data-site="v2"] .font-quote {
+  font-family: var(--font-cormorant), Georgia, serif;
+}
+
+[data-site="v2"] .no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+[data-site="v2"] .no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
