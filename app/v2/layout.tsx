@@ -47,7 +47,7 @@ export default function V2SiteLayout({ children }: { children: React.ReactNode }
   return (
     <div
       data-site="v2"
-      className={`${playfair.variable} ${cormorant.variable} ${dmSans.variable} min-h-screen bg-cream font-sans text-deep-earth antialiased`}
+      className={`${playfair.variable} ${cormorant.variable} ${dmSans.variable} min-h-screen overflow-x-clip bg-cream font-sans text-deep-earth antialiased`}
     >
       <SiteNav />
       {children}

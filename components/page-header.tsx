@@ -14,7 +14,7 @@ export function PageHeader({ eyebrow, title, subtitle }: PageHeaderProps) {
           {eyebrow ? (
             <p className="font-mono text-xs uppercase tracking-[0.25em] text-gold">{eyebrow}</p>
           ) : null}
-          <h1 className="mt-3 max-w-3xl text-balance font-serif text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-6xl">
+          <h1 className="mt-3 max-w-3xl break-words text-balance font-serif text-3xl font-bold leading-[1.05] sm:text-4xl lg:text-5xl xl:text-6xl">
             {title}
           </h1>
           {subtitle ? (

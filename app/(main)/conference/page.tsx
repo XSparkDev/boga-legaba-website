@@ -72,7 +72,7 @@ export default function ConferencePage() {
           </Reveal>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-2xl overflow-hidden shadow-card-hover">
-            <div className="bg-[#0A0A0A] p-10 flex flex-col justify-between grain relative">
+            <div className="relative flex flex-col justify-between bg-[#0A0A0A] p-6 grain sm:p-8 lg:p-10">
               <div className="relative z-[2]">
                 <span className="section-label">Why Host Here</span>
                 <h3 className="font-display text-3xl text-white leading-tight mb-8">
@@ -114,7 +114,7 @@ export default function ConferencePage() {
               </div>
             </div>
 
-            <div className="bg-white p-10">
+            <div className="bg-white p-6 sm:p-8 lg:p-10">
               <ConferenceForm />
             </div>
           </div>

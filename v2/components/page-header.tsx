@@ -23,7 +23,7 @@ export function PageHeader({
           </p>
         </Reveal>
         <Reveal delay={80}>
-          <h1 className="mt-4 max-w-4xl font-display text-5xl italic font-bold leading-[0.95] text-white text-balance md:text-7xl">
+          <h1 className="mt-4 max-w-4xl break-words text-balance font-display text-4xl font-bold italic leading-[0.95] text-white sm:text-5xl md:text-6xl lg:text-7xl">
             {title}
           </h1>
         </Reveal>

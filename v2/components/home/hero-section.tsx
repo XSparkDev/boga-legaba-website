@@ -36,12 +36,12 @@ export function HeroSection() {
       onMouseLeave={resetHeroMove}
     >
       <div className="relative z-[2] grid min-h-screen grid-cols-1 lg:grid-cols-[55%_45%]">
-        <div className="relative z-10 flex flex-col justify-center px-6 pb-12 pt-36 md:px-12 md:pt-32 lg:pt-0">
+        <div className="relative z-10 flex flex-col justify-center px-6 pb-12 pt-28 sm:pt-32 md:px-12 md:pt-36 lg:pt-0">
           <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-terracotta">
             Mahikeng · NW Province
           </p>
 
-          <h1 className="mt-5 font-display text-[clamp(56px,9vw,110px)] font-bold leading-[0.88] text-deep-earth">
+          <h1 className="mt-5 font-display text-[clamp(2.5rem,9vw,6.875rem)] font-bold leading-[0.9] text-deep-earth">
             {headlineWords.map((word, i) => (
               <span
                 key={word}

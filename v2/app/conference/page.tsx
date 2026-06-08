@@ -36,7 +36,7 @@ const conferenceHero = getSiteImage('conference-hero')
 export default function ConferencePage() {
   return (
     <main>
-      <section className="relative h-[80vh] min-h-[560px] w-full overflow-hidden">
+      <section className="relative h-[min(80vh,720px)] min-h-[min(560px,70svh)] w-full overflow-hidden">
         <SiteImage
           src={conferenceHero.src}
           alt={conferenceHero.alt}
@@ -67,7 +67,7 @@ export default function ConferencePage() {
       </section>
 
       <section className="bg-warm-sand py-12">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-y-10 px-6 md:grid-cols-5 md:px-8">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-4 gap-y-8 px-6 sm:grid-cols-3 md:grid-cols-5 md:gap-y-10 md:px-8">
           {capacity.map((c) => (
             <div key={c.label} className="text-center">
               <div className="font-display text-4xl font-bold text-terracotta md:text-5xl">

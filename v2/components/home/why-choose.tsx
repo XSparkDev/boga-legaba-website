@@ -43,7 +43,7 @@ export function WhyChoose() {
           </h2>
         </Reveal>
 
-        <div className="no-scrollbar mt-14 flex gap-6 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:overflow-visible">
+        <div className="no-scrollbar -mx-6 mt-14 flex gap-6 overflow-x-auto px-6 pb-2 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0">
           {features.map((f, i) => (
             <Reveal
               key={f.num}

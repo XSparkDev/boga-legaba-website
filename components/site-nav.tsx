@@ -53,20 +53,20 @@ export function SiteNav() {
           : "bg-transparent",
       )}
     >
-      <nav className="mx-auto flex h-[4.5rem] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:h-24 lg:px-8">
+      <nav className="mx-auto flex h-[4.5rem] max-w-7xl items-center justify-between gap-2 px-4 sm:gap-3 sm:px-6 xl:h-24 xl:gap-4 xl:px-8">
         <Link href="/" className="shrink-0" aria-label="Boga Legaba home">
           <SiteLogo size="nav" />
         </Link>
 
-        <ul className="hidden items-center gap-7 lg:flex">
+        <ul className="no-scrollbar hidden min-w-0 flex-1 items-center justify-center gap-2 overflow-x-auto px-1 xl:flex xl:gap-4 2xl:gap-6">
           {NAV_LINKS.map((link) => {
             const active = pathname === link.href
             return (
-              <li key={link.href}>
+              <li key={link.href} className="shrink-0">
                 <Link
                   href={link.href}
                   className={cn(
-                    "relative text-white/90 hover:text-white font-body text-sm tracking-wide transition-colors duration-200",
+                    "relative whitespace-nowrap font-body text-xs tracking-wide text-white/90 transition-colors duration-200 hover:text-white xl:text-sm",
                     "after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:bg-gold after:transition-all after:duration-300",
                     active ? "after:w-full text-white" : "hover:after:w-full after:w-0",
                   )}
@@ -78,19 +78,19 @@ export function SiteNav() {
           })}
         </ul>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <WebsiteSwitcher variant="dark" className="hidden md:flex" />
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <WebsiteSwitcher variant="dark" compact className="hidden md:flex" />
           <Link
             href="/book-now"
             data-ga4-event="book_now_click"
-            className="btn-gold hidden text-sm hover:shadow-gold-glow sm:inline-flex"
+            className="btn-gold hidden text-xs hover:shadow-gold-glow sm:inline-flex sm:text-sm"
           >
             Book Now
           </Link>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="inline-flex size-10 items-center justify-center rounded-full text-white lg:hidden"
+            className="inline-flex size-10 items-center justify-center rounded-full text-white xl:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
           >
@@ -102,7 +102,7 @@ export function SiteNav() {
       {/* Mobile full-screen menu */}
       <div
         className={cn(
-          "fixed inset-0 top-[4.5rem] z-40 bg-[#0a0a0a] transition-all duration-300 lg:hidden",
+          "fixed inset-0 top-[4.5rem] z-40 bg-[#0a0a0a] transition-all duration-300 xl:hidden",
           open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
       >

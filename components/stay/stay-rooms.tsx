@@ -64,7 +64,7 @@ export function StayRooms() {
     <section className="bg-background py-14 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div
-          className="flex flex-col gap-2 sm:flex-row sm:flex-wrap"
+          className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
           role="tablist"
           aria-label="Select a property"
         >
@@ -80,7 +80,7 @@ export function StayRooms() {
                   setActive(p.id)
                 }}
                 className={cn(
-                  "inline-flex items-center rounded-full px-5 py-2.5 font-mono text-[11px] tracking-[0.12em] uppercase transition-all duration-250",
+                  "inline-flex shrink-0 items-center rounded-full px-5 py-2.5 font-mono text-[11px] tracking-[0.12em] uppercase transition-all duration-250",
                   isActive ? "border-transparent text-white" : "border bg-white hover:border-current",
                 )}
                 style={

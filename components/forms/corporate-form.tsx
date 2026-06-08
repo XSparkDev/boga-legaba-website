@@ -115,7 +115,7 @@ export function CorporateForm() {
 
       {showSbd ? <SbdFormGenerator formData={sbdFormData} /> : null}
 
-      <div className="grid gap-5 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <Field label="Check-in Date" required error={errors.checkin}>
           <input type="date" className={inputClass} value={form.checkin} onChange={(e) => set("checkin", e.target.value)} />
         </Field>

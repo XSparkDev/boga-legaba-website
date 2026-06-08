@@ -28,7 +28,7 @@ export default function MainSiteLayout({ children }: { children: React.ReactNode
   return (
     <div
       data-site="main"
-      className={`${playfair.variable} ${dmSans.variable} ${ibmPlexMono.variable} min-h-screen bg-background font-body antialiased`}
+      className={`${playfair.variable} ${dmSans.variable} ${ibmPlexMono.variable} min-h-screen overflow-x-clip bg-background font-body antialiased`}
     >
       <SiteNav />
       {children}

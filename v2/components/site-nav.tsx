@@ -54,7 +54,7 @@ export function SiteNav() {
             : 'left-0 top-0 w-full bg-transparent px-5 py-4 md:px-8 md:py-5'
         )}
       >
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 w-full items-center justify-between gap-2 sm:gap-3">
           <Link href={v2Path('/')} className="shrink-0" data-cursor="nav">
             <SiteLogo
               variant={scrolled || lightHero ? 'dark' : 'light'}
@@ -62,7 +62,7 @@ export function SiteNav() {
             />
           </Link>
 
-          <nav className="no-scrollbar hidden min-w-0 flex-1 items-center justify-center gap-2 overflow-x-auto px-1 lg:flex xl:gap-3">
+          <nav className="no-scrollbar hidden min-w-0 flex-1 items-center justify-center gap-1.5 overflow-x-auto px-1 lg:flex xl:gap-2 2xl:gap-3">
             {navLinks.map((l) => {
               const active = pathname === l.href
               return (
@@ -83,16 +83,17 @@ export function SiteNav() {
             })}
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <WebsiteSwitcher
               variant={scrolled || lightHero ? 'light' : 'dark'}
+              compact
               className="hidden md:flex"
             />
             <Link
               href={v2Path('/book-now')}
               data-ga4-event="book_now_click"
               data-cursor="cta"
-              className="hidden shrink-0 rounded-full bg-terracotta px-4 py-2 font-sans text-xs font-medium text-white transition-colors hover:bg-terracotta-light xl:inline-block xl:px-5 xl:py-2.5 xl:text-sm"
+              className="hidden shrink-0 rounded-full bg-terracotta px-3 py-2 font-sans text-[11px] font-medium text-white transition-colors hover:bg-terracotta-light lg:inline-block lg:px-4 lg:text-xs xl:px-5 xl:py-2.5 xl:text-sm"
             >
               Book Now
             </Link>
@@ -132,7 +133,7 @@ export function SiteNav() {
             <X className="h-6 w-6" />
           </button>
         </div>
-        <nav className="flex flex-1 flex-col justify-center gap-2 px-6 pb-16">
+        <nav className="flex min-h-0 flex-1 flex-col justify-start gap-1 overflow-y-auto overscroll-contain px-6 py-6 pb-16">
           <WebsiteSwitcherMobile variant="dark" />
           {navLinks.concat([{ href: v2Path('/book-now'), label: 'Book Now' }]).map((l, i) => (
             <Link
@@ -143,7 +144,7 @@ export function SiteNav() {
                 animationDelay: `${i * 50}ms`,
                 animation: open ? 'word-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'none',
               }}
-              className="font-display text-4xl italic text-white opacity-0"
+              className="font-display text-3xl italic text-white opacity-0 sm:text-4xl"
             >
               {l.label}
             </Link>

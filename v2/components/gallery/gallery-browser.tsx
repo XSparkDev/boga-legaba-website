@@ -108,7 +108,7 @@ export function GalleryBrowser() {
           </div>
         </Reveal>
       ) : (
-        <Reveal delay={100} className="mt-8 grid auto-rows-[200px] grid-cols-2 gap-4 lg:grid-cols-4">
+        <Reveal delay={100} className="mt-8 grid auto-rows-[180px] grid-cols-1 gap-3 min-[420px]:grid-cols-2 min-[420px]:auto-rows-[200px] sm:gap-4 lg:grid-cols-4">
           {filtered.map((item, index) => (
             <button
               key={item.id}

@@ -50,7 +50,7 @@ export function MultiCriteriaSearch({
 
   return (
     <div className={cn('space-y-4', className)}>
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-brown" />
           <input
@@ -65,7 +65,7 @@ export function MultiCriteriaSearch({
         <button
           type="button"
           onClick={() => addCriterion(draft)}
-          className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-terracotta px-4 py-3 font-sans text-sm font-medium text-white transition-colors hover:bg-terracotta-light"
+          className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-terracotta px-4 py-3 font-sans text-sm font-medium text-white transition-colors hover:bg-terracotta-light sm:w-auto"
         >
           <Plus className="h-4 w-4" />
           Add

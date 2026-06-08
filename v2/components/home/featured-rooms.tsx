@@ -33,7 +33,7 @@ export function FeaturedRooms() {
           </h2>
         </Reveal>
 
-        <div className="no-scrollbar mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-visible">
+        <div className="no-scrollbar -mx-6 mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto px-6 pb-2 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
           {featured.map((room, i) => {
             const prop = propertyByKey(room.property)
             const image = featuredImageByName[room.name]

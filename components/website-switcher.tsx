@@ -13,6 +13,16 @@ import { cn } from "@/lib/utils"
 
 type SwitcherVariant = "dark" | "light"
 
+function SiteShortLabel({ siteId, fullLabel }: { siteId: SiteId; fullLabel: string }) {
+  if (siteId !== "alternate") return fullLabel
+  return (
+    <>
+      <span className="xl:hidden">Site 2</span>
+      <span className="hidden xl:inline">{fullLabel}</span>
+    </>
+  )
+}
+
 interface WebsiteSwitcherProps {
   variant?: SwitcherVariant
   className?: string
@@ -62,7 +72,7 @@ export function WebsiteSwitcher({ variant = "dark", className, compact = false }
                 )}
                 aria-current="true"
               >
-                {site.shortLabel}
+                <SiteShortLabel siteId={site.id} fullLabel={site.shortLabel} />
               </span>
             )
           }
@@ -79,7 +89,7 @@ export function WebsiteSwitcher({ variant = "dark", className, compact = false }
               )}
               title={`Switch to ${site.label}`}
             >
-              {site.shortLabel}
+              <SiteShortLabel siteId={site.id} fullLabel={site.shortLabel} />
             </Link>
           )
         })}

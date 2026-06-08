@@ -59,7 +59,7 @@ export function StayBrowser() {
   return (
     <div className="bg-cream">
       {/* Pill carousel */}
-      <div className="sticky top-0 z-30 border-b border-warm-sand/60 bg-cream/90 backdrop-blur-md">
+      <div className="sticky top-[4.5rem] z-30 border-b border-warm-sand/60 bg-cream/90 backdrop-blur-md md:top-20">
         <div className="no-scrollbar mx-auto flex max-w-7xl gap-3 overflow-x-auto px-6 py-4 md:px-8">
           {properties.map((p) => {
             const isActive = active === p.key

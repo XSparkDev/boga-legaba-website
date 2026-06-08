@@ -109,11 +109,11 @@ export function LocationSection() {
           >
             {BUSINESS.name}
           </h2>
-          <p className="mt-1.5 font-sans text-sm font-medium leading-relaxed text-body-brown">
+          <p className="mt-1.5 break-words font-sans text-sm font-medium leading-relaxed text-body-brown">
             {FULL_ADDRESS}
           </p>
 
-          <span className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-terracotta/35 bg-white px-3 py-1.5 font-sans text-xs font-medium text-deep-earth">
+          <span className="mt-3 inline-flex max-w-full items-center gap-1.5 rounded-full border border-terracotta/35 bg-white px-3 py-1.5 font-sans text-xs font-medium text-deep-earth">
             <Clock className="size-3.5 shrink-0 text-terracotta" aria-hidden />
             {LOCATION.travelNote}
           </span>
