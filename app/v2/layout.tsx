@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Playfair_Display, Cormorant_Garamond, DM_Sans } from "next/font/google"
 import { Toaster } from "sonner"
+import { BodyScrollReset } from "@/components/body-scroll-reset"
 import { SiteNav } from "@v2/components/site-nav"
 import { SiteFooter } from "@v2/components/site-footer"
 import { WhatsAppFloat } from "@v2/components/whatsapp-float"
@@ -47,8 +48,9 @@ export default function V2SiteLayout({ children }: { children: React.ReactNode }
   return (
     <div
       data-site="v2"
-      className={`${playfair.variable} ${cormorant.variable} ${dmSans.variable} min-h-screen overflow-x-clip bg-cream font-sans text-deep-earth antialiased`}
+      className={`${playfair.variable} ${cormorant.variable} ${dmSans.variable} min-h-[100dvh] overflow-x-clip bg-cream font-sans text-deep-earth antialiased`}
     >
+      <BodyScrollReset />
       <SiteNav />
       {children}
       <SiteFooter />

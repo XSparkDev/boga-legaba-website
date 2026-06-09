@@ -9,6 +9,7 @@ import {
   type ConferenceOffering,
 } from "@/data/conference"
 import { matchesAllCriteria } from "@/lib/match-criteria"
+import { scrollToElement } from "@/lib/smooth-scroll"
 import { cn } from "@/lib/utils"
 
 const quickFilters = [
@@ -58,7 +59,7 @@ export function ConferencePackages() {
   }, [quickFilter, criteria])
 
   function selectPackage(name: string) {
-    document.getElementById("conference-enquiry")?.scrollIntoView({ behavior: "smooth", block: "start" })
+    scrollToElement("conference-enquiry")
     window.dispatchEvent(new CustomEvent("conference-package-selected", { detail: { name } }))
   }
 

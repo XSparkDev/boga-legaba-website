@@ -9,6 +9,7 @@ import { properties } from '@v2/data/site'
 import { rooms, roomsByProperty, type Room } from '@v2/data/rooms'
 import { matchesAllCriteria } from '@v2/lib/match-criteria'
 import { NAV_STICKY_TOP_CLASS } from '@/lib/nav-shell'
+import { scrollToElement } from '@/lib/smooth-scroll'
 import { cn } from '@v2/lib/utils'
 
 const stayFilterSuggestions = [
@@ -54,7 +55,7 @@ export function StayBrowser() {
 
   function goTo(key: string) {
     setActive(key)
-    document.getElementById(`property-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    scrollToElement(`property-${key}`)
   }
 
   return (
@@ -62,7 +63,7 @@ export function StayBrowser() {
       {/* Pill carousel */}
       <div
         className={cn(
-          'sticky z-50 border-b border-warm-sand/60 bg-cream/95 backdrop-blur-md',
+          'sticky z-50 border-b border-warm-sand/60 bg-cream supports-[backdrop-filter]:bg-cream/95 supports-[backdrop-filter]:backdrop-blur-md',
           NAV_STICKY_TOP_CLASS,
         )}
       >

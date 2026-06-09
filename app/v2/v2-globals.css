@@ -215,6 +215,12 @@
   }
 }
 
+[data-site="v2"] .word-rise {
+  display: inline-block;
+  opacity: 0;
+  animation: v2-word-rise 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 [data-site="v2"] .reveal {
   opacity: 0;
   transform: translateY(30px);
@@ -249,4 +255,33 @@
 [data-site="v2"] .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-site="v2"] .word-rise,
+  [data-site="v2"] .hero-rule,
+  [data-site="v2"] .reveal,
+  [data-site="v2"] .reveal-right,
+  [data-site="v2"] .card-property,
+  [data-site="v2"] .card-property:hover,
+  [data-site="v2"] .card-room,
+  [data-site="v2"] .card-room:hover,
+  [data-site="v2"] .card-testimonial,
+  [data-site="v2"] .card-testimonial:hover,
+  [data-site="v2"] .card-testimonial::before,
+  [data-site="v2"] .footer-dash-line {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  [data-site="v2"] .hero-rule {
+    transform: scaleX(1) !important;
+  }
+  [data-site="v2"] .footer-dash-line {
+    clip-path: inset(0 0 0 0) !important;
+  }
+  [data-site="v2"] .card-testimonial::before {
+    width: 0 !important;
+  }
 }

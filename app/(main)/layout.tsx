@@ -1,4 +1,5 @@
 import { Playfair_Display, DM_Sans, IBM_Plex_Mono } from "next/font/google"
+import { BodyScrollReset } from "@/components/body-scroll-reset"
 import { SiteNav } from "@/components/site-nav"
 import { SiteFooter } from "@/components/site-footer"
 import { FloatingWhatsApp } from "@/components/floating-whatsapp"
@@ -28,8 +29,9 @@ export default function MainSiteLayout({ children }: { children: React.ReactNode
   return (
     <div
       data-site="main"
-      className={`${playfair.variable} ${dmSans.variable} ${ibmPlexMono.variable} min-h-screen overflow-x-clip bg-background font-body antialiased`}
+      className={`${playfair.variable} ${dmSans.variable} ${ibmPlexMono.variable} min-h-[100dvh] overflow-x-clip bg-background font-body antialiased`}
     >
+      <BodyScrollReset />
       <SiteNav />
       {children}
       <SiteFooter />

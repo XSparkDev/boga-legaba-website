@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react"
+import { createRevealObserver } from "@/lib/reveal-observer"
 import { cn } from "@/lib/utils"
 
 interface RevealProps {
@@ -14,27 +15,18 @@ export function Reveal({ children, className, delay = 0, as = "div" }: RevealPro
   const ref = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true)
-          observer.disconnect()
-        }
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
+    const observer = createRevealObserver(el, () => setVisible(true))
+    return () => observer?.disconnect()
   }, [])
 
-  const Tag = as as any
+  const Tag = as
 
   return (
     <Tag
-      ref={ref}
+      ref={ref as never}
       className={cn("reveal", visible && "is-visible", className)}
       style={delay ? { transitionDelay: `${delay}ms` } : undefined}
     >

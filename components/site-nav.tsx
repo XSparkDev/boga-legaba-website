@@ -14,6 +14,7 @@ import {
   NAV_LINKS_ROW_CLASS,
   NAV_LOGO_SLOT_CLASS,
 } from "@/lib/nav-shell"
+import { lockBodyScroll, unlockBodyScroll } from "@/lib/body-scroll-lock"
 import { cn } from "@/lib/utils"
 
 const NAV_LINKS = [
@@ -46,10 +47,9 @@ export function SiteNav() {
   }, [pathname])
 
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : ""
-    return () => {
-      document.body.style.overflow = ""
-    }
+    if (open) lockBodyScroll()
+    else unlockBodyScroll()
+    return () => unlockBodyScroll()
   }, [open])
 
   return (
@@ -57,7 +57,7 @@ export function SiteNav() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-colors duration-300",
         scrolled
-          ? "border-b border-white/10 bg-[#0A0A0A]/95 backdrop-blur-md"
+          ? "border-b border-white/10 bg-[#0A0A0A]/95 supports-[backdrop-filter]:backdrop-blur-md"
           : "bg-transparent",
       )}
     >
@@ -108,41 +108,45 @@ export function SiteNav() {
         </div>
       </nav>
 
-      <div
-        className={cn(
-          "fixed inset-0 top-[4.5rem] z-40 bg-[#0a0a0a] transition-all duration-300 xl:hidden",
-          open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
-        )}
-      >
-        <div className="flex h-[calc(100vh-4.5rem)] flex-col overflow-y-auto px-6 py-8">
-          <WebsiteSwitcherMobile variant="dark" />
-          <ul className="mt-6 flex flex-col gap-1">
-            {NAV_LINKS.map((link) => {
-              const active = pathname === link.href
-              return (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className={cn(
-                      "block border-b border-white/10 py-4 font-display text-2xl text-white/90 transition-colors hover:text-gold",
-                      active && "text-gold",
-                    )}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-          <Link
-            href="/book-now"
-            data-ga4-event="book_now_click"
-            className="btn-gold mt-8 w-full justify-center text-base"
-          >
-            Book Now
-          </Link>
+      {open ? (
+        <div
+          className="fixed inset-0 top-[4.5rem] z-40 bg-[#0a0a0a] xl:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Site menu"
+        >
+          <div className="flex h-[calc(100dvh-4.5rem)] flex-col overflow-y-auto overscroll-contain px-6 py-8 pb-[max(2rem,env(safe-area-inset-bottom))]">
+            <WebsiteSwitcherMobile variant="dark" />
+            <ul className="mt-6 flex flex-col gap-1">
+              {NAV_LINKS.map((link) => {
+                const active = pathname === link.href
+                return (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      onClick={() => setOpen(false)}
+                      className={cn(
+                        "block border-b border-white/10 py-4 font-display text-2xl text-white/90 transition-colors hover:text-gold",
+                        active && "text-gold",
+                      )}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+            <Link
+              href="/book-now"
+              data-ga4-event="book_now_click"
+              onClick={() => setOpen(false)}
+              className="btn-gold mt-8 w-full justify-center text-base"
+            >
+              Book Now
+            </Link>
+          </div>
         </div>
-      </div>
+      ) : null}
     </header>
   )
 }

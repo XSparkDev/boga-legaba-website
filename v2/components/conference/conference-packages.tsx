@@ -10,6 +10,7 @@ import {
   type ConferencePackage,
 } from '@v2/data/conference'
 import { matchesAllCriteria } from '@v2/lib/match-criteria'
+import { scrollToElement } from '@/lib/smooth-scroll'
 import { cn } from '@v2/lib/utils'
 
 const quickFilters = [
@@ -40,8 +41,7 @@ export function ConferencePackages() {
   }, [quickFilter, criteria])
 
   function selectPackage(name: string) {
-    const enquiry = document.getElementById('enquiry')
-    enquiry?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    scrollToElement('enquiry')
     window.dispatchEvent(new CustomEvent('conference-package-selected', { detail: { name } }))
   }
 

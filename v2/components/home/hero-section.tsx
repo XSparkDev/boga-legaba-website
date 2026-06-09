@@ -11,8 +11,8 @@ const heroImage = getSiteImage('hero')
 
 export function HeroSection() {
   return (
-    <section className="grain-surface relative min-h-screen w-full overflow-hidden bg-cream">
-      <div className="relative z-[2] grid min-h-screen grid-cols-1 lg:grid-cols-[55%_45%]">
+    <section className="grain-surface relative min-h-[100dvh] w-full overflow-hidden bg-cream">
+      <div className="relative z-[2] grid min-h-[100dvh] grid-cols-1 lg:grid-cols-[55%_45%]">
         <div className="relative z-10 flex flex-col justify-center px-6 pb-8 pt-[calc(4.5rem+1.5rem)] sm:px-8 sm:pb-10 sm:pt-[calc(4.5rem+2rem)] md:px-12 lg:px-14 lg:pb-12 lg:pt-0 xl:pt-[calc(6rem+1rem)]">
           <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-terracotta">
             Mahikeng · NW Province
@@ -60,7 +60,7 @@ export function HeroSection() {
           </p>
         </div>
 
-        <div className="relative order-first min-h-[42vh] lg:order-last lg:min-h-screen">
+        <div className="relative order-first min-h-[42dvh] lg:order-last lg:min-h-[100dvh]">
           <SiteImage
             src={heroImage.src}
             alt={heroImage.alt}

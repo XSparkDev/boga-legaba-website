@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react"
 import { FileCheck2, FileText, CreditCard, Landmark, Layers, UserCog } from "lucide-react"
 import { SBD_FORMS_ENABLED } from "@/lib/sbd-forms"
+import { scrollToElement } from "@/lib/smooth-scroll"
 
 const BENEFITS: {
   Icon: LucideIcon
@@ -26,9 +27,9 @@ const BENEFITS: {
 export function CorporateBenefits() {
   function scrollToForm() {
     window.dispatchEvent(new CustomEvent("corporate-select-per-diem"))
-    document.getElementById("corporate-enquiry")?.scrollIntoView({ behavior: "smooth", block: "start" })
+    scrollToElement("corporate-enquiry")
     window.setTimeout(() => {
-      document.getElementById("sbd-form-generator")?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+      scrollToElement("sbd-form-generator", { block: "nearest" })
     }, 350)
   }
 

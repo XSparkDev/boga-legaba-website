@@ -203,6 +203,16 @@
     transform: translateY(0);
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .reveal,
+    .reveal-animate {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+
   /* Legacy grain alias */
   .grain-overlay::after {
     content: '';

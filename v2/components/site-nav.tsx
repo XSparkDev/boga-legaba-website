@@ -17,6 +17,7 @@ import {
   NAV_LINKS_ROW_CLASS,
   NAV_LOGO_SLOT_CLASS,
 } from '@/lib/nav-shell'
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/body-scroll-lock'
 import { cn } from '@v2/lib/utils'
 
 export function SiteNav() {
@@ -41,20 +42,18 @@ export function SiteNav() {
   }, [pathname])
 
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : ''
-    return () => {
-      document.body.style.overflow = ''
-    }
+    if (open) lockBodyScroll()
+    else unlockBodyScroll()
+    return () => unlockBodyScroll()
   }, [open])
 
   return (
     <>
       <header
         className={cn(
-          'fixed top-0 left-0 right-0 z-50 overflow-hidden transition-colors duration-300',
-          NAV_BAR_HEIGHT,
+          'fixed top-0 left-0 right-0 z-50 transition-colors duration-300',
           solidHeader
-            ? 'border-b border-warm-sand/50 bg-cream/95 backdrop-blur-md'
+            ? 'border-b border-warm-sand/50 bg-cream/95 supports-[backdrop-filter]:backdrop-blur-md'
             : 'bg-transparent',
         )}
       >
@@ -125,11 +124,12 @@ export function SiteNav() {
         </nav>
       </header>
 
+      {!open ? null : (
       <div
-        className={cn(
-          'fixed inset-0 z-[60] flex flex-col bg-deep-earth transition-all duration-300 xl:hidden',
-          open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0',
-        )}
+        className="fixed inset-0 z-[60] flex flex-col bg-deep-earth xl:hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Site menu"
       >
         <div className="flex items-center justify-between px-5 py-5">
           <Link href={v2Path('/')} onClick={() => setOpen(false)}>
@@ -159,6 +159,7 @@ export function SiteNav() {
           ))}
         </nav>
       </div>
+      )}
     </>
   )
 }

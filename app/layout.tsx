@@ -1,6 +1,12 @@
 import type { Metadata } from "next"
 import { Analytics } from "@vercel/analytics/next"
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+}
+
 export const metadata: Metadata = {
   title: "Boga Legaba Guest House & Conference Centre | Guest House in Mahikeng",
   description:
@@ -24,7 +30,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen antialiased">
+      <body className="min-h-[100dvh] antialiased">
         {children}
         {process.env.NODE_ENV === "production" && <Analytics />}
       </body>

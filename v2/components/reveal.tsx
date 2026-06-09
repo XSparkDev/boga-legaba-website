@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState, type ElementType, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ElementType, type ReactNode } from 'react'
+import { createRevealObserver } from '@/lib/reveal-observer'
 import { cn } from '@v2/lib/utils'
 
 type Variant = 'up' | 'right' | 'scale'
@@ -27,27 +28,11 @@ export function Reveal({
   const ref = useRef<HTMLElement | null>(null)
   const [visible, setVisible] = useState(false)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
-
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduced) {
-      setVisible(true)
-      return
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true)
-          observer.disconnect()
-        }
-      },
-      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
+    const observer = createRevealObserver(el, () => setVisible(true))
+    return () => observer?.disconnect()
   }, [])
 
   return (
