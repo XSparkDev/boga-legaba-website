@@ -1,4 +1,8 @@
+'use client'
+
 import Link from 'next/link'
+import { NightsBridgeModal } from '@/components/NightsBridgeModal'
+import { useBookingModal } from '@/hooks/useBookingModal'
 import { v2Path } from '@v2/lib/paths'
 import { Facebook, Instagram, Mail, Phone } from 'lucide-react'
 import { Reveal } from '@v2/components/reveal'
@@ -7,6 +11,8 @@ import { SiteLogo } from './site-logo'
 import { EMAIL, PHONE, WEBSITE, navLinks, properties } from '@v2/data/site'
 
 export function SiteFooter() {
+  const { isOpen, openModal, closeModal } = useBookingModal()
+
   return (
     <footer className="relative bg-deep-earth text-cream/80">
       <Reveal className="block w-full">
@@ -40,15 +46,31 @@ export function SiteFooter() {
               Quick Links
             </p>
             <ul className="mt-5 space-y-2.5">
-              {navLinks.concat([{ href: '/book-now', label: 'Book Now' }]).map((l) => (
-                <li key={l.href}>
-                  <Link
-                    href={l.href}
-                    data-cursor="nav"
-                    className="text-sm text-warm-sand/80 transition-colors hover:text-white"
-                  >
-                    {l.label}
-                  </Link>
+              {navLinks
+                .concat([
+                  { href: '/book-now', label: 'Book Now' },
+                  { href: '/book-now', label: 'Check Availability' },
+                ])
+                .map((l) => (
+                <li key={l.label}>
+                  {l.label === 'Check Availability' ? (
+                    <button
+                      type="button"
+                      onClick={openModal}
+                      data-cursor="nav"
+                      className="text-sm text-warm-sand/80 transition-colors hover:text-white"
+                    >
+                      {l.label}
+                    </button>
+                  ) : (
+                    <Link
+                      href={l.href}
+                      data-cursor="nav"
+                      className="text-sm text-warm-sand/80 transition-colors hover:text-white"
+                    >
+                      {l.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -124,6 +146,7 @@ export function SiteFooter() {
           </p>
         </div>
       </div>
+      <NightsBridgeModal isOpen={isOpen} onClose={closeModal} />
     </footer>
   )
 }

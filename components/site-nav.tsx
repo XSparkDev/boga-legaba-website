@@ -4,7 +4,9 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
+import { NightsBridgeModal } from "@/components/NightsBridgeModal"
 import { SiteLogo } from "@/components/site-logo"
+import { useBookingModal } from "@/hooks/useBookingModal"
 import { WebsiteSwitcher, WebsiteSwitcherMobile } from "@/components/website-switcher"
 import {
   NAV_ACTIONS_CLASS,
@@ -34,6 +36,7 @@ export function SiteNav() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
+  const { isOpen, openModal, closeModal } = useBookingModal()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60)
@@ -53,6 +56,7 @@ export function SiteNav() {
   }, [open])
 
   return (
+    <>
     <header
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-colors duration-300",
@@ -89,13 +93,23 @@ export function SiteNav() {
 
         <div className={NAV_ACTIONS_CLASS}>
           <WebsiteSwitcher variant="dark" className="hidden md:flex" />
-          <Link
-            href="/book-now"
-            data-ga4-event="book_now_click"
-            className="btn-gold hidden min-w-[5.5rem] justify-center text-xs sm:inline-flex sm:text-sm"
-          >
-            Book Now
-          </Link>
+          <div className="hidden items-center gap-2 sm:inline-flex">
+            <button
+              type="button"
+              onClick={openModal}
+              data-ga4-event="book_now_click"
+              className="btn-gold min-w-[5.5rem] justify-center text-xs sm:text-sm"
+            >
+              Book Now
+            </button>
+            <button
+              type="button"
+              onClick={openModal}
+              className="btn-glass min-w-[5.5rem] justify-center text-xs sm:text-sm"
+            >
+              Check Availability
+            </button>
+          </div>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
@@ -136,17 +150,34 @@ export function SiteNav() {
                 )
               })}
             </ul>
-            <Link
-              href="/book-now"
-              data-ga4-event="book_now_click"
-              onClick={() => setOpen(false)}
-              className="btn-gold mt-8 w-full justify-center text-base"
-            >
-              Book Now
-            </Link>
+            <div className="mt-8 flex flex-col gap-3">
+              <button
+                type="button"
+                data-ga4-event="book_now_click"
+                onClick={() => {
+                  setOpen(false)
+                  openModal()
+                }}
+                className="btn-gold w-full justify-center text-base"
+              >
+                Book Now
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false)
+                  openModal()
+                }}
+                className="btn-glass w-full justify-center text-base"
+              >
+                Check Availability
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
     </header>
+    <NightsBridgeModal isOpen={isOpen} onClose={closeModal} />
+    </>
   )
 }

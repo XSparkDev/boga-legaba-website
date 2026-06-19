@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import { SpecialsCheckAvailability } from '@/components/specials-check-availability'
 import { PageHeader } from '@v2/components/page-header'
 import { Reveal } from '@v2/components/reveal'
 
@@ -54,13 +53,7 @@ export default function SpecialsPage() {
             <p className="text-sm text-muted-brown">
               For current seasonal promotions, contact reception or chat on WhatsApp.
             </p>
-            <Link
-              href="/book-now"
-              className="group mt-6 inline-flex items-center gap-2 rounded-full bg-terracotta px-8 py-3.5 font-sans text-sm font-medium text-white transition-colors hover:bg-terracotta-light"
-            >
-              Check Availability
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Link>
+            <SpecialsCheckAvailability />
           </Reveal>
         </div>
       </section>

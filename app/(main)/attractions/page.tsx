@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
-import Link from "next/link"
-import { Trees, Landmark, ShoppingBag, UtensilsCrossed, BookMarked, Plane, ArrowRight } from "lucide-react"
+import { Trees, Landmark, ShoppingBag, UtensilsCrossed, BookMarked, Plane } from "lucide-react"
+import { AttractionsBookingCta } from "@/components/attractions-booking-cta"
 import { PageHeader } from "@/components/page-header"
 import { SiteImage } from "@/components/site-image"
 import { Reveal } from "@/components/reveal"
@@ -67,13 +67,7 @@ export default function AttractionsPage() {
           <h2 className="text-balance font-serif text-2xl font-bold sm:text-3xl">
             Book your stay in Mahikeng&apos;s most central guest house
           </h2>
-          <Link
-            href="/book-now"
-            data-ga4-event="book_now_click"
-            className="inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-[#0a0a0a] transition-colors hover:bg-[#b8943c]"
-          >
-            Book Now <ArrowRight className="size-4" />
-          </Link>
+          <AttractionsBookingCta />
         </div>
       </section>
     </main>

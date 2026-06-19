@@ -1,12 +1,12 @@
 import type { Metadata } from "next"
 import { StayPageHeader } from "@/components/stay/stay-page-header"
 import { StayRooms } from "@/components/stay/stay-rooms"
-import { NightsBridgeEmbed } from "@/components/nightsbridge-embed"
+import { StayBookingCta } from "@/components/stay/stay-booking-cta"
 
 export const metadata: Metadata = {
   title: "Stay & Rooms | Boga Legaba Guest House, Mahikeng",
   description:
-    "27 rooms across 3 properties in Mahikeng. Browse Chababa, Interlaken A, Lantana and Transnet portfolio rooms by configuration and bathroom type. Book directly.",
+    "Browse rooms and live availability across Boga Legaba properties in Mahikeng. Inventory synced from NightsBridge.",
 }
 
 export default function StayPage() {
@@ -14,7 +14,7 @@ export default function StayPage() {
     <main>
       <StayPageHeader />
       <StayRooms />
-      <NightsBridgeEmbed />
+      <StayBookingCta />
     </main>
   )
 }

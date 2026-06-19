@@ -1,15 +1,17 @@
 'use client'
-import { v2Path } from '@v2/lib/paths'
 
-import Link from 'next/link'
 import { ArrowRight, ArrowDown } from 'lucide-react'
+import { NightsBridgeModal } from '@/components/NightsBridgeModal'
 import { SiteImage } from '@v2/components/site-image'
 import { getSiteImage } from '@v2/data/images'
+import { useBookingModal } from '@/hooks/useBookingModal'
 
 const headlineWords = ['Mahikeng\u2019s', 'Most', 'Welcoming', 'Address.']
 const heroImage = getSiteImage('hero')
 
 export function HeroSection() {
+  const { isOpen, openModal, closeModal } = useBookingModal()
+
   return (
     <section className="grain-surface relative min-h-[100dvh] w-full overflow-hidden bg-cream">
       <div className="relative z-[2] grid min-h-[100dvh] grid-cols-1 lg:grid-cols-[55%_45%]">
@@ -37,15 +39,16 @@ export function HeroSection() {
           </p>
 
           <div className="mt-7 flex w-full max-w-md flex-col gap-3 sm:mt-9 sm:max-w-none sm:flex-row sm:items-center sm:gap-4">
-            <Link
-              href={v2Path("/book-now")}
+            <button
+              type="button"
+              onClick={openModal}
               data-ga4-event="book_now_click"
               data-cursor="cta"
               className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-terracotta px-6 py-3.5 font-sans text-sm font-medium text-white transition-colors hover:bg-terracotta-light sm:w-auto sm:px-7 sm:py-4 sm:text-base"
             >
               Book Your Stay
               <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
-            </Link>
+            </button>
             <a
               href="#properties"
               className="group inline-flex w-full items-center justify-center gap-2 rounded-full border border-terracotta px-6 py-3.5 font-sans text-sm font-medium text-terracotta transition-colors hover:bg-terracotta/10 sm:w-auto sm:px-7 sm:py-4 sm:text-base"
@@ -70,6 +73,7 @@ export function HeroSection() {
           <div className="absolute inset-y-0 left-0 hidden w-16 bg-gradient-to-r from-cream to-transparent lg:block" />
         </div>
       </div>
+      <NightsBridgeModal isOpen={isOpen} onClose={closeModal} />
     </section>
   )
 }

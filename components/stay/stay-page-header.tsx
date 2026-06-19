@@ -31,8 +31,8 @@ export function StayPageHeader() {
             Find Your Perfect Room
           </h1>
           <p className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-white/70 lg:text-lg">
-            27 rooms across 3 properties — each physically located at a different address. Select your
-            property to begin.
+            Browse live room inventory synced from NightsBridge. Select a property and check your dates
+            to see what is available.
           </p>
         </Reveal>
       </div>

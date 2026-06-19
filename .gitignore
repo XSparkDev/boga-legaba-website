@@ -17,3 +17,17 @@ node_modules
 
 # Legacy duplicate copy (not part of the unified app)
 boga-legaba-website 2/
+
+# NightsBridge background sync (credentials + guest PII)
+services/nightsbridge-sync/.env
+services/nightsbridge-sync/storage_state.json
+services/nightsbridge-sync/output/
+services/nightsbridge-sync/.venv/
+services/nightsbridge-sync/logs/
+
+# Never commit secrets from the public scraper copy
+public/ScriptTestBLGH/.env
+public/ScriptTestBLGH/storage_state.json
+public/ScriptTestBLGH/output/
+public/ScriptTestBLGH/.venv/
+public/ScriptTestBLGH/logs/

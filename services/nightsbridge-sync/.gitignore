@@ -1,0 +1,14 @@
+# Secrets — never commit
+.env
+
+# Saved browser login session (contains auth cookies)
+storage_state.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Scraped output
+output/

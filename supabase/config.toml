@@ -1,0 +1,6 @@
+# Supabase project config (Edge Function cron)
+# See: https://supabase.com/docs/guides/functions/schedule-functions
+
+[functions.trigger-nightsbridge-sync]
+# Every 10 minutes — same as recommended poll interval
+schedule = "*/10 * * * *"
