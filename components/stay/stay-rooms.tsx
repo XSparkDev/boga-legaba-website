@@ -280,8 +280,8 @@ export function StayRooms() {
                         ? availability.getForRoom(room.name, property.name)
                         : undefined
                     }
-                    checkIn={availability.searched ? availability.checkIn : undefined}
-                    checkOut={availability.searched ? availability.checkOut : undefined}
+                    checkIn={checkIn || undefined}
+                    checkOut={checkOut || undefined}
                   />
                   )
                 })}

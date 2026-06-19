@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "sync:nightsbridge:setup": "bash services/nightsbridge-sync/setup.sh",
     "sync:nightsbridge:once": "bash scripts/nightsbridge-sync-cron.sh",
-    "sync:nightsbridge:worker": "cd services/nightsbridge-sync && SYNC_INTERVAL_MINUTES=${SYNC_INTERVAL_MINUTES:-10} .venv/bin/python worker.py"
+    "sync:nightsbridge:worker": "cd services/nightsbridge-sync && SYNC_INTERVAL_MINUTES=${SYNC_INTERVAL_MINUTES:-10} .venv/bin/python worker.py",
+    "sync:verify-schema": "python3 scripts/verify-supabase-schema.py"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

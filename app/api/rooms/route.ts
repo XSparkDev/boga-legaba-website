@@ -15,6 +15,7 @@ export async function GET() {
       .select(
         `
         bbroomid,
+        bbid,
         room_name,
         property_name,
         configuration,
@@ -48,7 +49,7 @@ export async function GET() {
         const fallback = await supabase
           .from("room")
           .select(
-            "bbroomid, room_name, property_name, configuration, bathroom_type, address, order_by, bbrtid, updated_at",
+            "bbroomid, bbid, room_name, property_name, configuration, bathroom_type, address, order_by, bbrtid, updated_at",
           )
           .eq("is_active", true)
           .order("property_name", { ascending: true })

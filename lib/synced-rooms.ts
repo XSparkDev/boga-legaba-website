@@ -3,6 +3,7 @@ import type { BathroomType, BedConfig, Property, PropertyId, Room } from "@/data
 /** Row from Supabase `room` (+ optional joined `room_type`). */
 export type SyncedRoomRow = {
   bbroomid: number
+  bbid?: number | null
   room_name: string
   property_name: string | null
   configuration: string | null
@@ -21,6 +22,7 @@ export type SyncedRoomRow = {
 
 export type SyncedRoom = Room & {
   bbroomid: number
+  bbid?: number | null
   bbrtid?: number | null
   maxAdults?: number | null
   maxOccupancy?: number | null
@@ -80,6 +82,7 @@ function mergeRoom(row: SyncedRoomRow): { propertyName: string; room: SyncedRoom
 
   const room: SyncedRoom = {
     bbroomid: row.bbroomid,
+    bbid: row.bbid ?? null,
     bbrtid: row.bbrtid,
     name: row.room_name,
     config: asBedConfig(row.configuration),

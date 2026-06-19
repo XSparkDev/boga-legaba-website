@@ -1,6 +1,7 @@
 import Link from "next/link"
 import type { Property, Room } from "@/data/rooms"
-import { BUSINESS } from "@/data/rooms"
+
+const NB_BBID = 21091
 import { SiteImage } from "@/components/site-image"
 import { getRoomImage } from "@/lib/site-images"
 import { formatZarPerNight, type RoomAvailabilitySummary } from "@/lib/room-availability"
@@ -53,12 +54,33 @@ export function RoomCard({
     alt: imageAlt || fallback.alt,
   }
   const synced = room as SyncedRoom
-  const whatsapp = property.whatsapp || BUSINESS.whatsappGeneral
+  const bbroomid = synced.bbroomid
+  const bbid = synced.bbid ?? NB_BBID
+  const bbrtid = synced.bbrtid ?? null
 
-  const bookHref =
+  // Prefer the NightsBridge room type name (rtname). If Supabase hasn't
+  // populated room_type.rtname yet, we still pass bbrtid so the book-now
+  // page can resolve the real name from the establishment API.
+  const rtName = synced.roomTypeName ?? room.name
+
+  function buildBookHref(from?: string, to?: string) {
+    const p = new URLSearchParams()
+    p.set("roomTypeName", rtName)
+    if (from) p.set("from", from)
+    if (to)   p.set("to", to)
+    p.set("bbid", String(bbid))
+    if (bbrtid) p.set("bbrtid", String(bbrtid))
+    if (bbroomid) p.set("bbroomid", String(bbroomid))
+    return `/book-now?${p.toString()}`
+  }
+
+  const bookHref = buildBookHref(checkIn, checkOut)
+
+  const waMessage =
     checkIn && checkOut
-      ? `/book-now?room=${encodeURIComponent(room.name)}&property=${encodeURIComponent(property.name)}&from=${checkIn}&to=${checkOut}`
-      : "/book-now"
+      ? `Hi Boga Legaba, I'd like to enquire about ${room.name} at ${property.name}${bbroomid ? ` (Room ID: ${bbroomid})` : ""} for ${checkIn} to ${checkOut}.`
+      : `Hi Boga Legaba, I'd like to enquire about ${room.name} at ${property.name}${bbroomid ? ` (Room ID: ${bbroomid})` : ""}.`
+  const whatsapp = `https://wa.me/27828757018?text=${encodeURIComponent(waMessage)}`
 
   return (
     <article

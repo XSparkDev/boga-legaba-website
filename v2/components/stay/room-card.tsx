@@ -49,7 +49,7 @@ export function RoomCard({ room }: { room: Room }) {
           Book This Room →
         </Link>
         <a
-          href={waLink(room.property, `I'd like to enquire about the ${room.name} room.`)}
+          href={waLink(room.property, `I'd like to enquire about the ${room.name} room at Boga Legaba ${room.property}.`)}
           target="_blank"
           rel="noopener noreferrer"
           data-ga4-event="whatsapp_click"

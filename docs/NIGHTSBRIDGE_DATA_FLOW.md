@@ -110,10 +110,11 @@ Room rows also get **catalog enrichment** during sync (`room_catalog.py`): `prop
 
 | Mechanism | Schedule | Notes |
 |-----------|----------|-------|
-| Host cron | Every 15–60 min → `POST /api/sync` | Set `SYNC_WORKER_URL` to a machine running `run-sync.sh` |
-| Manual | `cd public/ScriptTestBLGH && ./run-sync.sh` | Full sync + webview image URLs |
+| Supabase Edge → Railway | Every 10 min | [`trigger-nightsbridge-sync`](../supabase/functions/trigger-nightsbridge-sync/index.ts) |
+| Railway worker | On demand | [`services/sync-worker/`](../services/sync-worker/) runs `public/ScriptTestBLGH/main.py` |
+| Manual | Any time | `cd public/ScriptTestBLGH && ./run-sync.sh` |
 
-Default sync window: **today → today + 365 days** (`config.DEFAULT_DAYS_AHEAD`).
+See [`docs/COMPLETION_CHECKLIST.md`](COMPLETION_CHECKLIST.md).
 
 ---
 
