@@ -54,7 +54,7 @@ export async function generateMetadata({ searchParams }: BookNowPageProps): Prom
     title: name
       ? `Book ${name} | Boga Legaba Guest House`
       : "Availability & Rates | Boga Legaba Guest House",
-    description:
+  description:
       "Check live room availability and rates at Boga Legaba Guest House, Mafikeng. Book directly — no OTA fees, secure and instant.",
   }
 }
@@ -1473,11 +1473,11 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
             {properties
               .filter((p) => p.id !== "transnet")
               .map((p, i) => (
-                <Reveal key={p.id} delay={i * 90}>
-                  <a
-                    href={p.whatsapp}
-                    target="_blank"
-                    rel="noreferrer"
+              <Reveal key={p.id} delay={i * 90}>
+                <a
+                  href={p.whatsapp}
+                  target="_blank"
+                  rel="noreferrer"
                     className="group flex h-full flex-col rounded-xl border border-gray-200 border-l-4 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
                     style={{ borderLeftColor: p.colorHex }}
                   >
@@ -1485,18 +1485,18 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
                       className="font-mono text-[10px] uppercase tracking-wider"
                       style={{ color: p.colorHex }}
                     >
-                      {p.tagline}
-                    </span>
+                    {p.tagline}
+                  </span>
                     <span className="mt-1 font-serif text-lg text-gray-900">{p.name}</span>
                     <span className="font-mono text-xs uppercase tracking-wider text-gray-400">
                       {p.code}
                     </span>
                     <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#1ea952]">
-                      <MessageCircle className="size-4" /> Chat now
-                    </span>
-                  </a>
-                </Reveal>
-              ))}
+                    <MessageCircle className="size-4" /> Chat now
+                  </span>
+                </a>
+              </Reveal>
+            ))}
           </div>
 
           <div className="mx-auto mt-6 flex max-w-4xl justify-center">
