@@ -53,6 +53,7 @@ export function SiteNav() {
   }, [open])
 
   return (
+    <>
     <header
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-colors duration-300",
@@ -89,13 +90,6 @@ export function SiteNav() {
 
         <div className={NAV_ACTIONS_CLASS}>
           <WebsiteSwitcher variant="dark" className="hidden md:flex" />
-          <Link
-            href="/book-now"
-            data-ga4-event="book_now_click"
-            className="btn-gold hidden min-w-[5.5rem] justify-center text-xs sm:inline-flex sm:text-sm"
-          >
-            Book Now
-          </Link>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
@@ -136,17 +130,10 @@ export function SiteNav() {
                 )
               })}
             </ul>
-            <Link
-              href="/book-now"
-              data-ga4-event="book_now_click"
-              onClick={() => setOpen(false)}
-              className="btn-gold mt-8 w-full justify-center text-base"
-            >
-              Book Now
-            </Link>
           </div>
         </div>
       ) : null}
     </header>
+    </>
   )
 }

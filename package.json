@@ -6,11 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "sync:nightsbridge:setup": "bash services/nightsbridge-sync/setup.sh",
+    "sync:nightsbridge:once": "bash scripts/nightsbridge-sync-cron.sh",
+    "sync:nightsbridge:worker": "cd services/nightsbridge-sync && SYNC_INTERVAL_MINUTES=${SYNC_INTERVAL_MINUTES:-10} .venv/bin/python worker.py",
+    "sync:verify-schema": "python3 scripts/verify-supabase-schema.py"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
-    "@vercel/analytics": "1.6.1",
     "@radix-ui/react-accordion": "1.2.12",
     "@radix-ui/react-alert-dialog": "1.1.15",
     "@radix-ui/react-aspect-ratio": "1.1.8",
@@ -38,6 +41,8 @@
     "@radix-ui/react-toggle": "1.1.10",
     "@radix-ui/react-toggle-group": "1.1.11",
     "@radix-ui/react-tooltip": "1.2.8",
+    "@supabase/supabase-js": "^2.108.2",
+    "@vercel/analytics": "1.6.1",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

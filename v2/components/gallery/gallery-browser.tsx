@@ -52,11 +52,12 @@ export function GalleryBrowser() {
 
   useEffect(() => {
     if (lightboxIndex === null) return
+    const idx = lightboxIndex
 
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') close()
-      if (e.key === 'ArrowLeft') goTo(lightboxIndex - 1)
-      if (e.key === 'ArrowRight') goTo(lightboxIndex + 1)
+      if (e.key === 'ArrowLeft') goTo(idx - 1)
+      if (e.key === 'ArrowRight') goTo(idx + 1)
     }
 
     window.addEventListener('keydown', onKeyDown)

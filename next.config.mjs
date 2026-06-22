@@ -13,6 +13,9 @@ const nextConfig = {
       },
     ],
   },
+  outputFileTracingExcludes: {
+    "*": ["./services/nightsbridge-sync/.venv/**", "./services/nightsbridge-sync/output/**"],
+  },
 }
 
 export default nextConfig

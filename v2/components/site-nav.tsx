@@ -5,7 +5,9 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Menu, X } from 'lucide-react'
 import { navLinks } from '@v2/data/site'
+import { NightsBridgeModal } from '@/components/NightsBridgeModal'
 import { SiteLogo } from '@v2/components/site-logo'
+import { useBookingModal } from '@/hooks/useBookingModal'
 import { WebsiteSwitcher, WebsiteSwitcherMobile } from '@/components/website-switcher'
 import { V2_PREFIX } from '@/lib/website-sites'
 import { v2Path } from '@v2/lib/paths'
@@ -24,6 +26,7 @@ export function SiteNav() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
+  const { isOpen, openModal, closeModal } = useBookingModal()
   const isHome = pathname === V2_PREFIX
   // Pages with a cream/light hero need dark nav text; dark-hero pages use light text at the top.
   const isLightTopHero = isHome || pathname === v2Path('/dining')
@@ -99,14 +102,29 @@ export function SiteNav() {
               variant={useLightChrome ? 'light' : 'dark'}
               className="hidden md:flex"
             />
-            <Link
-              href={v2Path('/book-now')}
-              data-ga4-event="book_now_click"
-              data-cursor="cta"
-              className="hidden min-w-[5.5rem] shrink-0 items-center justify-center rounded-full bg-terracotta px-3 py-2 text-center text-xs font-medium text-white transition-colors hover:bg-terracotta-light sm:inline-flex sm:text-sm"
-            >
-              Book Now
-            </Link>
+            <div className="hidden items-center gap-2 sm:inline-flex">
+              <button
+                type="button"
+                onClick={openModal}
+                data-ga4-event="book_now_click"
+                data-cursor="cta"
+                className="min-w-[5.5rem] shrink-0 items-center justify-center rounded-full bg-terracotta px-3 py-2 text-center text-xs font-medium text-white transition-colors hover:bg-terracotta-light sm:inline-flex sm:text-sm"
+              >
+                Book Now
+              </button>
+              <button
+                type="button"
+                onClick={openModal}
+                className={cn(
+                  'min-w-[5.5rem] shrink-0 items-center justify-center rounded-full border px-3 py-2 text-center text-xs font-medium transition-colors sm:inline-flex sm:text-sm',
+                  useLightChrome
+                    ? 'border-deep-earth/20 text-deep-earth hover:bg-warm-sand'
+                    : 'border-cream/30 text-cream hover:bg-white/10',
+                )}
+              >
+                Check Availability
+              </button>
+            </div>
             <button
               type="button"
               aria-label="Open menu"
@@ -146,20 +164,41 @@ export function SiteNav() {
         </div>
         <nav className="flex min-h-0 flex-1 flex-col justify-start gap-1 overflow-y-auto overscroll-contain px-6 py-6 pb-16">
           <WebsiteSwitcherMobile variant="dark" />
-          {navLinks.concat([{ href: v2Path('/book-now'), label: 'Book Now' }]).map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              data-cursor="nav"
-              onClick={() => setOpen(false)}
-              className="font-display text-3xl italic text-white sm:text-4xl"
-            >
-              {l.label}
-            </Link>
-          ))}
+          {navLinks
+            .concat([
+              { href: v2Path('/book-now'), label: 'Book Now' },
+              { href: v2Path('/book-now'), label: 'Check Availability' },
+            ])
+            .map((l) =>
+              l.label === 'Book Now' || l.label === 'Check Availability' ? (
+                <button
+                  key={l.label}
+                  type="button"
+                  data-cursor="nav"
+                  onClick={() => {
+                    setOpen(false)
+                    openModal()
+                  }}
+                  className="text-left font-display text-3xl italic text-white sm:text-4xl"
+                >
+                  {l.label}
+                </button>
+              ) : (
+                <Link
+                  key={l.label}
+                  href={l.href}
+                  data-cursor="nav"
+                  onClick={() => setOpen(false)}
+                  className="font-display text-3xl italic text-white sm:text-4xl"
+                >
+                  {l.label}
+                </Link>
+              ),
+            )}
         </nav>
       </div>
       )}
+      <NightsBridgeModal isOpen={isOpen} onClose={closeModal} />
     </>
   )
 }

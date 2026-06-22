@@ -1,11 +1,16 @@
+"use client"
+
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
+import { NightsBridgeModal } from "@/components/NightsBridgeModal"
 import { SiteLogo } from "@/components/site-logo"
 import { SiteImage } from "@/components/site-image"
+import { useBookingModal } from "@/hooks/useBookingModal"
 import { getSiteImage } from "@/lib/site-images"
 
 export function HomeHero() {
   const hero = getSiteImage("hero")
+  const { isOpen, openModal, closeModal } = useBookingModal()
 
   return (
     <section className="grain relative flex min-h-[100svh] flex-col overflow-x-clip">
@@ -42,13 +47,14 @@ export function HomeHero() {
           </p>
           <div className="mt-7 space-y-6 sm:mt-9 sm:space-y-8">
             <div className="flex w-full max-w-xl flex-col gap-3 sm:max-w-2xl sm:flex-row sm:items-stretch">
-              <Link
-                href="/book-now"
+              <button
+                type="button"
+                onClick={openModal}
                 data-ga4-event="book_now_click"
                 className="btn-gold flex min-h-[3rem] w-full flex-1 items-center justify-center gap-2 border border-transparent px-5 py-3.5 text-center text-sm font-medium sm:px-6"
               >
                 Book Your Stay <ArrowRight className="size-4 shrink-0" />
-              </Link>
+              </button>
               <Link
                 href="/conference"
                 className="btn-glass flex min-h-[3rem] w-full flex-1 items-center justify-center px-5 py-3.5 text-center text-sm font-medium sm:px-6"
@@ -67,6 +73,7 @@ export function HomeHero() {
           </div>
         </div>
       </div>
+      <NightsBridgeModal isOpen={isOpen} onClose={closeModal} />
     </section>
   )
 }

@@ -1,7 +1,11 @@
+"use client"
+
 import Link from "next/link"
 import { Facebook, Instagram, Linkedin, MessageCircle, Phone, Mail, Globe } from "lucide-react"
+import { NightsBridgeModal } from "@/components/NightsBridgeModal"
 import { SiteLogo } from "@/components/site-logo"
 import { BUSINESS } from "@/data/rooms"
+import { useBookingModal } from "@/hooks/useBookingModal"
 
 const COLUMNS = [
   {
@@ -10,6 +14,7 @@ const COLUMNS = [
       { href: "/", label: "Home" },
       { href: "/stay", label: "Stay & Rooms" },
       { href: "/book-now", label: "Book Now" },
+      { href: "/book-now", label: "Check Availability" },
       { href: "/specials", label: "Specials" },
       { href: "/gallery", label: "Gallery" },
     ],
@@ -36,6 +41,8 @@ const COLUMNS = [
 ]
 
 export function SiteFooter() {
+  const { isOpen, openModal, closeModal } = useBookingModal()
+
   return (
     <footer className="bg-[#0a0a0a] text-white">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
@@ -73,12 +80,22 @@ export function SiteFooter() {
               <ul className="mt-4 space-y-3">
                 {col.links.map((link) => (
                   <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-white/65 transition-colors hover:text-white"
-                    >
-                      {link.label}
-                    </Link>
+                    {link.label === "Check Availability" ? (
+                      <button
+                        type="button"
+                        onClick={openModal}
+                        className="text-sm text-white/65 transition-colors hover:text-white"
+                      >
+                        {link.label}
+                      </button>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="text-sm text-white/65 transition-colors hover:text-white"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -120,6 +137,7 @@ export function SiteFooter() {
           </p>
         </div>
       </div>
+      <NightsBridgeModal isOpen={isOpen} onClose={closeModal} />
     </footer>
   )
 }

@@ -1,11 +1,12 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Zap } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
 import { SiteImage } from "@/components/site-image"
 import { InterestForm } from "@/components/forms/interest-form"
 import { Reveal } from "@/components/reveal"
 import { getSiteImage } from "@/lib/site-images"
+import { fetchSpecials } from "@/lib/nightsbridge-api"
 
 export const metadata: Metadata = {
   title: "Specials & Offers | Boga Legaba Guest House, Mahikeng",
@@ -13,7 +14,9 @@ export const metadata: Metadata = {
     "Current offers and promotions at Boga Legaba in Mahikeng — extended stay discounts, conference + accommodation packages and government rate specials. Book direct.",
 }
 
-const SPECIALS = [
+export const dynamic = "force-dynamic"
+
+const STATIC_SPECIALS = [
   {
     name: "Extended Stay Discount",
     imageKey: "specials.extended-stay",
@@ -34,7 +37,16 @@ const SPECIALS = [
   },
 ]
 
-export default function SpecialsPage() {
+function fmtDate(iso: string) {
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(
+    new Date(`${iso}T12:00:00`),
+  )
+}
+
+export default async function SpecialsPage() {
+  // Fetch live specials from NightsBridge
+  const liveSpecials = await fetchSpecials(21091)
+
   return (
     <main>
       <PageHeader
@@ -43,10 +55,64 @@ export default function SpecialsPage() {
         subtitle="Book directly with Boga Legaba to access our best available rates and exclusive packages."
       />
 
+      {/* Live NightsBridge specials (shown only when present) */}
+      {liveSpecials.length > 0 ? (
+        <section className="bg-[#0a0a0a] py-12 lg:py-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-8 flex items-center gap-3">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#b8973a]/20">
+                <Zap className="size-3.5 text-[#b8973a]" />
+              </span>
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-white/50">
+                Live from NightsBridge · {new Date().toLocaleDateString("en-ZA")}
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {liveSpecials.map((s) => (
+                <div
+                  key={s.specialid}
+                  className="rounded-xl border border-[#b8973a]/20 bg-white/5 p-5 text-white backdrop-blur-sm"
+                >
+                  {s.imageurl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={s.imageurl}
+                      alt={s.title}
+                      className="mb-4 h-36 w-full rounded-lg object-cover"
+                    />
+                  ) : null}
+                  <h3 className="font-serif text-xl font-bold text-white">{s.title}</h3>
+                  {s.description ? (
+                    <p className="mt-2 text-sm leading-relaxed text-white/70">{s.description}</p>
+                  ) : null}
+                  {s.discount ? (
+                    <span className="mt-3 inline-block rounded-full bg-[#b8973a]/20 px-3 py-1 font-mono text-[11px] text-[#b8973a]">
+                      {s.discount}
+                      {s.discounttype === "percent" ? "%" : ""} off
+                    </span>
+                  ) : null}
+                  {s.validfrom && s.validto ? (
+                    <p className="mt-3 font-mono text-[10px] text-white/40">
+                      Valid {fmtDate(s.validfrom)} — {fmtDate(s.validto)}
+                    </p>
+                  ) : null}
+                  <Link
+                    href={`/book-now?bbid=21091`}
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#b8973a] px-4 py-2.5 font-mono text-xs font-semibold uppercase tracking-wider text-white transition hover:brightness-110"
+                  >
+                    Book Now <ArrowRight className="size-3.5" />
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <section className="bg-background py-16 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-6 lg:grid-cols-3">
-            {SPECIALS.map((s, i) => {
+            {STATIC_SPECIALS.map((s, i) => {
               const img = getSiteImage(s.imageKey)
               return (
                 <Reveal as="article" key={s.name} delay={i * 90}>
