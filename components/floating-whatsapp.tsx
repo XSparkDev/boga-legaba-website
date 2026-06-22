@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { MessageCircle, X } from "lucide-react"
+import { MessageCircle, X, Lock } from "lucide-react"
+import Link from "next/link"
 import { properties } from "@/data/rooms"
 
 export function FloatingWhatsApp() {
@@ -10,8 +11,9 @@ export function FloatingWhatsApp() {
 
   return (
     <>
+      {/* WhatsApp property picker popup */}
       {open ? (
-        <div className="fixed bottom-24 right-6 z-50 w-72 overflow-hidden rounded-2xl border border-black/10 bg-card shadow-2xl">
+        <div className="fixed bottom-36 right-6 z-50 w-72 overflow-hidden rounded-2xl border border-black/10 bg-card shadow-2xl">
           <div className="flex items-center justify-between bg-[#0a0a0a] px-4 py-3">
             <p className="font-display text-sm text-white">Chat with which property?</p>
             <button onClick={() => setOpen(false)} aria-label="Close" className="text-white/70 hover:text-white">
@@ -43,14 +45,29 @@ export function FloatingWhatsApp() {
         </div>
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-label="Open WhatsApp chat options"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg whatsapp-pulse hover:scale-110 transition-transform duration-200"
-      >
-        <MessageCircle className="size-7 text-white" />
-      </button>
+      {/* Floating button stack — bottom-right corner */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-3">
+
+        {/* WhatsApp button */}
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-label="Open WhatsApp chat options"
+          className="w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg whatsapp-pulse hover:scale-110 transition-transform duration-200"
+        >
+          <MessageCircle className="size-7 text-white" />
+        </button>
+
+        {/* Admin login button — below WhatsApp */}
+        <Link
+          href="/admin"
+          aria-label="Admin login"
+          title="Admin"
+          className="group w-10 h-10 bg-[#0a0a0a]/80 hover:bg-[#b8973a] rounded-full flex items-center justify-center shadow-md border border-white/10 backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:border-[#b8973a]"
+        >
+          <Lock className="size-4 text-white/60 group-hover:text-white transition-colors" />
+        </Link>
+      </div>
     </>
   )
 }

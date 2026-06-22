@@ -3,7 +3,8 @@
 import { useState, type FormEvent } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense } from "react"
-import { Lock, Eye, EyeOff, LogIn } from "lucide-react"
+import { Lock, Eye, EyeOff, LogIn, ArrowLeft } from "lucide-react"
+import Link from "next/link"
 
 function LoginForm() {
   const router = useRouter()
@@ -41,6 +42,15 @@ function LoginForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] px-4">
+      {/* Back to website */}
+      <Link
+        href="/stay"
+        className="fixed top-5 left-5 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-white/40 backdrop-blur-sm transition-all hover:border-white/20 hover:text-white/70"
+      >
+        <ArrowLeft className="size-3.5" />
+        Back to site
+      </Link>
+
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="mb-8 text-center">

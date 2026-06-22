@@ -1,8 +1,6 @@
 import { Playfair_Display, DM_Sans, IBM_Plex_Mono } from "next/font/google"
 import { BodyScrollReset } from "@/components/body-scroll-reset"
-import { SiteNav } from "@/components/site-nav"
-import { SiteFooter } from "@/components/site-footer"
-import { FloatingWhatsApp } from "@/components/floating-whatsapp"
+import { MainSiteChrome } from "@/components/main-site-chrome"
 import { Toaster } from "sonner"
 import "../globals.css"
 
@@ -32,10 +30,7 @@ export default function MainSiteLayout({ children }: { children: React.ReactNode
       className={`${playfair.variable} ${dmSans.variable} ${ibmPlexMono.variable} min-h-[100dvh] overflow-x-clip bg-background font-body antialiased`}
     >
       <BodyScrollReset />
-      <SiteNav />
-      {children}
-      <SiteFooter />
-      <FloatingWhatsApp />
+      <MainSiteChrome>{children}</MainSiteChrome>
       <Toaster position="bottom-center" richColors closeButton />
     </div>
   )

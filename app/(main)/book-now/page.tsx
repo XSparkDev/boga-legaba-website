@@ -1160,7 +1160,8 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
   return (
     <>
       {/* ── Dark header with breadcrumb ──────────────────────── */}
-      <div className="border-b border-white/10 bg-[#0a0a0a] px-4 py-6 sm:px-6 lg:px-8">
+      {/* pt clears the fixed nav (4.5rem on mobile, 6rem on xl) + breathing room */}
+      <div className="border-b border-white/10 bg-[#0a0a0a] px-4 pb-6 pt-[calc(4.5rem+1.5rem)] sm:px-6 lg:px-8 xl:pt-[calc(6rem+1.5rem)]">
         <div className="mx-auto max-w-6xl">
           <nav className="mb-2 flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-white/40">
             <a href="/stay" className="hover:text-white/70 transition-colors">Stay</a>

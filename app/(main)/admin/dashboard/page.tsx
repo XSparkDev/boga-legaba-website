@@ -8,7 +8,6 @@ import {
   TrendingUp,
   Calendar,
   ExternalLink,
-  LogOut,
   RefreshCw,
   CheckCircle2,
   XCircle,
@@ -32,6 +31,7 @@ import {
   type OccupancyDay,
 } from "@/lib/nightsbridge-api"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
+import { AdminSignOutButton } from "@/components/admin/sign-out-button"
 import { SyncTransactionsButton } from "@/components/admin/sync-transactions-button"
 
 export const metadata: Metadata = {
@@ -254,20 +254,7 @@ export default async function AdminDashboardPage() {
               NightsBridge
               <ExternalLink className="size-3" />
             </a>
-            <form action="/api/admin/auth" method="post">
-              <a
-                href="/api/admin/auth"
-                onClick={async (e) => {
-                  e.preventDefault()
-                  await fetch("/api/admin/auth", { method: "DELETE" })
-                  window.location.href = "/admin/login"
-                }}
-                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-mono text-[11px] text-white/40 hover:text-white/70 transition-colors"
-              >
-                <LogOut className="size-3.5" />
-                Sign out
-              </a>
-            </form>
+            <AdminSignOutButton />
           </div>
         </div>
       </div>
