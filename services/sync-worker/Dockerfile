@@ -7,8 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY public/ScriptTestBLGH/requirements.txt /app/scraper/requirements.txt
-RUN pip install --no-cache-dir -r /app/scraper/requirements.txt \
-    && pip install --no-cache-dir httpx==0.27.2
+RUN pip install --no-cache-dir -r /app/scraper/requirements.txt
 
 RUN playwright install --with-deps chromium
 
