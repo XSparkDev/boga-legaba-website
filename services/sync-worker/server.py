@@ -14,11 +14,28 @@ import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-_default_scraper = Path(__file__).resolve().parent / "scraper"
-SCRAPER_DIR = Path(os.environ.get("SCRAPER_DIR", str(_default_scraper)))
-if not SCRAPER_DIR.is_dir():
-    SCRAPER_DIR = REPO_ROOT / "public" / "ScriptTestBLGH"
+_server_dir = Path(__file__).resolve().parent
+_default_scraper = _server_dir / "scraper"
+
+
+def _resolve_scraper_dir() -> Path:
+    env_dir = os.environ.get("SCRAPER_DIR")
+    if env_dir:
+        path = Path(env_dir)
+        if path.is_dir():
+            return path
+    if _default_scraper.is_dir():
+        return _default_scraper
+    # Local dev: services/sync-worker/server.py → repo root is two levels up
+    if len(_server_dir.parents) > 2:
+        repo_root = _server_dir.parents[2]
+        fallback = repo_root / "public" / "ScriptTestBLGH"
+        if fallback.is_dir():
+            return fallback
+    return _default_scraper
+
+
+SCRAPER_DIR = _resolve_scraper_dir()
 _lock = threading.Lock()
 _running = False
 
