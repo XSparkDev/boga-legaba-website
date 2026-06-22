@@ -6,12 +6,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY public/ScriptTestBLGH/requirements.txt /app/scraper/requirements.txt
+COPY scripts/ScriptTestBLGH/requirements.txt /app/scraper/requirements.txt
 RUN pip install --no-cache-dir -r /app/scraper/requirements.txt
 
 RUN playwright install --with-deps chromium
 
-COPY public/ScriptTestBLGH /app/scraper
+COPY scripts/ScriptTestBLGH /app/scraper
 COPY services/sync-worker/server.py /app/server.py
 
 ENV SCRAPER_DIR=/app/scraper
