@@ -3,4 +3,4 @@
 
 [functions.trigger-nightsbridge-sync]
 # Every 10 minutes — same as recommended poll interval
-schedule = "*/10 * * * *"
+# schedule = "*/10 * * * *"   ← set this in Dashboard → Edge Functions → Schedules

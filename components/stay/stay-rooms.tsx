@@ -70,7 +70,8 @@ export function StayRooms() {
   function passesAvailability(room: Room, property: SyncedProperty) {
     if (!availability.searched) return true
     const summary = availability.getForRoom(room.name, property.name)
-    if (!summary) return false
+    // No cache data for this room → treat as available (unknown ≠ blocked)
+    if (!summary) return true
     return summary.available
   }
 
@@ -150,22 +151,6 @@ export function StayRooms() {
   return (
     <section className="bg-background py-14 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          {isLiveInventory ? (
-            <LiveDataBadge label="Rooms · Supabase" />
-          ) : null}
-          {availability.searched && !availability.loading ? (
-            <LiveDataBadge label="Availability · Supabase" pulse={false} />
-          ) : null}
-          {media.hasLiveImages ? (
-            <LiveDataBadge label="Images · Supabase" pulse={false} />
-          ) : null}
-          {isLiveInventory && data?.syncedAt ? (
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-              Updated {new Date(data.syncedAt).toLocaleString("en-ZA")}
-            </span>
-          ) : null}
-        </div>
 
         <StayDateSearch
           checkIn={checkIn}

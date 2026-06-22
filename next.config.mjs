@@ -13,9 +13,6 @@ const nextConfig = {
       },
     ],
   },
-  turbopack: {
-    root: import.meta.dirname,
-  },
   outputFileTracingExcludes: {
     "*": ["./services/nightsbridge-sync/.venv/**", "./services/nightsbridge-sync/output/**"],
   },

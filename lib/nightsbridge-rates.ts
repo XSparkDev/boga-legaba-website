@@ -236,17 +236,40 @@ async function fetchFromSupabase(
  *
  * Tries the live NightsBridge Bridge API first (availgrid then availability),
  * then falls through to Supabase cache if all network calls fail.
+ *
+ * Note: the new NightsBridge availgrid format returns roomsfree:boolean per night
+ * but omits rate data. We merge availability from availgrid with rates from the
+ * /availability endpoint so the caller always gets both.
  */
 export async function fetchNightsBridgeRates(
   bbid: number,
   arrive: string,
   depart: string,
 ): Promise<RatesResult> {
-  // 1. Live NightsBridge availgrid API — per-night availability + rates
+  // 1. Live NightsBridge availgrid API — accurate per-night availability
   const gridRates = await callAvailGrid(bbid, arrive, depart)
-  if (gridRates?.length) return { rates: gridRates, source: "live" }
 
-  // 2. Fallback: availability endpoint (full stay range, total rates ÷ nights = per-night)
+  if (gridRates?.length) {
+    const hasRates = gridRates.some((r) => r.rateSingle != null || r.rateDouble != null)
+    if (hasRates) return { rates: gridRates, source: "live" }
+
+    // New API: availgrid has availability but no rates — fetch rates separately and merge
+    const availRates = await callAvailability(bbid, arrive, depart)
+    if (availRates?.length) {
+      const rateMap = new Map(availRates.map((r) => [r.rtname.toLowerCase().trim(), r]))
+      const merged = gridRates.map((r) => {
+        const rateData = rateMap.get(r.rtname.toLowerCase().trim())
+        return rateData
+          ? { ...r, rateSingle: rateData.rateSingle, rateDouble: rateData.rateDouble }
+          : r
+      })
+      return { rates: merged, source: "live" }
+    }
+    // No rates available from either endpoint — still return availability
+    return { rates: gridRates, source: "live" }
+  }
+
+  // 2. Fallback: availability endpoint alone (has both availability + rates)
   const availRates = await callAvailability(bbid, arrive, depart)
   if (availRates?.length) return { rates: availRates, source: "live" }
 

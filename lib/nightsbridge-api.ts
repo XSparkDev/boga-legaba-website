@@ -103,10 +103,10 @@ async function saveToRateCache(
 // ---------------------------------------------------------------------------
 
 /**
- * Raw shape for /bridge/api/5.0/availgrid when showroomcount: false.
- * Each availability entry represents one calendar date (startdate inclusive,
- * enddate inclusive → the array has nights+1 entries; the last entry is
- * the checkout-day morning and must be excluded from the availability check).
+ * Raw shape for /bridge/api/5.0/availgrid.
+ * NightsBridge changed the per-night availability entry format:
+ *   Old: { noroomsfree: number, closeoutrs: {...}, rates: [{paxrate}] }
+ *   New: { roomsfree: boolean }  (no rates — fetch those from /availability)
  */
 type AvailGridResponse = {
   success: boolean
@@ -121,15 +121,13 @@ type AvailGridResponse = {
       maxadults: number
       childpolicy: string
       availability: Array<{
-        roomrate: number
-        /** Present when showroomcount: false — actual count (0 = sold). */
-        noroomsfree: number
-        closeoutrs: {
-          closedout: boolean
-          bbrtid: number
-          closeouttype: string
-        }
-        rates: Array<{ paxrate: number }>
+        // New format (boolean)
+        roomsfree?: boolean
+        // Old format (number — kept for backward compat)
+        noroomsfree?: number
+        closeoutrs?: { closedout: boolean; bbrtid: number; closeouttype: string }
+        rates?: Array<{ paxrate: number }>
+        roomrate?: number
       }>
     }>
   }
@@ -192,14 +190,16 @@ export async function callAvailGrid(
       // Slice to only the actual stay nights (exclude the checkout-date entry)
       const stayNights = (rt.availability ?? []).slice(0, nights)
 
-      // Available iff EVERY stay night has rooms free and is not closed out
+      // Available iff EVERY stay night has rooms free.
+      // NightsBridge changed format: new API uses roomsfree:boolean, old used noroomsfree:number.
       const available =
         stayNights.length > 0 &&
-        stayNights.every(
-          (n) => (n.noroomsfree ?? 0) > 0 && !n.closeoutrs?.closedout,
-        )
+        stayNights.every((n) => {
+          if (typeof n.roomsfree === "boolean") return n.roomsfree
+          return (n.noroomsfree ?? 0) > 0 && !n.closeoutrs?.closedout
+        })
 
-      // "From" pricing = minimum rate across stay nights
+      // Rates from availgrid (old format only — new format omits them; caller merges from /availability)
       const singlePrices = stayNights
         .map((n) => n.rates?.[0]?.paxrate)
         .filter((v): v is number => typeof v === "number" && v > 0)

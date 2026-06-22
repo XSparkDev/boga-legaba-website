@@ -60,9 +60,9 @@ export function summarizeAvailability(
 
     for (const night of nights) {
       const row = byDate.get(night)
-      if (!row || !row.is_available) {
+      if (row && !row.is_available) {
         blockedDates.push(night)
-      } else if (row.rate != null) {
+      } else if (row?.rate != null) {
         rates.push(row.rate)
       }
     }

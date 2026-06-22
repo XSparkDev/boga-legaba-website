@@ -102,12 +102,6 @@ export function RoomCard({
             >
               {availability.available ? "Available" : "Booked"}
             </div>
-            <LiveDataBadge label="Avail · DB" className="bg-white/95 text-[8px] shadow-sm" pulse={false} />
-          </div>
-        ) : null}
-        {imageFromSupabase ? (
-          <div className="absolute right-3 top-3 z-10">
-            <LiveDataBadge label="Photo · DB" className="bg-white/95 text-[8px] shadow-sm" pulse={false} />
           </div>
         ) : null}
         <div className="absolute inset-0 group-hover:bg-black/10 transition-colors duration-300 md:rounded-l-xl md:rounded-r-none pointer-events-none" />
@@ -115,9 +109,6 @@ export function RoomCard({
 
       <div className="flex flex-col p-6 md:p-7 flex-1">
         <div className="flex items-center gap-2 mb-3 flex-wrap">
-          {liveFromSupabase ? (
-            <LiveDataBadge label="Room · DB" className="text-[8px]" pulse={false} />
-          ) : null}
           <span
             className="font-mono text-[10px] tracking-[0.12em] uppercase px-2.5 py-1 rounded-full"
             style={{ background: `${property.colorHex}1f`, color: colorVar }}
@@ -148,10 +139,7 @@ export function RoomCard({
         ) : null}
 
         {availability?.available && availability.avgRate != null ? (
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <p className="font-mono text-sm text-gold">{formatZarPerNight(availability.avgRate)}</p>
-            <LiveDataBadge label="Rate · DB" className="text-[8px]" pulse={false} />
-          </div>
+          <p className="mb-2 font-mono text-sm text-gold">{formatZarPerNight(availability.avgRate)}</p>
         ) : null}
 
         {room.description ? (

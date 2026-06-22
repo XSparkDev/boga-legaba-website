@@ -857,20 +857,6 @@ export default async function AdminDashboardPage() {
             ))}
           </div>
 
-          {/* Credentials note */}
-          <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3">
-            <p className="text-sm text-amber-800">
-              <strong>NightsBridge credentials:</strong> Username{" "}
-              <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs">
-                {process.env.SITE_USER ?? "21091"}
-              </code>{" "}
-              · Password{" "}
-              <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs">
-                {process.env.SITE_PASS ?? "4609"}
-              </code>{" "}
-              — use these to log in to the NightsBridge links above.
-            </p>
-          </div>
         </div>
 
         {/* ── Section 9: Availability detail for next 7 days ── */}
