@@ -85,8 +85,17 @@ class Handler(BaseHTTPRequestHandler):
             return
         self._json(404, {"ok": False, "error": "not found"})
 
+    def _read_body(self) -> bytes:
+        length = int(self.headers.get("Content-Length", 0))
+        return self.rfile.read(length) if length else b""
+
     def do_POST(self) -> None:
         global _running
+
+        if self.path == "/book":
+            self._handle_book()
+            return
+
         if self.path not in ("/run", "/"):
             self._json(404, {"ok": False, "error": "not found"})
             return
@@ -112,6 +121,51 @@ class Handler(BaseHTTPRequestHandler):
         finally:
             _running = False
             _lock.release()
+
+    def _handle_book(self) -> None:
+        if not _authorized(self.headers.get("Authorization")):
+            self._json(401, {"ok": False, "error": "unauthorized"})
+            return
+
+        body = self._read_body()
+        try:
+            params = json.loads(body)
+        except (json.JSONDecodeError, ValueError):
+            self._json(400, {"ok": False, "error": "invalid JSON body"})
+            return
+
+        required = ["checkin", "checkout", "roomTypeName", "mealPlanName",
+                    "firstname", "surname", "phone", "email"]
+        missing = [f for f in required if not params.get(f)]
+        if missing:
+            self._json(400, {"ok": False, "error": f"Missing: {', '.join(missing)}"})
+            return
+
+        book_script = SCRAPER_DIR / "book_nightsbridge.py"
+        if not book_script.exists():
+            self._json(503, {"ok": False, "error": "Booking script not found"})
+            return
+
+        try:
+            proc = subprocess.run(
+                [sys.executable, str(book_script), "--params", json.dumps(params)],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            stdout = proc.stdout.strip()
+            if stdout:
+                try:
+                    result = json.loads(stdout)
+                    self._json(200 if result.get("ok") else 500, result)
+                    return
+                except json.JSONDecodeError:
+                    pass
+            self._json(500, {"ok": False, "error": proc.stderr or "Booking failed"})
+        except subprocess.TimeoutExpired:
+            self._json(504, {"ok": False, "error": "Booking timed out after 120 s"})
+        except Exception as exc:
+            self._json(500, {"ok": False, "error": str(exc)})
 
 
 def main() -> None:

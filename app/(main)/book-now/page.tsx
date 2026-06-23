@@ -40,6 +40,7 @@ import {
   type RoomRate,
   type MealPlanRate,
 } from "@/lib/nightsbridge-rates"
+import { BookingWidget } from "@/components/book-now/booking-widget"
 
 export const dynamic = "force-dynamic"
 
@@ -93,9 +94,6 @@ function nightCount(arrive: string, depart: string): number {
   )
 }
 
-function nbUrl(bbid: number, arrive: string, depart: string): string {
-  return `https://book.nightsbridge.com/${bbid}?arrive=${arrive}&depart=${depart}`
-}
 
 function waEnquiryUrl(
   propertyName: string | null,
@@ -183,7 +181,7 @@ function RoomHero({
         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a]">
           <div className="text-center">
             <BedDouble className="mx-auto mb-3 size-12 text-[#b8973a]/40" />
-            <p className="font-mono text-xs text-white/30 uppercase tracking-widest">No image available</p>
+            <p className="font-body text-xs text-white/30">No image available</p>
           </div>
         </div>
       )}
@@ -197,7 +195,7 @@ function RoomHero({
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               {detail?.quality ? (
-                <span className="mb-2 inline-block rounded-full border border-[#b8973a]/50 bg-[#b8973a]/20 px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-[#b8973a]">
+                <span className="mb-2 inline-block rounded-full border border-[#b8973a]/50 bg-[#b8973a]/20 px-2.5 py-0.5 font-body text-[11px] font-medium text-[#b8973a]">
                   {detail.quality}
                 </span>
               ) : null}
@@ -206,19 +204,19 @@ function RoomHero({
               </h1>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 {detail?.roomSizeM2 ? (
-                  <span className="flex items-center gap-1.5 font-mono text-[11px] text-white/70">
+                  <span className="flex items-center gap-1.5 font-body text-xs text-white/70">
                     <Maximize2 className="size-3.5" />
                     {detail.roomSizeM2} m²
                   </span>
                 ) : null}
                 {detail?.bedTypes?.[0] ? (
-                  <span className="flex items-center gap-1.5 font-mono text-[11px] text-white/70">
+                  <span className="flex items-center gap-1.5 font-body text-xs text-white/70">
                     <BedDouble className="size-3.5" />
                     {detail.bedTypes[0].description} bed
                   </span>
                 ) : null}
                 {detail?.maxAdults ? (
-                  <span className="flex items-center gap-1.5 font-mono text-[11px] text-white/70">
+                  <span className="flex items-center gap-1.5 font-body text-xs text-white/70">
                     <Users className="size-3.5" />
                     Max {detail.maxAdults} adults
                   </span>
@@ -228,11 +226,11 @@ function RoomHero({
 
             {/* Dates pill */}
             <div className="rounded-xl border border-white/20 bg-black/50 px-4 py-2.5 backdrop-blur-sm">
-              <p className="font-mono text-[11px] text-white/60 uppercase tracking-wider">Stay</p>
-              <p className="mt-0.5 font-mono text-[12px] font-medium text-white">
+              <p className="font-body text-[11px] text-white/60">Stay</p>
+              <p className="mt-0.5 font-body text-sm font-medium text-white">
                 {fmtDate(arrive)} → {fmtDate(depart)}
               </p>
-              <p className="mt-0.5 font-mono text-[10px] text-[#b8973a]">
+              <p className="mt-0.5 font-body text-xs font-semibold text-[#b8973a]">
                 {nights} night{nights !== 1 ? "s" : ""}
               </p>
             </div>
@@ -263,13 +261,13 @@ function RoomFactsBlock({ detail, rateFallback }: { detail: NbRoomTypeDetail | n
   if (!d && !rateFallback) return null
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">Room facts</h2>
+      <h2 className="mb-4 font-body text-[13px] font-semibold tracking-normal text-gray-500">Room facts</h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {d?.roomSizeM2 ? (
           <div className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2.5">
             <Maximize2 className="size-4 shrink-0 text-[#b8973a]" />
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">Size</p>
+              <p className="font-body text-[11px] text-gray-400">Size</p>
               <p className="text-sm font-semibold text-gray-800">{d.roomSizeM2} m²</p>
             </div>
           </div>
@@ -278,7 +276,7 @@ function RoomFactsBlock({ detail, rateFallback }: { detail: NbRoomTypeDetail | n
           <div className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2.5">
             <BedDouble className="size-4 shrink-0 text-[#b8973a]" />
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">Bed</p>
+              <p className="font-body text-[11px] text-gray-400">Bed</p>
               <p className="text-sm font-semibold text-gray-800">
                 {d.bedTypes.map((b) => `${b.bedcount > 1 ? `${b.bedcount}× ` : ""}${b.description}`).join(", ")}
               </p>
@@ -289,7 +287,7 @@ function RoomFactsBlock({ detail, rateFallback }: { detail: NbRoomTypeDetail | n
           <div className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2.5">
             <Users className="size-4 shrink-0 text-[#b8973a]" />
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">Guests</p>
+              <p className="font-body text-[11px] text-gray-400">Guests</p>
               <p className="text-sm font-semibold text-gray-800">Max {d?.maxAdults ?? rateFallback?.maxAdults} adults</p>
             </div>
           </div>
@@ -298,7 +296,7 @@ function RoomFactsBlock({ detail, rateFallback }: { detail: NbRoomTypeDetail | n
           <div className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2.5">
             <Users className="size-4 shrink-0 text-[#b8973a]" />
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">Occupancy</p>
+              <p className="font-body text-[11px] text-gray-400">Occupancy</p>
               <p className="text-sm font-semibold text-gray-800">Up to {d.maxOccupancy} guests</p>
             </div>
           </div>
@@ -307,7 +305,7 @@ function RoomFactsBlock({ detail, rateFallback }: { detail: NbRoomTypeDetail | n
           <div className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2.5">
             <Star className="size-4 shrink-0 text-[#b8973a]" />
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">Tier</p>
+              <p className="font-body text-[11px] text-gray-400">Tier</p>
               <p className="text-sm font-semibold text-gray-800">{d.quality}</p>
             </div>
           </div>
@@ -316,7 +314,7 @@ function RoomFactsBlock({ detail, rateFallback }: { detail: NbRoomTypeDetail | n
           <div className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2.5">
             <Building2 className="size-4 shrink-0 text-[#b8973a]" />
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">Type</p>
+              <p className="font-body text-[11px] text-gray-400">Type</p>
               <p className="text-sm font-semibold text-gray-800">{d.roomType}</p>
             </div>
           </div>
@@ -325,7 +323,7 @@ function RoomFactsBlock({ detail, rateFallback }: { detail: NbRoomTypeDetail | n
           <div className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2.5">
             <span className="shrink-0 text-lg leading-none">🚭</span>
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">Smoking</p>
+              <p className="font-body text-[11px] text-gray-400">Smoking</p>
               <p className="text-sm font-semibold text-gray-800">Non-smoking</p>
             </div>
           </div>
@@ -339,11 +337,11 @@ function RoomAmenitiesBlock({ detail }: { detail: NbRoomTypeDetail | null }) {
   if (!detail?.amenityGroups?.length) return null
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">Room amenities</h2>
+      <h2 className="mb-4 font-body text-[13px] font-semibold tracking-normal text-gray-500">Room amenities</h2>
       <div className="space-y-5">
         {detail.amenityGroups.map((g) => (
           <div key={g.group}>
-            <p className="mb-2.5 flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-gray-600">
+            <p className="mb-2.5 flex items-center gap-1.5 font-body text-xs font-semibold text-gray-600">
               <span className="text-base leading-none">{groupIcon(g.group)}</span>
               {g.group}
             </p>
@@ -385,7 +383,6 @@ function RoomDetailAndBooking({
   whatsappUrl: string
 }) {
   const nights = nightCount(arrive, depart)
-  const bookUrl = nbUrl(bbid, arrive, depart)
 
   // Sort mealplans: Room Only first, then B&B, then DBB
   const sortedPlans = mealPlans
@@ -406,7 +403,7 @@ function RoomDetailAndBooking({
           {/* Description — prefer the establishment description (richer text) */}
           {(detail?.description || rate.description) ? (
             <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-3 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
+              <h2 className="mb-3 font-body text-[13px] font-semibold tracking-normal text-gray-500">
                 About this room
               </h2>
               <p className="text-base leading-relaxed text-gray-700">
@@ -449,7 +446,7 @@ function RoomDetailAndBooking({
                     <CheckCircle2 className="size-4 text-emerald-600" />
                     Available
                   </span>
-                  <span className="inline-flex items-center gap-1 font-mono text-[10px] text-emerald-600">
+                  <span className="inline-flex items-center gap-1 font-body text-[11px] text-emerald-600">
                     <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
                     Live
                   </span>
@@ -468,7 +465,7 @@ function RoomDetailAndBooking({
                 <Clock className="size-3.5 text-[#b8973a]" />
                 <span>{fmtDate(arrive)} → {fmtDate(depart)}</span>
               </div>
-              <p className="mt-1 font-mono text-[11px] text-[#b8973a] uppercase tracking-wider">
+              <p className="mt-1 font-body text-sm font-semibold text-[#b8973a]">
                 {nights} night{nights !== 1 ? "s" : ""}
               </p>
             </div>
@@ -477,7 +474,7 @@ function RoomDetailAndBooking({
             {rate.available && sortedPlans.length > 0 ? (
               <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
                 <div className="border-b border-gray-100 bg-gray-50 px-4 py-2.5">
-                  <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">
+                  <p className="font-body text-[11px] text-gray-400">
                     Rate options · per night
                   </p>
                 </div>
@@ -498,7 +495,7 @@ function RoomDetailAndBooking({
                             <p className="font-serif text-lg font-bold text-[#b8973a] leading-none">
                               {fmt(plan.rateSingle)}
                             </p>
-                            <p className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-gray-400">
+                            <p className="mt-0.5 font-body text-[11px] text-gray-400">
                               1 adult
                             </p>
                           </div>
@@ -508,7 +505,7 @@ function RoomDetailAndBooking({
                             <p className="font-serif text-lg font-bold text-[#b8973a] leading-none">
                               {fmt(plan.rateDouble)}
                             </p>
-                            <p className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-gray-400">
+                            <p className="mt-0.5 font-body text-[11px] text-gray-400">
                               2 adults
                             </p>
                           </div>
@@ -518,7 +515,7 @@ function RoomDetailAndBooking({
                   ))}
                 </div>
                 <div className="border-t border-gray-100 bg-gray-50 px-4 py-2">
-                  <p className="font-mono text-[9px] text-gray-400">
+                  <p className="font-body text-[11px] text-gray-400">
                     Per room · VAT included · Rates may vary per night
                   </p>
                 </div>
@@ -526,7 +523,7 @@ function RoomDetailAndBooking({
             ) : rate.available && (rate.rateSingle != null || rate.rateDouble != null) ? (
               // Fallback if no mealplan data
               <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-gray-400">
+                <p className="mb-2 font-body text-[11px] text-gray-400">
                   From · per night
                 </p>
                 <div className="grid grid-cols-2 gap-3">
@@ -535,7 +532,7 @@ function RoomDetailAndBooking({
                       <p className="font-serif text-2xl font-bold text-[#b8973a]">
                         {fmt(rate.rateSingle)}
                       </p>
-                      <p className="font-mono text-[10px] text-gray-400 uppercase">1 adult</p>
+                      <p className="font-body text-[11px] text-gray-400">1 adult</p>
                     </div>
                   ) : null}
                   {rate.rateDouble != null ? (
@@ -543,7 +540,7 @@ function RoomDetailAndBooking({
                       <p className="font-serif text-2xl font-bold text-[#b8973a]">
                         {fmt(rate.rateDouble)}
                       </p>
-                      <p className="font-mono text-[10px] text-gray-400 uppercase">2 adults</p>
+                      <p className="font-body text-[11px] text-gray-400">2 adults</p>
                     </div>
                   ) : null}
                 </div>
@@ -552,15 +549,15 @@ function RoomDetailAndBooking({
 
             {/* Book CTA */}
             {rate.available ? (
-              <a
-                href={bookUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b8973a] px-6 py-3.5 font-mono text-sm font-semibold uppercase tracking-wider text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:translate-y-0"
-              >
-                Confirm &amp; Book
-                <ArrowUpRight className="size-4" />
-              </a>
+              <BookingWidget
+                roomTypeName={rate.rtname}
+                arrive={arrive}
+                depart={depart}
+                bbid={bbid}
+                mealPlans={mealPlans}
+                available={rate.available}
+                whatsappUrl={whatsappUrl}
+              />
             ) : (
               <div className="rounded-xl border border-dashed border-red-200 bg-red-50 p-4 text-center">
                 <p className="text-sm font-medium text-red-700">Not available for these dates</p>
@@ -580,7 +577,7 @@ function RoomDetailAndBooking({
             </a>
 
             {/* NightsBridge badge */}
-            <p className="text-center font-mono text-[9px] uppercase tracking-widest text-gray-300">
+            <p className="text-center font-body text-[10px] text-gray-300">
               Powered by NightsBridge · Secure & Instant
             </p>
           </div>
@@ -618,11 +615,11 @@ function AvailabilityTable({
           <span>
             {fmtDate(arrive)} → {fmtDate(depart)}
           </span>
-          <span className="rounded-full bg-[#b8973a]/10 px-2.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-[#b8973a]">
+          <span className="rounded-full bg-[#b8973a]/10 px-2.5 py-0.5 font-body text-xs font-semibold text-[#b8973a]">
             {nights} night{nights !== 1 ? "s" : ""}
           </span>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-emerald-700">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 font-body text-xs text-emerald-700">
           <span className="size-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
           Live · NightsBridge
         </span>
@@ -633,22 +630,22 @@ function AvailabilityTable({
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50">
-              <th className="py-3 pl-4 pr-2 text-left font-mono text-[11px] uppercase tracking-wider text-gray-500 sm:pl-6">
+              <th className="py-3 pl-4 pr-2 text-left font-body text-xs font-medium tracking-normal text-gray-500 sm:pl-6">
                 Room type
               </th>
-              <th className="px-3 py-3 text-center font-mono text-[11px] uppercase tracking-wider text-gray-500">
+              <th className="px-3 py-3 text-center font-body text-xs font-medium tracking-normal text-gray-500">
                 Guests
               </th>
-              <th className="px-3 py-3 text-right font-mono text-[11px] uppercase tracking-wider text-gray-500">
+              <th className="px-3 py-3 text-right font-body text-xs font-medium tracking-normal text-gray-500">
                 1 adult / night
               </th>
-              <th className="px-3 py-3 text-right font-mono text-[11px] uppercase tracking-wider text-gray-500">
+              <th className="px-3 py-3 text-right font-body text-xs font-medium tracking-normal text-gray-500">
                 2 adults / night
               </th>
-              <th className="px-3 py-3 text-center font-mono text-[11px] uppercase tracking-wider text-gray-500">
+              <th className="px-3 py-3 text-center font-body text-xs font-medium tracking-normal text-gray-500">
                 Status
               </th>
-              <th className="py-3 pl-2 pr-4 text-right font-mono text-[11px] uppercase tracking-wider text-gray-500 sm:pr-6">
+              <th className="py-3 pl-2 pr-4 text-right font-body text-xs font-medium tracking-normal text-gray-500 sm:pr-6">
                 Action
               </th>
             </tr>
@@ -688,7 +685,7 @@ function AvailabilityTable({
 
                   {/* Guests */}
                   <td className="px-3 py-4 text-center">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 font-mono text-[11px] text-gray-600">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 font-body text-xs text-gray-600">
                       <Users className="size-3" />
                       {r.maxAdults ?? r.maxGuests ?? "—"}
                     </span>
@@ -719,12 +716,12 @@ function AvailabilityTable({
                   {/* Status */}
                   <td className="px-3 py-4 text-center">
                     {r.available ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-wider text-emerald-700">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 font-body text-[11px] font-medium text-emerald-700">
                         <CheckCircle2 className="size-3" />
                         Available
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-wider text-red-600">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 font-body text-[11px] font-medium text-red-600">
                         <XCircle className="size-3" />
                         Sold
                       </span>
@@ -736,13 +733,13 @@ function AvailabilityTable({
                     {r.available ? (
                       <a
                         href={detailUrl}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#b8973a] px-4 py-2 font-mono text-[11px] font-semibold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#b8973a] px-4 py-2 font-body text-xs font-semibold text-white transition-all hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
                       >
                         View & Book
                         <ChevronDown className="size-3" />
                       </a>
                     ) : (
-                      <span className="font-mono text-[11px] text-gray-400">Unavailable</span>
+                      <span className="font-body text-xs text-gray-400">Unavailable</span>
                     )}
                   </td>
                 </tr>
@@ -754,7 +751,7 @@ function AvailabilityTable({
 
       {/* Footer note */}
       <div className="border-t border-gray-100 bg-gray-50 px-4 py-2.5 sm:px-6">
-        <p className="font-mono text-[10px] text-gray-400">
+        <p className="font-body text-[11px] text-gray-400">
           Rates are per room · Room Only · VAT included · Click a room for full details & all meal plan options
         </p>
       </div>
@@ -778,7 +775,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
       {/* Check-in / check-out + quick facts */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="border-b border-gray-100 bg-gray-50 px-5 py-3 sm:px-6">
-          <h3 className="font-mono text-[11px] uppercase tracking-[0.18em] text-gray-500">
+          <h3 className="font-body text-[13px] font-semibold tracking-normal text-gray-500">
             Property information
           </h3>
         </div>
@@ -787,7 +784,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
             <div className="flex items-center gap-3 p-4">
               <Clock className="size-5 shrink-0 text-[#b8973a]" />
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">Check-in</p>
+                <p className="font-body text-[11px] text-gray-400">Check-in</p>
                 <p className="font-semibold text-gray-800">{est.checkintime}</p>
               </div>
             </div>
@@ -796,7 +793,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
             <div className="flex items-center gap-3 p-4">
               <Clock className="size-5 shrink-0 text-[#b8973a]" />
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">Check-out</p>
+                <p className="font-body text-[11px] text-gray-400">Check-out</p>
                 <p className="font-semibold text-gray-800">{est.checkouttime}</p>
               </div>
             </div>
@@ -805,7 +802,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
             <div className="flex items-center gap-3 p-4">
               <Wifi className="size-5 shrink-0 text-[#b8973a]" />
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">Wi-Fi</p>
+                <p className="font-body text-[11px] text-gray-400">Wi-Fi</p>
                 <p className="font-semibold text-gray-800">
                   {est.wificost === "Free and unlimited" ? "Free" : est.wificost ?? est.wifi}
                 </p>
@@ -816,7 +813,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
             <div className="flex items-center gap-3 p-4">
               <Car className="size-5 shrink-0 text-[#b8973a]" />
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">Parking</p>
+                <p className="font-body text-[11px] text-gray-400">Parking</p>
                 <p className="font-semibold text-gray-800">{est.parking}</p>
               </div>
             </div>
@@ -826,18 +823,18 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
         {/* Grading + pets + smoking row */}
         <div className="flex flex-wrap gap-3 border-t border-gray-100 px-5 py-3 sm:px-6">
           {gradeMain ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#b8973a]/30 bg-[#b8973a]/5 px-3 py-1 font-mono text-[11px] text-[#b8973a]">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#b8973a]/30 bg-[#b8973a]/5 px-3 py-1 font-body text-xs text-[#b8973a]">
               <Star className="size-3" />
               {gradeMain.grade} · {gradeMain.gradingauthority}
             </span>
           ) : null}
           {est.allowPet ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 font-mono text-[11px] text-gray-600">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 font-body text-xs text-gray-600">
               🐾 {est.allowPet}
             </span>
           ) : null}
           {!est.allowSmoking ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 font-mono text-[11px] text-gray-600">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 font-body text-xs text-gray-600">
               🚭 Non-smoking property
             </span>
           ) : null}
@@ -848,7 +845,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
       {est.propertyAmenities.length > 0 ? (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="border-b border-gray-100 bg-gray-50 px-5 py-3 sm:px-6">
-            <h3 className="font-mono text-[11px] uppercase tracking-[0.18em] text-gray-500">
+            <h3 className="font-body text-[13px] font-semibold tracking-normal text-gray-500">
               Facilities & amenities
             </h3>
           </div>
@@ -872,7 +869,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
       {est.propertyImages.length > 0 ? (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="border-b border-gray-100 bg-gray-50 px-5 py-3 sm:px-6">
-            <h3 className="font-mono text-[11px] uppercase tracking-[0.18em] text-gray-500">
+            <h3 className="font-body text-[13px] font-semibold tracking-normal text-gray-500">
               Property gallery
             </h3>
           </div>
@@ -890,7 +887,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
                 />
                 {img.categoryname ? (
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-1.5">
-                    <p className="font-mono text-[9px] uppercase tracking-wider text-white/70">
+                    <p className="font-body text-[10px] text-white/70">
                       {img.categoryname}
                     </p>
                   </div>
@@ -925,7 +922,7 @@ function AreaSection({ est }: { est: EstablishmentData }) {
       {/* About the area */}
       {est.areainfo ? (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-          <h3 className="mb-3 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-500">
+          <h3 className="mb-3 flex items-center gap-2 font-body text-[13px] font-semibold tracking-normal text-gray-500">
             <TreePine className="size-4 text-[#b8973a]" /> About Mafikeng
           </h3>
           <p className="text-sm leading-relaxed text-gray-600">{est.areainfo}</p>
@@ -935,7 +932,7 @@ function AreaSection({ est }: { est: EstablishmentData }) {
       {/* Attractions */}
       {attractionsList.length > 0 ? (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-          <h3 className="mb-3 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-500">
+          <h3 className="mb-3 flex items-center gap-2 font-body text-[13px] font-semibold tracking-normal text-gray-500">
             <Star className="size-4 text-[#b8973a]" /> Local attractions
           </h3>
           <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
@@ -954,11 +951,11 @@ function AreaSection({ est }: { est: EstablishmentData }) {
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <h3 className="mb-2 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-500">
+              <h3 className="mb-2 flex items-center gap-2 font-body text-[13px] font-semibold tracking-normal text-gray-500">
                 🗺️ Getting here
               </h3>
               {est.address ? (
-                <p className="mb-2 font-mono text-[11px] text-[#b8973a]">{est.address.replace(/\n/g, " · ")}</p>
+                <p className="mb-2 font-body text-xs text-[#b8973a]">{est.address.replace(/\n/g, " · ")}</p>
               ) : null}
               <p className="text-sm leading-relaxed text-gray-600">{est.directions}</p>
             </div>
@@ -967,7 +964,7 @@ function AreaSection({ est }: { est: EstablishmentData }) {
                 href={`https://www.google.com/maps?q=${est.lat},${est.lng}`}
                 target="_blank"
                 rel="noreferrer"
-                className="shrink-0 rounded-xl border border-[#b8973a]/30 bg-[#b8973a]/5 px-4 py-2.5 font-mono text-[11px] text-[#b8973a] hover:bg-[#b8973a]/10 transition-colors"
+                className="shrink-0 rounded-xl border border-[#b8973a]/30 bg-[#b8973a]/5 px-4 py-2.5 font-body text-xs text-[#b8973a] hover:bg-[#b8973a]/10 transition-colors"
               >
                 Open in Maps
                 <ArrowUpRight className="ml-1 inline size-3" />
@@ -1021,7 +1018,7 @@ function PoliciesSection({
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="border-b border-gray-100 bg-gray-50 px-5 py-3 sm:px-6">
-        <h3 className="font-mono text-[11px] uppercase tracking-[0.18em] text-gray-500">
+        <h3 className="font-body text-[13px] font-semibold tracking-normal text-gray-500">
           Property policies
         </h3>
       </div>
@@ -1163,7 +1160,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
       {/* pt clears the fixed nav (4.5rem on mobile, 6rem on xl) + breathing room */}
       <div className="border-b border-white/10 bg-[#0a0a0a] px-4 pb-6 pt-[calc(4.5rem+1.5rem)] sm:px-6 lg:px-8 xl:pt-[calc(6rem+1.5rem)]">
         <div className="mx-auto max-w-6xl">
-          <nav className="mb-2 flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-white/40">
+          <nav className="mb-2 flex items-center gap-1 font-body text-xs text-white/40">
             <a href="/stay" className="hover:text-white/70 transition-colors">Stay</a>
             <ChevronRight className="size-3" />
             {propertyNameParam ? (
@@ -1181,7 +1178,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
               ? `Book ${displayRoomTypeName}`
               : "Check Availability & Rates"}
           </h1>
-          <p className="mt-1 font-mono text-[11px] uppercase tracking-wider text-white/40">
+          <p className="mt-1 font-body text-xs text-white/40">
             Boga Legaba Guest House &amp; Conference Centre · Mafikeng
           </p>
         </div>
@@ -1206,7 +1203,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
                 {/* Photo gallery strip (all images from NightsBridge) */}
                 {selectedDetail && selectedDetail.images.length > 1 ? (
                   <div className="mx-auto max-w-6xl px-4 pt-5 sm:px-6 lg:px-8">
-                    <h2 className="mb-3 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
+                    <h2 className="mb-3 font-body text-[13px] font-semibold tracking-normal text-gray-500">
                       Room photos · {selectedDetail.images.length} images
                     </h2>
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
@@ -1223,7 +1220,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
                           />
                           {img.categoryname ? (
                             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-1.5 opacity-0 transition-opacity group-hover:opacity-100">
-                              <p className="font-mono text-[9px] uppercase tracking-wider text-white/80">
+                              <p className="font-body text-[10px] text-white/80">
                                 {img.categoryname}
                               </p>
                             </div>
@@ -1252,7 +1249,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
                       <div className="space-y-6 lg:col-span-2">
                         {directDetail.description ? (
                           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                            <h2 className="mb-3 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">About this room</h2>
+                            <h2 className="mb-3 font-body text-[13px] font-semibold tracking-normal text-gray-500">About this room</h2>
                             <p className="text-base leading-relaxed text-gray-700">{directDetail.description}</p>
                           </div>
                         ) : null}
@@ -1302,7 +1299,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="font-serif text-xl font-bold text-gray-900">Available rooms</h2>
                   {sortedRates.length > 0 ? (
-                    <p className="font-mono text-xs text-gray-500">
+                    <p className="font-body text-xs text-gray-500">
                       {availableCount} of {sortedRates.length} available
                     </p>
                   ) : null}
@@ -1409,7 +1406,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
                 {/* Room description + facts */}
                 {selectedDetail.description ? (
                   <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h2 className="mb-3 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">About this room</h2>
+                    <h2 className="mb-3 font-body text-[13px] font-semibold tracking-normal text-gray-500">About this room</h2>
                     <p className="text-base leading-relaxed text-gray-700">{selectedDetail.description}</p>
                   </div>
                 ) : null}
@@ -1421,7 +1418,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
 
             {/* Date CTA */}
             <div className="rounded-2xl border-2 border-dashed border-[#b8973a]/30 bg-[#b8973a]/5 p-8 text-center">
-              <p className="font-mono text-xs uppercase tracking-widest text-[#b8973a]">
+              <p className="font-body text-sm font-semibold text-[#b8973a]">
                 Add your dates to see live pricing
               </p>
               <p className="mt-2 text-sm text-gray-600 max-w-sm mx-auto">
@@ -1431,7 +1428,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
               </p>
               <a
                 href={`/stay`}
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#b8973a] px-6 py-3 font-mono text-sm font-semibold uppercase tracking-wider text-white shadow-sm transition hover:brightness-110"
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#b8973a] px-6 py-3 font-body text-sm font-semibold text-white shadow-sm transition hover:brightness-110"
               >
                 Choose dates →
               </a>
@@ -1457,7 +1454,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
       <section className="bg-white py-14 lg:py-20 border-t border-gray-100">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Reveal className="mx-auto max-w-2xl text-center">
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#b8973a]">
+            <p className="font-body text-xs font-semibold text-[#b8973a]">
               Prefer to talk?
             </p>
             <h2 className="mt-3 text-balance font-serif text-2xl font-bold text-gray-900 sm:text-3xl">
@@ -1482,13 +1479,13 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
                     style={{ borderLeftColor: p.colorHex }}
                   >
                     <span
-                      className="font-mono text-[10px] uppercase tracking-wider"
+                      className="font-body text-xs"
                       style={{ color: p.colorHex }}
                     >
                     {p.tagline}
                   </span>
                     <span className="mt-1 font-serif text-lg text-gray-900">{p.name}</span>
-                    <span className="font-mono text-xs uppercase tracking-wider text-gray-400">
+                    <span className="font-body text-xs text-gray-400">
                       {p.code}
                     </span>
                     <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#1ea952]">

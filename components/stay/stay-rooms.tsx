@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { MapPin } from "lucide-react"
-import type { Property, PropertyId, Room } from "@/data/rooms"
+import { properties as staticProperties, type Property, type PropertyId, type Room } from "@/data/rooms"
 import { RoomCard } from "@/components/room-card"
 import { MultiCriteriaSearch } from "@/components/search/multi-criteria-search"
 import { StayDateSearch } from "@/components/stay/stay-date-search"
@@ -45,7 +45,10 @@ export function StayRooms() {
   const { data, loading, error } = useSyncedRooms()
   const availability = useAvailability()
   const media = useMediaAssets()
-  const catalog = data?.properties ?? []
+  const catalog: SyncedProperty[] =
+    data?.properties?.length
+      ? data.properties
+      : (staticProperties as unknown as SyncedProperty[])
   const isLiveInventory = data?.source === "database"
   const [active, setActive] = useState<PropertyId>("chababa")
   const [criteria, setCriteria] = useState<string[]>([])
@@ -129,20 +132,6 @@ export function StayRooms() {
               <div className="h-56 rounded-xl bg-muted" />
             </div>
           </div>
-        </div>
-      </section>
-    )
-  }
-
-  if (!catalog.length) {
-    return (
-      <section className="bg-background py-14 lg:py-20">
-        <div className="mx-auto max-w-7xl px-4 text-center">
-          <p className="font-serif text-xl text-foreground">No rooms synced from NightsBridge yet.</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Run the sync script to load inventory from NightsBridge.
-          </p>
-          {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
         </div>
       </section>
     )
