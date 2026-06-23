@@ -13,11 +13,14 @@ Required params:
   email                  Guest email
 
 Optional params:
-  adults      (int, default 2)
-  children1   (int, 0–5 yrs free, default 0)
-  children2   (int, 6–12 yrs, default 0)
-  arrivalTime HH:MM
-  notes       Special requests
+  adults         (int, default 2)
+  children1      (int, 0–5 yrs free, default 0)
+  children2      (int, 6–12 yrs, default 0)
+  arrivalTime    HH:MM
+  airline        Airline name (if applicable)
+  flightno       Flight number (if applicable)
+  notes          Special requests
+  paymentMethod  "bank_transfer" (default) | "credit_card"
 """
 
 from __future__ import annotations
@@ -43,15 +46,18 @@ def book_room(params: dict) -> dict:
     checkout     = params["checkout"]
     room_type    = params["roomTypeName"]
     meal_plan    = params["mealPlanName"]
-    adults       = int(params.get("adults", 2))
-    children1    = int(params.get("children1", 0))
-    children2    = int(params.get("children2", 0))
-    firstname    = params["firstname"]
-    surname      = params["surname"]
-    phone        = params["phone"]
-    email        = params["email"]
-    arrival_time = params.get("arrivalTime", "")
-    notes        = params.get("notes", "")
+    adults          = int(params.get("adults", 2))
+    children1       = int(params.get("children1", 0))
+    children2       = int(params.get("children2", 0))
+    firstname       = params["firstname"]
+    surname         = params["surname"]
+    phone           = params["phone"]
+    email           = params["email"]
+    arrival_time    = params.get("arrivalTime", "")
+    airline         = params.get("airline", "")
+    flightno        = params.get("flightno", "")
+    notes           = params.get("notes", "")
+    payment_method  = params.get("paymentMethod", "bank_transfer")
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -99,12 +105,12 @@ def book_room(params: dict) -> dict:
             _fill_guest_form(
                 page, adults, children1, children2,
                 firstname, surname, phone, email,
-                arrival_time, notes,
+                arrival_time, airline, flightno, notes,
             )
             time.sleep(1)
 
-            # ── Step 5: Select Bank Transfer ──────────────────────────────
-            _select_payment(page, "bank_transfer")
+            # ── Step 5: Select payment method ─────────────────────────────
+            _select_payment(page, payment_method)
             time.sleep(0.5)
 
             # ── Step 6: Accept T&Cs ───────────────────────────────────────
@@ -231,6 +237,8 @@ def _fill_guest_form(
     phone: str,
     email: str,
     arrival_time: str,
+    airline: str,
+    flightno: str,
     notes: str,
 ) -> None:
     # Pax counts
@@ -247,7 +255,9 @@ def _fill_guest_form(
         ("surname", surname),
         ("phoneno", phone),
         ("email", email),
-        ("emailverify", email),
+        ("emailverify", email),   # NightsBridge requires email confirmation
+        ("airline", airline),
+        ("flightno", flightno),
     ]:
         if val:
             loc = page.locator(f'input[name="{name}"]').first

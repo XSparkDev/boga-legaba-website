@@ -19,12 +19,13 @@ interface BookingWidgetProps {
 }
 
 type Step = "idle" | "form" | "submitting" | "success" | "error"
+type PaymentMethod = "bank_transfer" | "credit_card"
 
 const MEAL_PLAN_ORDER = [5, 1, 3] // Room Only, B&B, DBB
 const MEAL_ICONS: Record<number, string> = { 1: "🍳", 3: "🍽️", 5: "🛏️" }
 
 function fmt(n: number) {
-  return `R ${Math.round(n).toLocaleString("en-ZA")}`
+  return `R ${Math.round(n).toLocaleString("en-ZA")}`
 }
 
 // ---------------------------------------------------------------------------
@@ -53,20 +54,31 @@ export function BookingWidget({
   const [bookingRef, setBookingRef] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState("")
 
-  // Form fields
+  // Form fields — mirror every field NightsBridge collects
   const [adults, setAdults] = useState(2)
-  const [children1, setChildren1] = useState(0)
-  const [children2, setChildren2] = useState(0)
+  const [children1, setChildren1] = useState(0)   // Age 0-5 (free)
+  const [children2, setChildren2] = useState(0)   // Age 6-12 (R150)
   const [firstname, setFirstname] = useState("")
   const [surname, setSurname] = useState("")
   const [phone, setPhone] = useState("")
   const [email, setEmail] = useState("")
+  const [emailVerify, setEmailVerify] = useState("")
   const [arrivalTime, setArrivalTime] = useState("")
+  const [airline, setAirline] = useState("")
+  const [flightno, setFlightno] = useState("")
   const [notes, setNotes] = useState("")
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank_transfer")
+  const [emailMismatch, setEmailMismatch] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!selectedPlan) return
+
+    if (email !== emailVerify) {
+      setEmailMismatch(true)
+      return
+    }
+    setEmailMismatch(false)
     setStep("submitting")
 
     try {
@@ -86,7 +98,10 @@ export function BookingWidget({
           phone,
           email,
           arrivalTime,
+          airline,
+          flightno,
           notes,
+          paymentMethod,
         }),
       })
 
@@ -121,6 +136,16 @@ export function BookingWidget({
         <p className="text-sm text-emerald-700">
           A confirmation will be sent to <strong>{email}</strong>. Please save your reference number.
         </p>
+        {paymentMethod === "credit_card" && (
+          <p className="mt-2 text-xs text-emerald-600">
+            A secure payment link will be emailed to you by NightsBridge.
+          </p>
+        )}
+        {paymentMethod === "bank_transfer" && (
+          <p className="mt-2 text-xs text-emerald-600">
+            Banking details for your EFT payment will be included in your confirmation email.
+          </p>
+        )}
         <p className="mt-3 text-xs text-emerald-600">
           {roomTypeName} · {arrive} → {depart}
           {selectedPlan ? ` · ${selectedPlan.description}` : ""}
@@ -153,7 +178,7 @@ export function BookingWidget({
             rel="noreferrer"
             className="rounded-lg bg-[#25D366] px-4 py-2 text-sm font-medium text-white hover:brightness-105"
           >
-            💬 WhatsApp
+            WhatsApp
           </a>
         </div>
       </div>
@@ -178,7 +203,7 @@ export function BookingWidget({
     return (
       <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-[#b8973a]/30 bg-[#fdf8ef] py-8">
         <Loader2 className="size-8 animate-spin text-[#b8973a]" />
-        <p className="text-sm font-medium text-gray-700">Processing your booking…</p>
+        <p className="text-sm font-medium text-gray-700">Processing your booking&hellip;</p>
         <p className="text-xs text-gray-400">This can take up to 60 seconds</p>
       </div>
     )
@@ -258,7 +283,7 @@ export function BookingWidget({
                     onClick={() => set(Math.max(min, value - 1))}
                     className="flex size-7 items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50"
                   >
-                    −
+                    &minus;
                   </button>
                   <span className="w-6 text-center font-body text-sm font-semibold">{value}</span>
                   <button
@@ -272,19 +297,21 @@ export function BookingWidget({
               </div>
             ))}
           </div>
+          <p className="mt-1 font-body text-[10px] text-gray-400">
+            Children 0–5 stay free · Children 6–12 pay R150/night
+          </p>
         </div>
 
-        {/* Divider */}
         <div className="border-t border-gray-100" />
 
         {/* Guest details */}
         <div>
           <p className="mb-3 font-body text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Guest details
+            Personal information
           </p>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <FormField label="First name *" required>
+              <FormField label="First name *">
                 <input
                   type="text"
                   value={firstname}
@@ -294,7 +321,7 @@ export function BookingWidget({
                   className={inputCls}
                 />
               </FormField>
-              <FormField label="Surname *" required>
+              <FormField label="Surname *">
                 <input
                   type="text"
                   value={surname}
@@ -306,7 +333,7 @@ export function BookingWidget({
               </FormField>
             </div>
 
-            <FormField label="Phone *">
+            <FormField label="Phone number * (include country code)">
               <input
                 type="tel"
                 value={phone}
@@ -317,16 +344,31 @@ export function BookingWidget({
               />
             </FormField>
 
-            <FormField label="Email *">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
-                className={inputCls}
-              />
-            </FormField>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="Email *">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setEmailMismatch(false) }}
+                  placeholder="your@email.com"
+                  required
+                  className={inputCls}
+                />
+              </FormField>
+              <FormField label="Re-type email *">
+                <input
+                  type="email"
+                  value={emailVerify}
+                  onChange={(e) => { setEmailVerify(e.target.value); setEmailMismatch(false) }}
+                  placeholder="your@email.com"
+                  required
+                  className={`${inputCls} ${emailMismatch ? "border-red-400 ring-1 ring-red-300" : ""}`}
+                />
+              </FormField>
+            </div>
+            {emailMismatch && (
+              <p className="font-body text-xs text-red-500">Email addresses do not match.</p>
+            )}
 
             <FormField label="Approx. arrival time">
               <input
@@ -336,6 +378,27 @@ export function BookingWidget({
                 className={inputCls}
               />
             </FormField>
+
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="Airline (if applicable)">
+                <input
+                  type="text"
+                  value={airline}
+                  onChange={(e) => setAirline(e.target.value)}
+                  placeholder="e.g. FlySafair"
+                  className={inputCls}
+                />
+              </FormField>
+              <FormField label="Flight no. (if applicable)">
+                <input
+                  type="text"
+                  value={flightno}
+                  onChange={(e) => setFlightno(e.target.value)}
+                  placeholder="e.g. FA123"
+                  className={inputCls}
+                />
+              </FormField>
+            </div>
 
             <FormField label="Special requests">
               <textarea
@@ -349,18 +412,57 @@ export function BookingWidget({
           </div>
         </div>
 
-        {/* Payment note */}
-        <div className="rounded-lg bg-blue-50 px-4 py-3">
-          <p className="font-body text-xs text-blue-700">
-            💳 <strong>Bank Transfer</strong> — you will receive payment instructions after booking confirmation.
+        <div className="border-t border-gray-100" />
+
+        {/* Payment method */}
+        <div>
+          <p className="mb-2 font-body text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Payment method
           </p>
+          <div className="space-y-2">
+            {(
+              [
+                {
+                  value: "bank_transfer" as PaymentMethod,
+                  label: "Bank Transfer (EFT)",
+                  note: "Banking details will be included in your confirmation email.",
+                },
+                {
+                  value: "credit_card" as PaymentMethod,
+                  label: "Credit Card",
+                  note: "A secure payment link will be emailed to you after booking.",
+                },
+              ] as const
+            ).map(({ value, label, note }) => (
+              <label
+                key={value}
+                className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                  paymentMethod === value
+                    ? "border-[#b8973a] bg-[#fdf8ef]"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  checked={paymentMethod === value}
+                  onChange={() => setPaymentMethod(value)}
+                  className="mt-0.5 accent-[#b8973a]"
+                />
+                <div>
+                  <span className="font-body text-sm text-gray-800">{label}</span>
+                  <p className="font-body text-[11px] text-gray-400">{note}</p>
+                </div>
+              </label>
+            ))}
+          </div>
         </div>
 
         {/* T&Cs */}
         <label className="flex items-start gap-2 text-xs text-gray-500">
           <input type="checkbox" required className="mt-0.5 accent-[#b8973a]" />
           <span>
-            I accept the{" "}
+            I have read and accepted the{" "}
             <a
               href="#"
               className="text-[#b8973a] underline"
@@ -396,11 +498,9 @@ const inputCls =
 function FormField({
   label,
   children,
-  required: _req,
 }: {
   label: string
   children: React.ReactNode
-  required?: boolean
 }) {
   return (
     <div>
