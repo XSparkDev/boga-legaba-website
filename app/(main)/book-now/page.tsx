@@ -428,9 +428,22 @@ function RoomDetailAndBooking({
               </div>
             </div>
           ) : null}
+
+          {/* Booking widget — expands here when guest clicks "Book This Room" */}
+          <BookingWidget
+            roomTypeName={rate.rtname}
+            arrive={arrive}
+            depart={depart}
+            bbid={bbid}
+            mealPlans={mealPlans}
+            available={rate.available}
+            whatsappUrl={whatsappUrl}
+            maxAdults={rate.maxAdults}
+            maxOccupancy={rate.maxGuests}
+          />
         </div>
 
-        {/* ── RIGHT: Booking widget (1/3 width, sticky) ─────── */}
+        {/* ── RIGHT: Rates summary + WhatsApp (1/3 width, sticky) ─────── */}
         <div className="lg:col-span-1">
           <div className="sticky top-24 space-y-4">
 
@@ -546,26 +559,6 @@ function RoomDetailAndBooking({
                 </div>
               </div>
             ) : null}
-
-            {/* Book CTA */}
-            {rate.available ? (
-              <BookingWidget
-                roomTypeName={rate.rtname}
-                arrive={arrive}
-                depart={depart}
-                bbid={bbid}
-                mealPlans={mealPlans}
-                available={rate.available}
-                whatsappUrl={whatsappUrl}
-                maxAdults={rate.maxAdults}
-                maxOccupancy={rate.maxGuests}
-              />
-            ) : (
-              <div className="rounded-xl border border-dashed border-red-200 bg-red-50 p-4 text-center">
-                <p className="text-sm font-medium text-red-700">Not available for these dates</p>
-                <p className="mt-1 text-xs text-red-500">Try different dates or select another room</p>
-              </div>
-            )}
 
             {/* WhatsApp enquiry */}
             <a
