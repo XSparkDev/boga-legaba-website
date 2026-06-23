@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { CheckCircle2, Loader2, AlertTriangle, ArrowRight, X } from "lucide-react"
+import { CheckCircle2, Loader2, AlertTriangle, ArrowRight, X, ExternalLink } from "lucide-react"
 import type { MealPlanRate } from "@/lib/nightsbridge-rates"
 
 // ---------------------------------------------------------------------------
@@ -18,7 +18,7 @@ interface BookingWidgetProps {
   whatsappUrl: string
 }
 
-type Step = "idle" | "form" | "submitting" | "success" | "error"
+type Step = "idle" | "form" | "submitting" | "success" | "redirected" | "error"
 type PaymentMethod = "bank_transfer" | "credit_card"
 
 const MEAL_PLAN_ORDER = [5, 1, 3] // Room Only, B&B, DBB
@@ -36,7 +36,7 @@ export function BookingWidget({
   roomTypeName,
   arrive,
   depart,
-  bbid: _bbid,
+  bbid,
   mealPlans,
   available,
   whatsappUrl,
@@ -54,10 +54,10 @@ export function BookingWidget({
   const [bookingRef, setBookingRef] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState("")
 
-  // Form fields — mirror every field NightsBridge collects
+  // Form fields — every field NightsBridge collects
   const [adults, setAdults] = useState(2)
-  const [children1, setChildren1] = useState(0)   // Age 0-5 (free)
-  const [children2, setChildren2] = useState(0)   // Age 6-12 (R150)
+  const [children1, setChildren1] = useState(0)  // Age 0–5 (free)
+  const [children2, setChildren2] = useState(0)  // Age 6–12 (R150/night)
   const [firstname, setFirstname] = useState("")
   const [surname, setSurname] = useState("")
   const [phone, setPhone] = useState("")
@@ -70,6 +70,8 @@ export function BookingWidget({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank_transfer")
   const [emailMismatch, setEmailMismatch] = useState(false)
 
+  const nbUrl = `https://book.nightsbridge.com/${bbid}?arrive=${arrive}&depart=${depart}`
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!selectedPlan) return
@@ -79,6 +81,15 @@ export function BookingWidget({
       return
     }
     setEmailMismatch(false)
+
+    // Credit card requires 3D Secure — cannot be automated.
+    // Send the guest directly to NightsBridge to complete card payment securely.
+    if (paymentMethod === "credit_card") {
+      window.open(nbUrl, "_blank", "noopener,noreferrer")
+      setStep("redirected")
+      return
+    }
+
     setStep("submitting")
 
     try {
@@ -105,7 +116,12 @@ export function BookingWidget({
         }),
       })
 
-      const data = (await res.json()) as { ok: boolean; bookingRef?: string; error?: string; confirmationText?: string }
+      const data = (await res.json()) as {
+        ok: boolean
+        bookingRef?: string
+        error?: string
+        confirmationText?: string
+      }
 
       if (data.ok) {
         setBookingRef(data.bookingRef ?? null)
@@ -122,7 +138,7 @@ export function BookingWidget({
 
   if (!available) return null
 
-  // ── Success state ────────────────────────────────────────────────────────
+  // ── Success ──────────────────────────────────────────────────────────────
   if (step === "success") {
     return (
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
@@ -134,27 +150,56 @@ export function BookingWidget({
           </p>
         )}
         <p className="text-sm text-emerald-700">
-          A confirmation will be sent to <strong>{email}</strong>. Please save your reference number.
+          A confirmation will be sent to <strong>{email}</strong>.
         </p>
-        {paymentMethod === "credit_card" && (
-          <p className="mt-2 text-xs text-emerald-600">
-            A secure payment link will be emailed to you by NightsBridge.
-          </p>
-        )}
-        {paymentMethod === "bank_transfer" && (
-          <p className="mt-2 text-xs text-emerald-600">
-            Banking details for your EFT payment will be included in your confirmation email.
-          </p>
-        )}
-        <p className="mt-3 text-xs text-emerald-600">
-          {roomTypeName} · {arrive} → {depart}
+        <p className="mt-2 text-xs text-emerald-600">
+          Banking details for your EFT payment will be included in the confirmation email.
+        </p>
+        <p className="mt-3 text-xs text-emerald-500">
+          {roomTypeName} &middot; {arrive} &rarr; {depart}
           {selectedPlan ? ` · ${selectedPlan.description}` : ""}
         </p>
       </div>
     )
   }
 
-  // ── Error state ──────────────────────────────────────────────────────────
+  // ── Credit card redirect ──────────────────────────────────────────────────
+  if (step === "redirected") {
+    return (
+      <div className="rounded-xl border border-blue-200 bg-blue-50 p-6">
+        <div className="flex items-start gap-3">
+          <ExternalLink className="mt-0.5 size-5 shrink-0 text-blue-500" />
+          <div>
+            <p className="font-body font-semibold text-blue-900">NightsBridge opened in a new tab</p>
+            <p className="mt-1 text-sm text-blue-700">
+              Please select <strong>{roomTypeName}</strong> with{" "}
+              <strong>{selectedPlan?.description}</strong> and complete your credit card payment
+              there. Your dates ({arrive} &rarr; {depart}) are pre-filled.
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <a
+            href={nbUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:brightness-105"
+          >
+            Open NightsBridge again
+            <ExternalLink className="size-3.5" />
+          </a>
+          <button
+            onClick={() => setStep("form")}
+            className="rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+          >
+            Go back
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Error ─────────────────────────────────────────────────────────────────
   if (step === "error") {
     return (
       <div className="rounded-xl border border-red-200 bg-red-50 p-5">
@@ -185,7 +230,7 @@ export function BookingWidget({
     )
   }
 
-  // ── Idle (Book button only) ───────────────────────────────────────────────
+  // ── Idle ──────────────────────────────────────────────────────────────────
   if (step === "idle") {
     return (
       <button
@@ -228,7 +273,7 @@ export function BookingWidget({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5 p-5">
-        {/* Meal plan selector */}
+        {/* Meal plan */}
         {sorted.length > 0 && (
           <div>
             <p className="mb-2 font-body text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -264,7 +309,7 @@ export function BookingWidget({
           </div>
         )}
 
-        {/* Guest counts */}
+        {/* Guests */}
         <div>
           <p className="mb-2 font-body text-xs font-semibold uppercase tracking-wide text-gray-500">
             Guests
@@ -298,13 +343,13 @@ export function BookingWidget({
             ))}
           </div>
           <p className="mt-1 font-body text-[10px] text-gray-400">
-            Children 0–5 stay free · Children 6–12 pay R150/night
+            Children 0–5 stay free &middot; Children 6–12 pay R150/night
           </p>
         </div>
 
         <div className="border-t border-gray-100" />
 
-        {/* Guest details */}
+        {/* Personal information */}
         <div>
           <p className="mb-3 font-body text-xs font-semibold uppercase tracking-wide text-gray-500">
             Personal information
@@ -420,41 +465,48 @@ export function BookingWidget({
             Payment method
           </p>
           <div className="space-y-2">
-            {(
-              [
-                {
-                  value: "bank_transfer" as PaymentMethod,
-                  label: "Bank Transfer (EFT)",
-                  note: "Banking details will be included in your confirmation email.",
-                },
-                {
-                  value: "credit_card" as PaymentMethod,
-                  label: "Credit Card",
-                  note: "A secure payment link will be emailed to you after booking.",
-                },
-              ] as const
-            ).map(({ value, label, note }) => (
-              <label
-                key={value}
-                className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                  paymentMethod === value
-                    ? "border-[#b8973a] bg-[#fdf8ef]"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  checked={paymentMethod === value}
-                  onChange={() => setPaymentMethod(value)}
-                  className="mt-0.5 accent-[#b8973a]"
-                />
-                <div>
-                  <span className="font-body text-sm text-gray-800">{label}</span>
-                  <p className="font-body text-[11px] text-gray-400">{note}</p>
-                </div>
-              </label>
-            ))}
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                paymentMethod === "bank_transfer"
+                  ? "border-[#b8973a] bg-[#fdf8ef]"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                checked={paymentMethod === "bank_transfer"}
+                onChange={() => setPaymentMethod("bank_transfer")}
+                className="mt-0.5 accent-[#b8973a]"
+              />
+              <div>
+                <span className="font-body text-sm text-gray-800">Bank Transfer (EFT)</span>
+                <p className="font-body text-[11px] text-gray-400">
+                  Banking details will be emailed after confirmation. Booking is secured immediately.
+                </p>
+              </div>
+            </label>
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                paymentMethod === "credit_card"
+                  ? "border-[#b8973a] bg-[#fdf8ef]"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                checked={paymentMethod === "credit_card"}
+                onChange={() => setPaymentMethod("credit_card")}
+                className="mt-0.5 accent-[#b8973a]"
+              />
+              <div>
+                <span className="font-body text-sm text-gray-800">Credit Card</span>
+                <p className="font-body text-[11px] text-gray-400">
+                  You will be taken to NightsBridge&apos;s secure payment page to enter your card details.
+                </p>
+              </div>
+            </label>
           </div>
         </div>
 
@@ -480,8 +532,17 @@ export function BookingWidget({
           disabled={!selectedPlan}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b8973a] px-6 py-3.5 font-body text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Confirm Booking
-          <ArrowRight className="size-4" />
+          {paymentMethod === "credit_card" ? (
+            <>
+              Continue to Payment
+              <ExternalLink className="size-4" />
+            </>
+          ) : (
+            <>
+              Confirm Booking
+              <ArrowRight className="size-4" />
+            </>
+          )}
         </button>
       </form>
     </div>

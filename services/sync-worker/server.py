@@ -83,6 +83,90 @@ def _check_env() -> list[str]:
     return missing
 
 
+def _check_room_availability(params: dict) -> dict:
+    """
+    Query Supabase availability_cache before running Playwright.
+    Returns {"ok": True} if a room of the requested type is free for all nights.
+    Returns {"ok": False, "error": "..."} if fully booked.
+    On any DB error, returns {"ok": True} so Playwright can still try — NightsBridge
+    is the authoritative source; we only use this to fail fast and give a better UX.
+    """
+    try:
+        from supabase import create_client
+        from datetime import date, timedelta
+    except ImportError:
+        return {"ok": True}  # supabase not installed — don't block
+
+    try:
+        env = _build_env()
+        url = (env.get("SUPABASE_URL") or "").strip()
+        key = (env.get("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
+        if not url or not key:
+            return {"ok": True}
+
+        sb = create_client(url, key)
+        room_type_name = params.get("roomTypeName", "")
+        checkin = params.get("checkin", "")
+        checkout = params.get("checkout", "")
+
+        # Build list of night-dates to check (arrival night through night before checkout)
+        start = date.fromisoformat(checkin)
+        end = date.fromisoformat(checkout)
+        night_dates = []
+        d = start
+        while d < end:
+            night_dates.append(d.isoformat())
+            d += timedelta(days=1)
+
+        if not night_dates:
+            return {"ok": True}
+
+        # Get the bbrtid for this room type name
+        rt_resp = sb.table("room_type").select("bbrtid").eq("rtname", room_type_name).execute()
+        if not rt_resp.data:
+            # Room type unknown in our DB — let NightsBridge decide
+            print(f"[worker] Availability check: room type '{room_type_name}' not in DB, passing through")
+            return {"ok": True}
+
+        bbrtid = rt_resp.data[0]["bbrtid"]
+
+        # Get all physical rooms of this type
+        rooms_resp = sb.table("room").select("bbroomid").eq("bbrtid", bbrtid).execute()
+        if not rooms_resp.data:
+            return {"ok": True}
+
+        room_ids = [r["bbroomid"] for r in rooms_resp.data]
+
+        # Check if ANY physical room is available for ALL requested nights
+        for bbroomid in room_ids:
+            cache_resp = (
+                sb.table("availability_cache")
+                .select("check_date,is_available")
+                .eq("bbroomid", bbroomid)
+                .in_("check_date", night_dates)
+                .execute()
+            )
+            available_nights = {r["check_date"] for r in cache_resp.data if r["is_available"]}
+            if all(night in available_nights for night in night_dates):
+                # Found a room that's free the whole stay
+                print(f"[worker] Availability OK: bbroomid={bbroomid} free {checkin}–{checkout}")
+                return {"ok": True}
+
+        print(f"[worker] Availability FAIL: no '{room_type_name}' free {checkin}–{checkout}")
+        return {
+            "ok": False,
+            "error": (
+                f"Sorry, no {room_type_name} is available from {checkin} to {checkout}. "
+                "Please choose different dates or a different room type."
+            ),
+        }
+
+    except Exception as exc:
+        # Never block a booking on a DB error — NightsBridge will catch it
+        print(f"[worker] Availability check error (non-blocking): {exc}", file=sys.stderr)
+        return {"ok": True}
+
+
 def _run_sync() -> tuple[int, str]:
     missing = _check_env()
     if missing:
@@ -188,6 +272,12 @@ class Handler(BaseHTTPRequestHandler):
             self._json(400, {"ok": False, "error": f"Missing: {', '.join(missing)}"})
             return
 
+        # Availability pre-check — fast Supabase query before spinning up Playwright
+        avail = _check_room_availability(params)
+        if not avail["ok"]:
+            self._json(409, {"ok": False, "error": avail["error"]})
+            return
+
         book_script = SCRAPER_DIR / "book_nightsbridge.py"
         if not book_script.exists():
             self._json(503, {"ok": False, "error": "Booking script not found"})
@@ -199,6 +289,7 @@ class Handler(BaseHTTPRequestHandler):
                 capture_output=True,
                 text=True,
                 timeout=120,
+                env=_build_env(),
             )
             stdout = proc.stdout.strip()
             if stdout:

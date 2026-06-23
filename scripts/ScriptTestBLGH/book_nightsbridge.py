@@ -80,15 +80,14 @@ def book_room(params: dict) -> dict:
             # ── Step 2: Find room card and click VIEW RATES AND BOOK ──────
             clicked = _click_view_rates(page, room_type)
             if not clicked:
-                # Last resort: just click the first visible btn-show-rates
-                btn = page.query_selector("button.btn-show-rates")
-                if btn:
-                    btn.click()
-                    clicked = True
-            if not clicked:
+                # Dump visible room names to help diagnose mismatches
+                visible = _list_visible_room_types(page)
                 return {
                     "ok": False,
-                    "error": f"Room '{room_type}' not found on booking page",
+                    "error": (
+                        f"Room type '{room_type}' not found on the NightsBridge booking page. "
+                        f"Visible room types: {visible or '(none detected)'}"
+                    ),
                 }
             time.sleep(4)
 
@@ -126,15 +125,40 @@ def book_room(params: dict) -> dict:
                 }
             time.sleep(12)
 
-            # ── Step 8: Extract confirmation ──────────────────────────────
+            # ── Step 8: Analyse result page ───────────────────────────────
+            page_url = page.url
             page_text = page.evaluate("() => document.body.innerText")
+
+            # Detect redirect to a payment gateway (3DS / Peach Payments etc.)
+            payment_domains = ("peach", "paygate", "3dsecure", "cybersource",
+                               "payfast", "ozow", "dpo", "payu")
+            if any(d in page_url.lower() for d in payment_domains):
+                return {
+                    "ok": False,
+                    "error": (
+                        "NightsBridge redirected to a card payment gateway. "
+                        "Please use Bank Transfer or book directly on NightsBridge."
+                    ),
+                }
+
+            # Detect NightsBridge error messages on the page
+            text_lower = page_text.lower()
+            error_phrases = [
+                "not available", "no rooms available", "fully booked",
+                "sold out", "no availability", "booking failed",
+                "we were unable", "cannot be booked",
+            ]
             booking_ref = _extract_booking_ref(page_text)
+            if not booking_ref and any(p in text_lower for p in error_phrases):
+                return {
+                    "ok": False,
+                    "error": "NightsBridge indicated no availability for these dates. " + page_text[:300],
+                }
 
             return {
                 "ok": True,
                 "bookingRef": booking_ref,
                 "confirmationText": page_text[:1500],
-                "submitted": submitted,
             }
 
         except Exception as exc:
@@ -151,6 +175,32 @@ def book_room(params: dict) -> dict:
 # ---------------------------------------------------------------------------
 # Playwright helpers
 # ---------------------------------------------------------------------------
+
+def _list_visible_room_types(page) -> list[str]:
+    """Return room type names visible on the page — used in error messages for diagnosis."""
+    try:
+        return page.evaluate(
+            """() => {
+                const buttons = Array.from(document.querySelectorAll('button.btn-show-rates'));
+                const names = [];
+                for (const btn of buttons) {
+                    let el = btn;
+                    for (let i = 0; i < 12; i++) {
+                        if (!el.parentElement) break;
+                        el = el.parentElement;
+                        const h = el.querySelector('h2,h3,h4,[class*="title"],[class*="name"]');
+                        if (h && h.innerText?.trim()) {
+                            names.push(h.innerText.trim());
+                            break;
+                        }
+                    }
+                }
+                return [...new Set(names)];
+            }"""
+        )
+    except Exception:
+        return []
+
 
 def _click_view_rates(page, room_type_name: str) -> bool:
     """Find the room card matching room_type_name and click its VIEW RATES AND BOOK button."""
@@ -324,14 +374,20 @@ def _submit_booking(page) -> str:
 
 def _extract_booking_ref(text: str) -> str | None:
     patterns = [
-        r'[Bb]ooking\s+[Rr]ef(?:erence)?[:\s]+([A-Z0-9\-]+)',
-        r'[Cc]onfirmation\s+[Nn](?:umber|o\.?)[:\s]+([A-Z0-9\-]+)',
-        r'[Bb]ooking\s+[Nn](?:umber|o\.?)[:\s]+([A-Z0-9\-]+)',
+        # NightsBridge bbid-prefixed refs e.g. "21091-12345"
         r'\b(21091-\d+)\b',
-        r'[Rr]ef[:\s]+([A-Z0-9\-]{4,12})',
+        # Explicit booking reference label
+        r'[Bb]ooking\s+[Rr]ef(?:erence)?[:\s#]+([A-Z0-9\-]{4,20})',
+        r'[Cc]onfirmation\s+[Nn](?:umber|o\.?)[:\s#]+([A-Z0-9\-]{4,20})',
+        r'[Bb]ooking\s+[Nn](?:umber|o\.?)[:\s#]+([A-Z0-9\-]{4,20})',
+        r'[Rr]eference\s+[Nn](?:umber|o\.?)[:\s#]+([A-Z0-9\-]{4,20})',
+        # Short "Ref:" label
+        r'\bRef[:\s]+([A-Z0-9\-]{4,16})\b',
+        # NightsBridge sometimes shows "Your booking number is XXXXX"
+        r'booking\s+(?:number|ref)\s+(?:is\s+)?([A-Z0-9\-]{4,20})',
     ]
     for pat in patterns:
-        m = re.search(pat, text)
+        m = re.search(pat, text, re.IGNORECASE)
         if m:
             return m.group(1)
     return None
