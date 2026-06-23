@@ -16,6 +16,9 @@ interface BookingWidgetProps {
   mealPlans: MealPlanRate[] | null
   available: boolean
   whatsappUrl: string
+  /** From NightsBridge room type — enforced in form and passed to bot */
+  maxAdults?: number | null
+  maxOccupancy?: number | null
 }
 
 type Step = "idle" | "form" | "submitting" | "success" | "redirected" | "error"
@@ -40,7 +43,12 @@ export function BookingWidget({
   mealPlans,
   available,
   whatsappUrl,
+  maxAdults: rawMaxAdults,
+  maxOccupancy: rawMaxOccupancy,
 }: BookingWidgetProps) {
+  // NightsBridge limits — fall back to safe defaults when not provided
+  const maxAdults = rawMaxAdults ?? 4
+  const maxOccupancy = rawMaxOccupancy ?? maxAdults
   const sorted = mealPlans
     ? [...mealPlans].sort((a, b) => {
         const ia = MEAL_PLAN_ORDER.indexOf(a.mealplanid)
@@ -69,12 +77,29 @@ export function BookingWidget({
   const [notes, setNotes] = useState("")
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank_transfer")
   const [emailMismatch, setEmailMismatch] = useState(false)
+  const [occupancyError, setOccupancyError] = useState("")
 
   const nbUrl = `https://book.nightsbridge.com/${bbid}?arrive=${arrive}&depart=${depart}`
+
+  // Recompute occupancy error whenever counts change
+  const totalGuests = adults + children1 + children2
+  const adultsOverLimit = adults > maxAdults
+  const totalOverLimit = totalGuests > maxOccupancy
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!selectedPlan) return
+
+    // Mirror NightsBridge occupancy validation before hitting the bot
+    if (adultsOverLimit) {
+      setOccupancyError(`This room allows a maximum of ${maxAdults} adult${maxAdults === 1 ? "" : "s"}.`)
+      return
+    }
+    if (totalOverLimit) {
+      setOccupancyError(`This room fits a maximum of ${maxOccupancy} guest${maxOccupancy === 1 ? "" : "s"} in total.`)
+      return
+    }
+    setOccupancyError("")
 
     if (email !== emailVerify) {
       setEmailMismatch(true)
@@ -113,6 +138,8 @@ export function BookingWidget({
           flightno,
           notes,
           paymentMethod,
+          maxAdults,
+          maxOccupancy,
         }),
       })
 
@@ -316,9 +343,9 @@ export function BookingWidget({
           </p>
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: "Adults", value: adults, set: setAdults, min: 1, max: 4 },
-              { label: "Children 0–5", value: children1, set: setChildren1, min: 0, max: 4 },
-              { label: "Children 6–12", value: children2, set: setChildren2, min: 0, max: 4 },
+              { label: "Adults", value: adults, set: setAdults, min: 1, max: maxAdults },
+              { label: "Children 0–5", value: children1, set: setChildren1, min: 0, max: Math.max(0, maxOccupancy - adults - children2) },
+              { label: "Children 6–12", value: children2, set: setChildren2, min: 0, max: Math.max(0, maxOccupancy - adults - children1) },
             ].map(({ label, value, set, min, max }) => (
               <div key={label}>
                 <label className="mb-1 block font-body text-[11px] text-gray-400">{label}</label>
@@ -344,7 +371,11 @@ export function BookingWidget({
           </div>
           <p className="mt-1 font-body text-[10px] text-gray-400">
             Children 0–5 stay free &middot; Children 6–12 pay R150/night
+            {rawMaxAdults ? ` · Max ${maxAdults} adult${maxAdults === 1 ? "" : "s"}, ${maxOccupancy} total` : ""}
           </p>
+          {occupancyError && (
+            <p className="mt-1 font-body text-xs font-medium text-red-500">{occupancyError}</p>
+          )}
         </div>
 
         <div className="border-t border-gray-100" />

@@ -106,7 +106,12 @@ def book_room(params: dict) -> dict:
                 firstname, surname, phone, email,
                 arrival_time, airline, flightno, notes,
             )
-            time.sleep(1)
+            time.sleep(1.5)
+
+            # ── Step 4b: Check NightsBridge occupancy validation ──────────
+            occupancy_err = _check_occupancy_error(page)
+            if occupancy_err:
+                return {"ok": False, "error": occupancy_err}
 
             # ── Step 5: Select payment method ─────────────────────────────
             _select_payment(page, payment_method)
@@ -123,7 +128,9 @@ def book_room(params: dict) -> dict:
                     "ok": False,
                     "error": "Could not find the submit/confirm button on the booking form",
                 }
-            time.sleep(12)
+
+            # Wait for confirmation OR a known error — much more reliable than a fixed sleep
+            _wait_for_result(page, timeout_ms=20_000)
 
             # ── Step 8: Analyse result page ───────────────────────────────
             page_url = page.url
@@ -323,6 +330,59 @@ def _fill_guest_form(
         loc = page.locator('textarea[name="notes"]').first
         if loc.count():
             loc.fill(notes)
+
+
+def _check_occupancy_error(page) -> str | None:
+    """
+    Return NightsBridge's occupancy validation message if present, else None.
+    Fires after filling adult/children counts — catches 'Too many people' before submit.
+    """
+    try:
+        return page.evaluate(
+            """() => {
+                const phrases = ['too many people', 'exceeds maximum', 'capacity exceeded',
+                                 'too many guests', 'maximum occupancy'];
+                const body = document.body.innerText.toLowerCase();
+                for (const p of phrases) {
+                    if (body.includes(p)) {
+                        // Find the actual visible error text for a cleaner message
+                        const els = document.querySelectorAll('[class*="error"],[class*="warn"],[style*="red"],mat-error');
+                        for (const el of els) {
+                            const t = el.innerText?.trim();
+                            if (t && t.length < 120) return t;
+                        }
+                        return 'Too many people for this room type. Please reduce guest count.';
+                    }
+                }
+                return null;
+            }"""
+        )
+    except Exception:
+        return None
+
+
+def _wait_for_result(page, timeout_ms: int = 20_000) -> None:
+    """
+    Wait until NightsBridge shows a booking result — confirmation or error.
+    Falls back to a plain sleep if the JS condition never fires.
+    """
+    try:
+        page.wait_for_function(
+            """() => {
+                const text = document.body.innerText.toLowerCase();
+                // Success signals
+                if (text.includes('confirmed') || text.includes('reference') ||
+                    text.includes('thank you') || text.includes('booking number')) return true;
+                // Error signals
+                if (text.includes('not available') || text.includes('booking failed') ||
+                    text.includes('error') || text.includes('unable to complete')) return true;
+                // Payment gateway redirect (URL-based check done separately)
+                return false;
+            }""",
+            timeout=timeout_ms,
+        )
+    except Exception:
+        time.sleep(8)  # fallback if wait_for_function times out
 
 
 def _select_payment(page, method: str = "bank_transfer") -> None:

@@ -557,6 +557,8 @@ function RoomDetailAndBooking({
                 mealPlans={mealPlans}
                 available={rate.available}
                 whatsappUrl={whatsappUrl}
+                maxAdults={rate.maxAdults}
+                maxOccupancy={rate.maxGuests}
               />
             ) : (
               <div className="rounded-xl border border-dashed border-red-200 bg-red-50 p-4 text-center">
