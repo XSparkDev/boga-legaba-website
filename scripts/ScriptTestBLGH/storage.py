@@ -51,10 +51,15 @@ def save_csv(records: list[dict]) -> str | None:
 def _supabase_client() -> Client:
     if create_client is None:
         raise RuntimeError("supabase package not installed. Run: pip install supabase==2.4.0")
-    url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    url = (os.environ.get("SUPABASE_URL") or "").strip()
+    key = (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
     if not url or not key:
-        raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env")
+        raise RuntimeError(
+            f"SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set. "
+            f"url={'set' if url else 'MISSING'}, key={'set('+str(len(key))+' chars)' if key else 'MISSING'}"
+        )
+    # Debug: print first/last 6 chars of key so Render logs confirm the correct key is loaded
+    print(f"[storage] Supabase key: {key[:6]}...{key[-6:]} ({len(key)} chars)")
     return create_client(url, key)
 
 
