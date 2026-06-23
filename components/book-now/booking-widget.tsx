@@ -346,35 +346,77 @@ export function BookingWidget({
               { label: "Adults", value: adults, set: setAdults, min: 1, max: maxAdults },
               { label: "Children 0–5", value: children1, set: setChildren1, min: 0, max: Math.max(0, maxOccupancy - adults - children2) },
               { label: "Children 6–12", value: children2, set: setChildren2, min: 0, max: Math.max(0, maxOccupancy - adults - children1) },
-            ].map(({ label, value, set, min, max }) => (
-              <div key={label}>
-                <label className="mb-1 block font-body text-[11px] text-gray-400">{label}</label>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => set(Math.max(min, value - 1))}
-                    className="flex size-7 items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50"
-                  >
-                    &minus;
-                  </button>
-                  <span className="w-6 text-center font-body text-sm font-semibold">{value}</span>
-                  <button
-                    type="button"
-                    onClick={() => set(Math.min(max, value + 1))}
-                    className="flex size-7 items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50"
-                  >
-                    +
-                  </button>
+            ].map(({ label, value, set, min, max }) => {
+              const atMin = value <= min
+              const atMax = value >= max
+              return (
+                <div key={label}>
+                  <label className="mb-1 block font-body text-[11px] text-gray-400">{label}</label>
+                  <div className="flex items-center gap-1">
+                    {/* Minus button — fades out at minimum */}
+                    <button
+                      type="button"
+                      onClick={() => set(Math.max(min, value - 1))}
+                      disabled={atMin}
+                      className={`flex size-7 items-center justify-center rounded-md border font-medium transition-all ${
+                        atMin
+                          ? "cursor-not-allowed border-gray-100 text-gray-200"
+                          : "border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      &minus;
+                    </button>
+
+                    {/* Count — turns amber when at limit */}
+                    <span className={`w-6 text-center font-body text-sm font-bold transition-colors ${
+                      atMax && max > min ? "text-amber-500" : "text-gray-800"
+                    }`}>
+                      {value}
+                    </span>
+
+                    {/* Plus button — turns amber and locks at maximum */}
+                    <button
+                      type="button"
+                      onClick={() => set(Math.min(max, value + 1))}
+                      disabled={atMax}
+                      className={`flex size-7 items-center justify-center rounded-md border font-medium transition-all ${
+                        atMax
+                          ? "cursor-not-allowed border-amber-200 bg-amber-50 text-amber-300"
+                          : "border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      +
+                    </button>
+                  </div>
+                  {/* "Max" label under the counter when at limit */}
+                  {atMax && max > min && (
+                    <p className="mt-0.5 font-body text-[10px] font-semibold text-amber-500">Max</p>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
-          <p className="mt-1 font-body text-[10px] text-gray-400">
+
+          {/* Policy hint */}
+          <p className="mt-2 font-body text-[10px] text-gray-400">
             Children 0–5 stay free &middot; Children 6–12 pay R150/night
             {rawMaxAdults ? ` · Max ${maxAdults} adult${maxAdults === 1 ? "" : "s"}, ${maxOccupancy} total` : ""}
           </p>
+
+          {/* Real-time capacity warning — amber when full, red only on invalid submit */}
+          {totalGuests >= maxOccupancy && (
+            <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+              <AlertTriangle className="size-3.5 shrink-0 text-amber-500" />
+              <p className="font-body text-xs text-amber-700">
+                Room at full capacity &mdash; maximum {maxOccupancy} guest{maxOccupancy !== 1 ? "s" : ""}.
+              </p>
+            </div>
+          )}
           {occupancyError && (
-            <p className="mt-1 font-body text-xs font-medium text-red-500">{occupancyError}</p>
+            <div className="mt-2 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+              <AlertTriangle className="size-3.5 shrink-0 text-red-500" />
+              <p className="font-body text-xs text-red-600">{occupancyError}</p>
+            </div>
           )}
         </div>
 
