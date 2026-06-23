@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createSupabaseAnonClient } from "@/lib/supabase/client"
+import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { callAvailGrid } from "@/lib/nightsbridge-api"
 
 export const dynamic = "force-dynamic"
@@ -62,8 +63,33 @@ export async function GET(request: NextRequest) {
 
     if (cacheError) throw cacheError
 
-    // Cache hit — use it
+    // Staleness guard — if the last successful sync is > 21 min old, skip the cache
+    // and go straight to live NightsBridge so guests never see stale availability.
+    let cacheIsFresh = false
     if (cache?.length) {
+      try {
+        const admin = createSupabaseAdminClient()
+        const { data: lastSync } = await admin
+          .from("sync_run")
+          .select("finished_at")
+          .eq("ok", true)
+          .not("finished_at", "is", null)
+          .order("finished_at", { ascending: false })
+          .limit(1)
+          .single()
+
+        if (lastSync?.finished_at) {
+          const ageMs = Date.now() - new Date(lastSync.finished_at).getTime()
+          cacheIsFresh = ageMs < 21 * 60 * 1000
+        }
+      } catch {
+        // Can't determine staleness — treat cache as stale to be safe
+        cacheIsFresh = false
+      }
+    }
+
+    // Cache hit — only use it if the sync data is fresh
+    if (cache?.length && cacheIsFresh) {
       const rows: AvailabilityRow[] = cache.map((row) => {
         const room = roomById.get(row.bbroomid)
         return {
@@ -79,7 +105,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(rows)
     }
 
-    // Cache is empty/stale — call live NightsBridge API
+    // Cache is empty or stale — call live NightsBridge API
     const bbid = rooms[0]?.bbid
     if (bbid) {
       const gridRates = await callAvailGrid(bbid, from, to)

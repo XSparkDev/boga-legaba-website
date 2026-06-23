@@ -83,6 +83,9 @@ def _check_env() -> list[str]:
     return missing
 
 
+_STALE_MINUTES = 21  # If last sync is older than this, bypass cache — let NightsBridge decide
+
+
 def _check_room_availability(params: dict) -> dict:
     """
     Query Supabase availability_cache before running Playwright.
@@ -90,10 +93,13 @@ def _check_room_availability(params: dict) -> dict:
     Returns {"ok": False, "error": "..."} if fully booked.
     On any DB error, returns {"ok": True} so Playwright can still try — NightsBridge
     is the authoritative source; we only use this to fail fast and give a better UX.
+
+    If the last successful sync is older than _STALE_MINUTES, the cache is bypassed
+    entirely so that stale data never causes a false rejection or false approval.
     """
     try:
         from supabase import create_client
-        from datetime import date, timedelta
+        from datetime import date, datetime, timedelta, timezone
     except ImportError:
         return {"ok": True}  # supabase not installed — don't block
 
@@ -105,6 +111,39 @@ def _check_room_availability(params: dict) -> dict:
             return {"ok": True}
 
         sb = create_client(url, key)
+
+        # ── Staleness guard ────────────────────────────────────────────────────
+        # If the most recent successful sync is older than _STALE_MINUTES, the
+        # availability_cache cannot be trusted. Skip the pre-check and let
+        # NightsBridge be the sole gatekeeper.
+        try:
+            sync_resp = (
+                sb.table("sync_run")
+                .select("finished_at")
+                .eq("ok", True)
+                .not_.is_("finished_at", "null")
+                .order("finished_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            if not sync_resp.data:
+                print("[worker] No successful sync_run found — bypassing stale cache check")
+                return {"ok": True}
+
+            last_sync_str = sync_resp.data[0]["finished_at"]
+            last_sync = datetime.fromisoformat(last_sync_str.replace("Z", "+00:00"))
+            age_minutes = (datetime.now(timezone.utc) - last_sync).total_seconds() / 60
+            if age_minutes > _STALE_MINUTES:
+                print(
+                    f"[worker] Availability cache is {age_minutes:.1f} min old "
+                    f"(> {_STALE_MINUTES} min threshold). "
+                    "Bypassing pre-check — NightsBridge will be the gatekeeper."
+                )
+                return {"ok": True}
+        except Exception as stale_exc:
+            print(f"[worker] Staleness check error (non-blocking): {stale_exc}", file=sys.stderr)
+            return {"ok": True}
+
         room_type_name = params.get("roomTypeName", "")
         checkin = params.get("checkin", "")
         checkout = params.get("checkout", "")
