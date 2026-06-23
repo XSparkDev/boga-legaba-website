@@ -48,13 +48,49 @@ def _authorized(header: str | None) -> bool:
     return header == expected
 
 
-def _run_sync() -> tuple[int, str]:
+def _build_env() -> dict:
+    """Return a copy of os.environ with all required aliases resolved."""
     env = os.environ.copy()
-    if not env.get("SUPABASE_URL") and env.get("NEXT_PUBLIC_SUPABASE_URL"):
-        env["SUPABASE_URL"] = env["NEXT_PUBLIC_SUPABASE_URL"].replace("/rest/v1/", "").rstrip("/")
+
+    # SUPABASE_URL — accept NEXT_PUBLIC_SUPABASE_URL as alias
+    if not env.get("SUPABASE_URL"):
+        raw = env.get("NEXT_PUBLIC_SUPABASE_URL", "")
+        if raw:
+            env["SUPABASE_URL"] = raw.replace("/rest/v1/", "").rstrip("/")
+
+    # SUPABASE_SERVICE_ROLE_KEY — if missing, try common alternate names
+    if not env.get("SUPABASE_SERVICE_ROLE_KEY"):
+        for alias in ("SUPABASE_KEY", "SUPABASE_ANON_KEY", "NEXT_PUBLIC_SUPABASE_ANON_KEY"):
+            if env.get(alias):
+                env["SUPABASE_SERVICE_ROLE_KEY"] = env[alias]
+                print(f"[worker] WARNING: Using {alias} as SUPABASE_SERVICE_ROLE_KEY fallback. "
+                      "Set SUPABASE_SERVICE_ROLE_KEY directly on Render for proper permissions.")
+                break
+
     env.setdefault("HEADLESS", "true")
     env["PYTHONUNBUFFERED"] = "1"
+    return env
 
+
+def _check_env() -> list[str]:
+    """Return list of missing required env var names (using resolved aliases)."""
+    env = _build_env()
+    missing = []
+    for var in ("SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "CRON_SECRET",
+                "SITE_USER", "SITE_PASS"):
+        if not env.get(var):
+            missing.append(var)
+    return missing
+
+
+def _run_sync() -> tuple[int, str]:
+    missing = _check_env()
+    if missing:
+        msg = f"Missing required env vars: {', '.join(missing)}. Set them in the Render dashboard."
+        print(f"[worker] ERROR: {msg}", file=sys.stderr)
+        return 1, msg
+
+    env = _build_env()
     proc = subprocess.run(
         [sys.executable, "main.py"],
         cwd=str(SCRAPER_DIR),
@@ -82,6 +118,17 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         if self.path in ("/", "/health"):
             self._json(200, {"ok": True, "service": "boga-nb-sync-worker"})
+            return
+        if self.path == "/env-status":
+            missing = _check_env()
+            self._json(
+                200 if not missing else 503,
+                {
+                    "ok": not missing,
+                    "missing": missing,
+                    "message": "All env vars set" if not missing else f"Missing: {', '.join(missing)}",
+                },
+            )
             return
         self._json(404, {"ok": False, "error": "not found"})
 
@@ -118,6 +165,18 @@ def main() -> None:
     if not SCRAPER_DIR.is_dir():
         print(f"Scraper not found at {SCRAPER_DIR}", file=sys.stderr)
         sys.exit(1)
+
+    # Warn on startup about any missing vars so they appear in Render deploy logs
+    missing = _check_env()
+    if missing:
+        print(
+            f"[worker] ⚠️  MISSING ENV VARS: {', '.join(missing)}\n"
+            "         Syncs will fail until these are set in the Render dashboard:\n"
+            "         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, CRON_SECRET, SITE_USER, SITE_PASS",
+            file=sys.stderr,
+        )
+    else:
+        print("[worker] ✓ All required env vars present")
 
     port = int(os.environ.get("PORT", "8080"))
     server = HTTPServer(("0.0.0.0", port), Handler)
