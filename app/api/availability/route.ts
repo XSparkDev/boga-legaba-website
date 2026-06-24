@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createSupabaseAnonClient } from "@/lib/supabase/client"
+import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { callAvailGridNightly } from "@/lib/nightsbridge-api"
 
 export const dynamic = "force-dynamic"
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createSupabaseAnonClient()
+    const supabase = createSupabaseAdminClient()
 
     // Include bbrtid so we can match NightsBridge availability by room type ID
     let roomQuery = supabase
