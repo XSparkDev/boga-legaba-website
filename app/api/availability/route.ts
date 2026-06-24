@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createSupabaseAnonClient } from "@/lib/supabase/client"
-import { createSupabaseAdminClient } from "@/lib/supabase/admin"
-import { callAvailGrid } from "@/lib/nightsbridge-api"
+import { callAvailGridNightly } from "@/lib/nightsbridge-api"
 
 export const dynamic = "force-dynamic"
 
@@ -63,33 +62,11 @@ export async function GET(request: NextRequest) {
 
     if (cacheError) throw cacheError
 
-    // Staleness guard — if the last successful sync is > 21 min old, skip the cache
-    // and go straight to live NightsBridge so guests never see stale availability.
-    let cacheIsFresh = false
+    // Always prefer the cache — it has per-physical-room accuracy from BookingCalendarRQ.
+    // callAvailGrid only returns per-room-TYPE data (noroomsfree > 0 means some room is free,
+    // not that THIS specific room is free), which causes false positives when one room in a
+    // multi-room type is booked but others aren't.
     if (cache?.length) {
-      try {
-        const admin = createSupabaseAdminClient()
-        const { data: lastSync } = await admin
-          .from("sync_run")
-          .select("finished_at")
-          .eq("ok", true)
-          .not("finished_at", "is", null)
-          .order("finished_at", { ascending: false })
-          .limit(1)
-          .single()
-
-        if (lastSync?.finished_at) {
-          const ageMs = Date.now() - new Date(lastSync.finished_at).getTime()
-          cacheIsFresh = ageMs < 21 * 60 * 1000
-        }
-      } catch {
-        // Can't determine staleness — treat cache as stale to be safe
-        cacheIsFresh = false
-      }
-    }
-
-    // Cache hit — only use it if the sync data is fresh
-    if (cache?.length && cacheIsFresh) {
       const rows: AvailabilityRow[] = cache.map((row) => {
         const room = roomById.get(row.bbroomid)
         return {
@@ -105,31 +82,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(rows)
     }
 
-    // Cache is empty or stale — call live NightsBridge API
+    // No cache at all (e.g. fresh deployment before first sync) — fall back to live
+    // NightsBridge with per-night queries so each calendar cell is checked independently.
     const bbid = rooms[0]?.bbid
     if (bbid) {
-      const gridRates = await callAvailGrid(bbid, from, to)
-      if (gridRates?.length) {
-        const nights = generateNights(from, to)
-        // Build a map from NightsBridge rtid → availability (reliable numeric match)
-        const rateByRtid = new Map(
-          gridRates.filter((r) => r.rtid != null).map((r) => [r.rtid as number, r]),
-        )
+      const nights = generateNights(from, to)
+      const nightlyMap = await callAvailGridNightly(bbid, from, to)
 
+      if (nightlyMap?.size) {
         const rows: AvailabilityRow[] = []
         for (const room of rooms) {
-          const rate = room.bbrtid ? rateByRtid.get(room.bbrtid) : undefined
-          // If NightsBridge doesn't know this room type, show as available
-          const isAvailable = rate ? rate.available : true
-
           for (const night of nights) {
+            const rtAvail = nightlyMap.get(night)
+            const hasFreeRooms = room.bbrtid != null
+              ? (rtAvail?.get(room.bbrtid) ?? true)
+              : true
             rows.push({
               room_name: room.room_name,
               property_name: (room.property_name as string | null) ?? null,
               check_date: night,
-              is_available: isAvailable,
-              rate: rate?.rateSingle ?? null,
-              status: isAvailable ? "available" : "unavailable",
+              is_available: hasFreeRooms,
+              rate: null,
+              status: hasFreeRooms ? "available" : "unavailable",
               booking_ref: null,
             })
           }

@@ -243,6 +243,159 @@ export async function callAvailGrid(
 }
 
 // ---------------------------------------------------------------------------
+// LIVE BOOKING GATE: real-time, uncached availability check by room-type name
+// ---------------------------------------------------------------------------
+
+export type LiveAvailability =
+  | { status: "available" }
+  | { status: "unavailable" }
+  | { status: "unknown" } // NB unreachable / room type not listed — let Playwright decide
+
+/**
+ * Real-time availability gate used right before a booking is placed.
+ *
+ * Unlike callAvailGrid this NEVER reads the in-memory cache — a booking decision
+ * must reflect NightsBridge's state *right now*, not what it was up to 10 min ago.
+ *
+ * Returns:
+ *   "available"   — at least one room of the type is free for EVERY stay night
+ *   "unavailable" — NB lists the type but it is sold out on ≥1 night → block booking
+ *   "unknown"     — NB unreachable or doesn't list the type → don't block (Playwright
+ *                   + NightsBridge remain the authoritative final gatekeeper)
+ */
+export async function checkRoomTypeAvailableLive(
+  bbid: number,
+  roomTypeName: string,
+  arrive: string,
+  depart: string,
+): Promise<LiveAvailability> {
+  const nights = stayNightCount(arrive, depart)
+  try {
+    const res = await fetch("https://www.nightsbridge.com/bridge/api/5.0/availgrid", {
+      method: "POST",
+      headers: NB_HEADERS,
+      body: JSON.stringify({
+        bbid,
+        nbid: 0,
+        extbbid: "",
+        clientloginkey: null,
+        startdate: arrive,
+        enddate: depart,
+        bbrtid: 0,
+        rtgroupid: 0,
+        nightsbridge: true,
+        showroomcount: false,
+        showrates: false,
+        showextras: false,
+      }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    })
+
+    if (!res.ok) return { status: "unknown" }
+    const json = (await res.json()) as AvailGridResponse
+    if (!json.success || !json.data?.roomtypes?.length) return { status: "unknown" }
+
+    const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase()
+    const target = norm(roomTypeName)
+    const rt = json.data.roomtypes.find(
+      (r) => norm(r.rtname) === target || norm(r.rtname).includes(target) || target.includes(norm(r.rtname)),
+    )
+
+    // NB doesn't list this type for these dates — can't make a confident call.
+    if (!rt) return { status: "unknown" }
+
+    const stayNights = (rt.availability ?? []).slice(0, nights)
+    if (!stayNights.length) return { status: "unknown" }
+
+    const everyNightFree = stayNights.every((n) => {
+      if (typeof n.roomsfree === "boolean") return n.roomsfree
+      return (n.noroomsfree ?? 0) > 0 && !n.closeoutrs?.closedout
+    })
+
+    return { status: everyNightFree ? "available" : "unavailable" }
+  } catch {
+    return { status: "unknown" }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// NIGHTLY: per-date availability map for calendar display
+// ---------------------------------------------------------------------------
+
+/**
+ * One API call to /availgrid, indexed per night.
+ * Unlike callAvailGrid (which collapses to a single available:boolean for the
+ * whole stay), this returns a Map<date, Map<rtid, hasFreeRooms>> so the
+ * availability route can check each calendar cell independently.
+ *
+ * NOTE: hasFreeRooms = (noroomsfree > 0) for the room TYPE, not a specific
+ * physical room. If 1 of 3 rooms is booked, hasFreeRooms is still true.
+ * Per-physical-room accuracy requires the availability_cache (from full sync).
+ */
+export async function callAvailGridNightly(
+  bbid: number,
+  from: string,
+  to: string,
+): Promise<Map<string, Map<number, boolean>> | null> {
+  try {
+    const res = await fetch("https://www.nightsbridge.com/bridge/api/5.0/availgrid", {
+      method: "POST",
+      headers: NB_HEADERS,
+      body: JSON.stringify({
+        bbid,
+        nbid: 0,
+        extbbid: "",
+        clientloginkey: null,
+        startdate: from,
+        enddate: to,
+        bbrtid: 0,
+        rtgroupid: 0,
+        nightsbridge: true,
+        showroomcount: false,
+        showrates: false,
+        showextras: false,
+      }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    })
+
+    if (!res.ok) return null
+    const json = (await res.json()) as AvailGridResponse
+    if (!json.success || !json.data?.roomtypes?.length) return null
+
+    // Build ordered stay-night dates (same logic as generateNights in the route)
+    const dates: string[] = []
+    const cur = new Date(`${from}T12:00:00Z`)
+    const end = new Date(`${to}T12:00:00Z`)
+    while (cur < end) {
+      dates.push(cur.toISOString().slice(0, 10))
+      cur.setDate(cur.getDate() + 1)
+    }
+
+    const nightlyMap = new Map<string, Map<number, boolean>>()
+    for (const d of dates) nightlyMap.set(d, new Map())
+
+    for (const rt of json.data.roomtypes) {
+      const avail = rt.availability ?? []
+      dates.forEach((d, i) => {
+        const entry = avail[i]
+        if (!entry) return
+        const free =
+          typeof entry.roomsfree === "boolean"
+            ? entry.roomsfree
+            : (entry.noroomsfree ?? 0) > 0 && !entry.closeoutrs?.closedout
+        nightlyMap.get(d)?.set(rt.rtid, free)
+      })
+    }
+
+    return nightlyMap
+  } catch {
+    return null
+  }
+}
+
+// ---------------------------------------------------------------------------
 // FALLBACK: availability endpoint
 // ---------------------------------------------------------------------------
 

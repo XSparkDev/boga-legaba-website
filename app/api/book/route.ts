@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
+import { checkRoomTypeAvailableLive } from "@/lib/nightsbridge-api"
 
 export const maxDuration = 90
+
+const NB_BBID = 21091
 
 const REQUIRED = [
   "checkin", "checkout", "roomTypeName", "mealPlanName",
@@ -20,6 +23,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { ok: false, error: `Missing fields: ${missing.join(", ")}` },
       { status: 400 },
+    )
+  }
+
+  // ── Real-time availability gate ──────────────────────────────────────────
+  // Ask NightsBridge directly, right now (no cache), whether a room of this type
+  // is actually free for these exact dates. This catches the case where the
+  // browsed calendar was slightly stale and the room was taken in the meantime —
+  // so the guest gets a clean message instead of a failed booking at the very end.
+  // "unknown" (NB unreachable) does NOT block: Playwright + NightsBridge remain the
+  // authoritative final gatekeeper and will reject a genuinely unavailable room.
+  const bbid = typeof body.bbid === "number" ? body.bbid : NB_BBID
+  const live = await checkRoomTypeAvailableLive(
+    bbid,
+    String(body.roomTypeName),
+    String(body.checkin),
+    String(body.checkout),
+  )
+  if (live.status === "unavailable") {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `Sorry — ${body.roomTypeName} was just taken for ${body.checkin} to ${body.checkout}. Please choose different dates or another room.`,
+      },
+      { status: 409 },
     )
   }
 
