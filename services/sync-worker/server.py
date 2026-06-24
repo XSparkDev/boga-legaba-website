@@ -266,6 +266,10 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_book()
             return
 
+        if self.path == "/manage-booking":
+            self._handle_manage_booking()
+            return
+
         if self.path not in ("/run", "/"):
             self._json(404, {"ok": False, "error": "not found"})
             return
@@ -341,6 +345,55 @@ class Handler(BaseHTTPRequestHandler):
             self._json(500, {"ok": False, "error": proc.stderr or "Booking failed"})
         except subprocess.TimeoutExpired:
             self._json(504, {"ok": False, "error": "Booking timed out after 120 s"})
+        except Exception as exc:
+            self._json(500, {"ok": False, "error": str(exc)})
+
+
+    def _handle_manage_booking(self) -> None:
+        if not _authorized(self.headers.get("Authorization")):
+            self._json(401, {"ok": False, "error": "unauthorized"})
+            return
+
+        body = self._read_body()
+        try:
+            params = json.loads(body)
+        except (json.JSONDecodeError, ValueError):
+            self._json(400, {"ok": False, "error": "invalid JSON body"})
+            return
+
+        booking_ref = params.get("bookingRef")
+        action = params.get("action")
+
+        if not booking_ref or action not in ("checkin", "checkout"):
+            self._json(400, {"ok": False, "error": "bookingRef and action (checkin|checkout) required"})
+            return
+
+        manage_script = SCRAPER_DIR / "manage_booking.py"
+        if not manage_script.exists():
+            self._json(503, {"ok": False, "error": "manage_booking.py not found in scraper"})
+            return
+
+        try:
+            proc = subprocess.run(
+                [sys.executable, str(manage_script),
+                 "--booking-ref", str(booking_ref),
+                 "--action", action],
+                capture_output=True,
+                text=True,
+                timeout=120,
+                env=_build_env(),
+            )
+            stdout = proc.stdout.strip()
+            if stdout:
+                try:
+                    result = json.loads(stdout)
+                    self._json(200 if result.get("ok") else 500, result)
+                    return
+                except json.JSONDecodeError:
+                    pass
+            self._json(500, {"ok": False, "error": proc.stderr or "Action failed"})
+        except subprocess.TimeoutExpired:
+            self._json(504, {"ok": False, "error": "Action timed out after 120 s"})
         except Exception as exc:
             self._json(500, {"ok": False, "error": str(exc)})
 

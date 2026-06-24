@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import Link from "next/link"
 import {
   Building2,
   BedDouble,
@@ -23,6 +24,7 @@ import {
   Shield,
   CreditCard,
   ArrowUpRight,
+  CalendarDays,
 } from "lucide-react"
 import {
   fetchEstablishment,
@@ -244,6 +246,13 @@ export default async function AdminDashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              href="/admin/bookings"
+              className="flex items-center gap-1.5 rounded-lg border border-[#b8973a]/40 bg-[#b8973a]/10 px-3 py-1.5 font-mono text-[11px] text-[#b8973a] hover:bg-[#b8973a]/20 transition-colors"
+            >
+              <CalendarDays className="size-3.5" />
+              Bookings
+            </Link>
             <a
               href={NB_DASHBOARD}
               target="_blank"
