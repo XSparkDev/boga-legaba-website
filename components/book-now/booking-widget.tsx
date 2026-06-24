@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { CheckCircle2, Loader2, AlertTriangle, ArrowRight, X, ExternalLink } from "lucide-react"
+import { CheckCircle2, Loader2, AlertTriangle, ArrowRight, X } from "lucide-react"
 import type { MealPlanRate } from "@/lib/nightsbridge-rates"
 
 // ---------------------------------------------------------------------------
@@ -21,8 +21,7 @@ interface BookingWidgetProps {
   maxOccupancy?: number | null
 }
 
-type Step = "idle" | "form" | "submitting" | "success" | "redirected" | "error"
-type PaymentMethod = "bank_transfer" | "credit_card"
+type Step = "idle" | "form" | "submitting" | "success" | "error"
 
 const MEAL_PLAN_ORDER = [5, 1, 3] // Room Only, B&B, DBB
 const MEAL_ICONS: Record<number, string> = { 1: "🍳", 3: "🍽️", 5: "🛏️" }
@@ -75,7 +74,6 @@ export function BookingWidget({
   const [airline, setAirline] = useState("")
   const [flightno, setFlightno] = useState("")
   const [notes, setNotes] = useState("")
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank_transfer")
   const [emailMismatch, setEmailMismatch] = useState(false)
   const [occupancyError, setOccupancyError] = useState("")
 
@@ -107,14 +105,6 @@ export function BookingWidget({
     }
     setEmailMismatch(false)
 
-    // Credit card requires 3D Secure — cannot be automated.
-    // Send the guest directly to NightsBridge to complete card payment securely.
-    if (paymentMethod === "credit_card") {
-      window.open(nbUrl, "_blank", "noopener,noreferrer")
-      setStep("redirected")
-      return
-    }
-
     setStep("submitting")
 
     try {
@@ -137,7 +127,7 @@ export function BookingWidget({
           airline,
           flightno,
           notes,
-          paymentMethod,
+          paymentMethod: "bank_transfer",
           maxAdults,
           maxOccupancy,
         }),
@@ -191,41 +181,6 @@ export function BookingWidget({
   }
 
   // ── Credit card redirect ──────────────────────────────────────────────────
-  if (step === "redirected") {
-    return (
-      <div className="rounded-xl border border-blue-200 bg-blue-50 p-6">
-        <div className="flex items-start gap-3">
-          <ExternalLink className="mt-0.5 size-5 shrink-0 text-blue-500" />
-          <div>
-            <p className="font-body font-semibold text-blue-900">NightsBridge opened in a new tab</p>
-            <p className="mt-1 text-sm text-blue-700">
-              Please select <strong>{roomTypeName}</strong> with{" "}
-              <strong>{selectedPlan?.description}</strong> and complete your credit card payment
-              there. Your dates ({arrive} &rarr; {depart}) are pre-filled.
-            </p>
-          </div>
-        </div>
-        <div className="mt-4 flex gap-2">
-          <a
-            href={nbUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:brightness-105"
-          >
-            Open NightsBridge again
-            <ExternalLink className="size-3.5" />
-          </a>
-          <button
-            onClick={() => setStep("form")}
-            className="rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
-          >
-            Go back
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   // ── Error ─────────────────────────────────────────────────────────────────
   if (step === "error") {
     return (
@@ -537,50 +492,23 @@ export function BookingWidget({
           <p className="mb-2 font-body text-xs font-semibold uppercase tracking-wide text-gray-500">
             Payment method
           </p>
-          <div className="space-y-2">
-            <label
-              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                paymentMethod === "bank_transfer"
-                  ? "border-[#b8973a] bg-[#fdf8ef]"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <input
-                type="radio"
-                name="paymentMethod"
-                checked={paymentMethod === "bank_transfer"}
-                onChange={() => setPaymentMethod("bank_transfer")}
-                className="mt-0.5 accent-[#b8973a]"
-              />
-              <div>
-                <span className="font-body text-sm text-gray-800">Bank Transfer (EFT)</span>
-                <p className="font-body text-[11px] text-gray-400">
-                  Banking details will be emailed after confirmation. Booking is secured immediately.
-                </p>
-              </div>
-            </label>
-            <label
-              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                paymentMethod === "credit_card"
-                  ? "border-[#b8973a] bg-[#fdf8ef]"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <input
-                type="radio"
-                name="paymentMethod"
-                checked={paymentMethod === "credit_card"}
-                onChange={() => setPaymentMethod("credit_card")}
-                className="mt-0.5 accent-[#b8973a]"
-              />
-              <div>
-                <span className="font-body text-sm text-gray-800">Credit Card</span>
-                <p className="font-body text-[11px] text-gray-400">
-                  You will be taken to NightsBridge&apos;s secure payment page to enter your card details.
-                </p>
-              </div>
-            </label>
+          <div className="rounded-lg border border-[#b8973a] bg-[#fdf8ef] p-3">
+            <span className="font-body text-sm text-gray-800">Bank Transfer (EFT)</span>
+            <p className="mt-0.5 font-body text-[11px] text-gray-400">
+              Banking details will be emailed after confirmation. Booking is secured immediately.
+            </p>
           </div>
+          <p className="mt-2 font-body text-[11px] text-gray-400">
+            Prefer to pay by card?{" "}
+            <a
+              href={nbUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#b8973a] underline underline-offset-2 hover:brightness-75"
+            >
+              Book directly on NightsBridge →
+            </a>
+          </p>
         </div>
 
         {/* T&Cs */}
@@ -599,29 +527,15 @@ export function BookingWidget({
           </span>
         </label>
 
-        {/* Submit — credit card bypasses HTML5 validation (guest fills details on NightsBridge) */}
-        {paymentMethod === "credit_card" ? (
-          <button
-            type="button"
-            onClick={() => {
-              window.open(nbUrl, "_blank", "noopener,noreferrer")
-              setStep("redirected")
-            }}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b8973a] px-6 py-3.5 font-body text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:translate-y-0"
-          >
-            Continue to Payment
-            <ExternalLink className="size-4" />
-          </button>
-        ) : (
-          <button
-            type="submit"
-            disabled={!selectedPlan}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b8973a] px-6 py-3.5 font-body text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Confirm Booking
-            <ArrowRight className="size-4" />
-          </button>
-        )}
+        {/* Submit */}
+        <button
+          type="submit"
+          disabled={!selectedPlan}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b8973a] px-6 py-3.5 font-body text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Confirm Booking
+          <ArrowRight className="size-4" />
+        </button>
       </form>
     </div>
   )
