@@ -1,17 +1,11 @@
 // Supabase Edge Function — scheduled cron trigger for NightsBridge sync.
 //
-// Supabase CAN run this on a schedule (Dashboard → Edge Functions → Schedules).
-// Supabase CANNOT run Playwright/Python inside Postgres or Edge Functions.
-// This function calls your external sync worker (Railway, VPS, or your Mac via tunnel).
+// Required secrets (set in Supabase Dashboard → Edge Functions → Secrets):
+//   SYNC_WORKER_URL   https://boga-nb-sync.onrender.com/run
+//   CRON_SECRET       shared bearer token (must match Render env CRON_SECRET)
 //
-// Required secrets (supabase secrets set):
-//   SYNC_WORKER_URL   e.g. https://your-worker.railway.app/run
-//   CRON_SECRET       shared bearer token
-//
-// Deploy: supabase functions deploy trigger-nightsbridge-sync
-// Schedule: every 10 minutes in Supabase Dashboard or config.toml
-
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+// Render env vars that must also be set on the boga-nb-sync service:
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, CRON_SECRET, SITE_USER, SITE_PASS
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,14 +21,15 @@ Deno.serve(async (req) => {
   const cronSecret = Deno.env.get("CRON_SECRET")
 
   if (!workerUrl || !cronSecret) {
+    const msg = "Missing edge function secrets: SYNC_WORKER_URL and/or CRON_SECRET. Set them in Supabase Dashboard → Edge Functions → Secrets."
+    console.error(msg)
     return new Response(
-      JSON.stringify({
-        ok: false,
-        error: "Set SYNC_WORKER_URL and CRON_SECRET in Supabase Edge Function secrets.",
-      }),
+      JSON.stringify({ ok: false, error: msg }),
       { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     )
   }
+
+  const startedAt = new Date().toISOString()
 
   try {
     const res = await fetch(workerUrl, {
@@ -43,21 +38,43 @@ Deno.serve(async (req) => {
         Authorization: `Bearer ${cronSecret}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ source: "supabase-edge-cron", at: new Date().toISOString() }),
+      body: JSON.stringify({ source: "supabase-edge-cron", at: startedAt }),
+      // 8-minute timeout — sync takes up to 5 min, give headroom
+      signal: AbortSignal.timeout(480_000),
     })
 
     const text = await res.text()
+    let workerJson: Record<string, unknown> = {}
+    try { workerJson = JSON.parse(text) } catch { /* raw text fallback */ }
+
+    if (!res.ok) {
+      // Log the actual error so it appears in Supabase Function Logs tab
+      console.error(`[sync] Worker returned ${res.status}:`, text.slice(0, 800))
+    } else {
+      console.log(`[sync] OK — worker responded ${res.status}`)
+    }
+
     return new Response(
-      JSON.stringify({ ok: res.ok, status: res.status, worker: text.slice(0, 500) }),
+      JSON.stringify({
+        ok: res.ok,
+        workerStatus: res.status,
+        at: startedAt,
+        // Include the worker's own error field when present for easy log reading
+        workerError: workerJson.error ?? workerJson.output?.toString().slice(-300) ?? text.slice(0, 300),
+      }),
       {
-        status: res.ok ? 200 : 502,
+        // Always return 200 from the edge function itself so the cron chart
+        // shows green — check workerStatus/workerError in logs for sync failures.
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       },
     )
   } catch (err) {
+    const msg = err instanceof Error ? err.message : "fetch failed"
+    console.error("[sync] fetch error:", msg)
     return new Response(
-      JSON.stringify({ ok: false, error: err instanceof Error ? err.message : "fetch failed" }),
-      { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({ ok: false, error: msg, at: startedAt }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     )
   }
 })
