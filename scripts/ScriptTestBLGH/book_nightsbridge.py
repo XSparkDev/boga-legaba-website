@@ -162,10 +162,11 @@ def book_room(params: dict) -> dict:
                     "error": "NightsBridge indicated no availability for these dates. " + page_text[:300],
                 }
 
+            confirmation = _parse_confirmation(page)
             return {
                 "ok": True,
                 "bookingRef": booking_ref,
-                "confirmationText": page_text[:1500],
+                "confirmation": confirmation,
             }
 
         except Exception as exc:
@@ -430,6 +431,74 @@ def _submit_booking(page) -> str:
         }"""
     )
     return result or ""
+
+
+def _parse_confirmation(page) -> dict:
+    """
+    Extract structured booking confirmation fields from the NightsBridge
+    confirmation page. Uses DOM table rows first, regex on raw text as fallback.
+    Returns an empty dict on any failure — callers treat it as optional.
+    """
+    try:
+        return page.evaluate(r"""() => {
+            const text = document.body.innerText;
+
+            // Approach 1: pull label→value from <tr> cells
+            const rows = {};
+            document.querySelectorAll('tr').forEach(tr => {
+                const cells = [...tr.querySelectorAll('td, th')];
+                if (cells.length >= 2) {
+                    const k = cells[0].innerText.trim().replace(/[:\s]+$/, '').toLowerCase();
+                    const v = cells[1].innerText.trim();
+                    if (k && v && k.length < 60) rows[k] = v;
+                }
+            });
+
+            // Fuzzy key lookup with regex fallback
+            const norm = s => s.replace(/[\s.()\/]+/g, '').toLowerCase();
+            const G = (keys, pat) => {
+                for (const k of keys) {
+                    for (const [label, val] of Object.entries(rows)) {
+                        if (norm(label).includes(norm(k))) return val;
+                    }
+                }
+                if (pat) { const m = text.match(pat); if (m) return m[1].trim(); }
+                return '';
+            };
+
+            // Property name from first sensible heading
+            let propertyName = '';
+            for (const el of document.querySelectorAll('h1,h2,h3')) {
+                const t = el.innerText.trim();
+                if (t && t.length > 5 && t.length < 120 && !/^(thank|your booking|we look)/i.test(t)) {
+                    propertyName = t;
+                    break;
+                }
+            }
+
+            const payM = text.match(/(The property will[^\n.]+\.)/i);
+
+            return {
+                bookingId:   G(['bookingid', 'booking id', 'booking number'], /Booking\s*ID\s*(\d+)/i),
+                propertyName,
+                arrival:     G(['arrival'], /Arrival\s*([A-Za-z][^\n]{3,40})/i),
+                leaving:     G(['leaving', 'depart'], /Leaving[:\s]*([A-Za-z][^\n]{3,40})/i),
+                nights:      G(['no nights', 'nights', 'number of nights'], /No\.?\s*Nights\s*(\d+)/i),
+                rooms:       G(['roomunit', 'room/unit', 'room'], /Room\/Unit\(s\)\s*([^\n]+)/i),
+                total:       G(['total'], /\bTotal\s*(R[\d\s,.]+)/i),
+                deposit:     G(['deposit'], /\bDeposit\s*(R[\d\s,.]+)/i),
+                paymentNote: payM ? payM[1].trim() : 'The property will contact you directly with details on making payment.',
+                contacts:    G(['contacts', 'contact'], /\bContacts?\s*([^\n]+)/i),
+                phone:       G(['phone no', 'phone', 'telephone'], /Phone\s*No\.?\s*([^\n]+)/i),
+                cell:        G(['cell no', 'cell', 'mobile'], /Cell\s*No\.?\s*([^\n]+)/i),
+                email:       G(['email'], /\bEmail\s*([\w.+\-]+@[\w.\-]+)/i),
+                website:     G(['website'], /Website\s*([\w.\/-]+)/i),
+                address:     G(['address'], /\bAddress\s*([^\n]+)/i),
+                directions:  G(['directions'], /Directions\s*([\s\S]+?)(?=\nEnjoy your stay|\n*$)/i),
+            };
+        }""")
+    except Exception:
+        return {}
 
 
 def _extract_booking_ref(text: str) -> str | None:

@@ -23,6 +23,25 @@ interface BookingWidgetProps {
 
 type Step = "idle" | "form" | "submitting" | "success" | "error"
 
+interface ConfirmationData {
+  bookingId?: string
+  propertyName?: string
+  arrival?: string
+  leaving?: string
+  nights?: string
+  rooms?: string
+  total?: string
+  deposit?: string
+  paymentNote?: string
+  contacts?: string
+  phone?: string
+  cell?: string
+  email?: string
+  website?: string
+  address?: string
+  directions?: string
+}
+
 const MEAL_PLAN_ORDER = [5, 1, 3] // Room Only, B&B, DBB
 const MEAL_ICONS: Record<number, string> = { 1: "🍳", 3: "🍽️", 5: "🛏️" }
 
@@ -59,6 +78,7 @@ export function BookingWidget({
   const [step, setStep] = useState<Step>("idle")
   const [selectedPlan, setSelectedPlan] = useState<MealPlanRate | null>(sorted[0] ?? null)
   const [bookingRef, setBookingRef] = useState<string | null>(null)
+  const [confirmation, setConfirmation] = useState<ConfirmationData | null>(null)
   const [errorMsg, setErrorMsg] = useState("")
 
   // Form fields — every field NightsBridge collects
@@ -137,11 +157,12 @@ export function BookingWidget({
         ok: boolean
         bookingRef?: string
         error?: string
-        confirmationText?: string
+        confirmation?: ConfirmationData
       }
 
       if (data.ok) {
         setBookingRef(data.bookingRef ?? null)
+        setConfirmation(data.confirmation ?? null)
         setStep("success")
       } else {
         setErrorMsg(data.error ?? "Booking failed. Please try WhatsApp or call us.")
@@ -157,25 +178,104 @@ export function BookingWidget({
 
   // ── Success ──────────────────────────────────────────────────────────────
   if (step === "success") {
+    const details = [
+      { label: "Booking ID", value: confirmation?.bookingId || bookingRef },
+      { label: "Arrival",    value: confirmation?.arrival },
+      { label: "Leaving",    value: confirmation?.leaving },
+      { label: "Nights",     value: confirmation?.nights },
+      { label: "Room",       value: confirmation?.rooms },
+      { label: "Total",      value: confirmation?.total },
+      { label: "Deposit",    value: confirmation?.deposit },
+    ].filter((r) => r.value)
+
     return (
-      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
-        <CheckCircle2 className="mx-auto mb-3 size-10 text-emerald-500" />
-        <h3 className="mb-1 font-serif text-xl font-bold text-emerald-900">Booking Confirmed!</h3>
-        {bookingRef && (
-          <p className="mb-2 font-mono text-sm font-semibold text-emerald-700">
-            Reference: {bookingRef}
-          </p>
+      <div className="overflow-hidden rounded-xl border border-emerald-200 bg-white shadow-sm">
+        {/* Header */}
+        <div className="bg-emerald-500 px-6 py-5 text-center text-white">
+          <CheckCircle2 className="mx-auto mb-2 size-8" />
+          <h3 className="font-serif text-xl font-bold">Your booking is confirmed!</h3>
+          <p className="mt-1 font-body text-sm text-emerald-100">We look forward to seeing you!</p>
+        </div>
+
+        {/* Property name */}
+        {confirmation?.propertyName && (
+          <div className="border-b border-gray-100 px-6 py-3 text-center">
+            <p className="font-body text-sm font-semibold text-gray-800">{confirmation.propertyName}</p>
+          </div>
         )}
-        <p className="text-sm text-emerald-700">
-          A confirmation will be sent to <strong>{email}</strong>.
-        </p>
-        <p className="mt-2 text-xs text-emerald-600">
-          Banking details for your EFT payment will be included in the confirmation email.
-        </p>
-        <p className="mt-3 text-xs text-emerald-500">
-          {roomTypeName} &middot; {arrive} &rarr; {depart}
-          {selectedPlan ? ` · ${selectedPlan.description}` : ""}
-        </p>
+
+        {/* Booking details */}
+        {details.length > 0 && (
+          <div className="px-6 py-4">
+            {details.map((row) => (
+              <div key={row.label} className="flex gap-4 border-b border-gray-50 py-2 last:border-0">
+                <span className="w-20 shrink-0 pt-0.5 font-body text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                  {row.label}
+                </span>
+                <span className="font-body text-sm text-gray-900">{row.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Payment note */}
+        <div className="mx-6 mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="font-body text-xs text-amber-800">
+            {confirmation?.paymentNote ||
+              "The property will contact you directly with details on making payment."}
+          </p>
+        </div>
+
+        {/* Contact */}
+        {(confirmation?.contacts || confirmation?.phone || confirmation?.cell || confirmation?.email) && (
+          <div className="border-t border-gray-100 px-6 py-4">
+            <p className="mb-2 font-body text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+              Contacts
+            </p>
+            {confirmation?.contacts && (
+              <p className="font-body text-sm font-medium text-gray-900">{confirmation.contacts}</p>
+            )}
+            {confirmation?.phone && (
+              <p className="font-body text-xs text-gray-600">{confirmation.phone}</p>
+            )}
+            {confirmation?.cell && (
+              <p className="font-body text-xs text-gray-600">{confirmation.cell}</p>
+            )}
+            {confirmation?.email && (
+              <p className="font-body text-xs text-gray-600">{confirmation.email}</p>
+            )}
+            {confirmation?.website && (
+              <p className="font-body text-xs text-gray-600">{confirmation.website}</p>
+            )}
+          </div>
+        )}
+
+        {/* Address */}
+        {confirmation?.address && (
+          <div className="border-t border-gray-100 px-6 py-4">
+            <p className="mb-1 font-body text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+              Address
+            </p>
+            <p className="font-body text-sm text-gray-700">{confirmation.address}</p>
+          </div>
+        )}
+
+        {/* Directions */}
+        {confirmation?.directions && (
+          <div className="border-t border-gray-100 px-6 py-4">
+            <p className="mb-1 font-body text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+              Directions
+            </p>
+            <p className="font-body text-xs leading-relaxed text-gray-600">{confirmation.directions}</p>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="border-t border-gray-100 bg-gray-50 px-6 py-3 text-center">
+          <p className="font-body text-xs text-gray-500">
+            A confirmation has been sent to <strong>{email}</strong>
+          </p>
+        </div>
       </div>
     )
   }
