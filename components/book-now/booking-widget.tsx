@@ -599,24 +599,29 @@ export function BookingWidget({
           </span>
         </label>
 
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={!selectedPlan}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b8973a] px-6 py-3.5 font-body text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {paymentMethod === "credit_card" ? (
-            <>
-              Continue to Payment
-              <ExternalLink className="size-4" />
-            </>
-          ) : (
-            <>
-              Confirm Booking
-              <ArrowRight className="size-4" />
-            </>
-          )}
-        </button>
+        {/* Submit — credit card bypasses HTML5 validation (guest fills details on NightsBridge) */}
+        {paymentMethod === "credit_card" ? (
+          <button
+            type="button"
+            onClick={() => {
+              window.open(nbUrl, "_blank", "noopener,noreferrer")
+              setStep("redirected")
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b8973a] px-6 py-3.5 font-body text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:translate-y-0"
+          >
+            Continue to Payment
+            <ExternalLink className="size-4" />
+          </button>
+        ) : (
+          <button
+            type="submit"
+            disabled={!selectedPlan}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b8973a] px-6 py-3.5 font-body text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Confirm Booking
+            <ArrowRight className="size-4" />
+          </button>
+        )}
       </form>
     </div>
   )
