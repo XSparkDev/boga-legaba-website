@@ -1,3 +1,5 @@
 playwright==1.44.0
 python-dotenv==1.0.1
-supabase==2.4.0
+# Pin only top-level supabase; let it own its transitive deps.
+# (See scripts/ScriptTestBLGH/requirements.txt for the rationale.)
+supabase==2.15.1

@@ -2,5 +2,14 @@
 # See: https://supabase.com/docs/guides/functions/schedule-functions
 
 [functions.trigger-nightsbridge-sync]
-# Every 10 minutes — same as recommended poll interval
-# schedule = "*/10 * * * *"   ← set this in Dashboard → Edge Functions → Schedules
+# Every 5 minutes — refreshes the availability_cache that powers the public
+# calendar display. 5-min spacing is safe for the Playwright sync (a full run
+# takes ~2-5 min, so runs never overlap themselves).
+#
+# NOTE: Booking SAFETY does not depend on this cadence. app/api/book/route.ts
+# performs a live, uncached NightsBridge availability check at the moment of
+# booking (checkRoomTypeAvailableLive), so a slightly stale display can never
+# result in a booking on an unavailable room.
+#
+# Scheduling is handled by a pg_cron job (created in the Dashboard) that POSTs to this
+# function's URL every 5 minutes. See migrations/006_sync_cron.sql to reconcile cadence.
