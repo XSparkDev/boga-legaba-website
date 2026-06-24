@@ -48,13 +48,172 @@ def _authorized(header: str | None) -> bool:
     return header == expected
 
 
-def _run_sync() -> tuple[int, str]:
+def _build_env() -> dict:
+    """Return a copy of os.environ with all required aliases resolved."""
     env = os.environ.copy()
-    if not env.get("SUPABASE_URL") and env.get("NEXT_PUBLIC_SUPABASE_URL"):
-        env["SUPABASE_URL"] = env["NEXT_PUBLIC_SUPABASE_URL"].replace("/rest/v1/", "").rstrip("/")
+
+    # SUPABASE_URL — accept NEXT_PUBLIC_SUPABASE_URL as alias
+    if not env.get("SUPABASE_URL"):
+        raw = env.get("NEXT_PUBLIC_SUPABASE_URL", "")
+        if raw:
+            env["SUPABASE_URL"] = raw.replace("/rest/v1/", "").rstrip("/")
+
+    # SUPABASE_SERVICE_ROLE_KEY — if missing, try common alternate names
+    if not env.get("SUPABASE_SERVICE_ROLE_KEY"):
+        for alias in ("SUPABASE_KEY", "SUPABASE_ANON_KEY", "NEXT_PUBLIC_SUPABASE_ANON_KEY"):
+            if env.get(alias):
+                env["SUPABASE_SERVICE_ROLE_KEY"] = env[alias]
+                print(f"[worker] WARNING: Using {alias} as SUPABASE_SERVICE_ROLE_KEY fallback. "
+                      "Set SUPABASE_SERVICE_ROLE_KEY directly on Render for proper permissions.")
+                break
+
     env.setdefault("HEADLESS", "true")
     env["PYTHONUNBUFFERED"] = "1"
+    return env
 
+
+def _check_env() -> list[str]:
+    """Return list of missing required env var names (using resolved aliases)."""
+    env = _build_env()
+    missing = []
+    for var in ("SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "CRON_SECRET",
+                "SITE_USER", "SITE_PASS"):
+        if not env.get(var):
+            missing.append(var)
+    return missing
+
+
+_STALE_MINUTES = 21  # If last sync is older than this, bypass cache — let NightsBridge decide
+
+
+def _check_room_availability(params: dict) -> dict:
+    """
+    Query Supabase availability_cache before running Playwright.
+    Returns {"ok": True} if a room of the requested type is free for all nights.
+    Returns {"ok": False, "error": "..."} if fully booked.
+    On any DB error, returns {"ok": True} so Playwright can still try — NightsBridge
+    is the authoritative source; we only use this to fail fast and give a better UX.
+
+    If the last successful sync is older than _STALE_MINUTES, the cache is bypassed
+    entirely so that stale data never causes a false rejection or false approval.
+    """
+    try:
+        from supabase import create_client
+        from datetime import date, datetime, timedelta, timezone
+    except ImportError:
+        return {"ok": True}  # supabase not installed — don't block
+
+    try:
+        env = _build_env()
+        url = (env.get("SUPABASE_URL") or "").strip()
+        key = (env.get("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
+        if not url or not key:
+            return {"ok": True}
+
+        sb = create_client(url, key)
+
+        # ── Staleness guard ────────────────────────────────────────────────────
+        # If the most recent successful sync is older than _STALE_MINUTES, the
+        # availability_cache cannot be trusted. Skip the pre-check and let
+        # NightsBridge be the sole gatekeeper.
+        try:
+            sync_resp = (
+                sb.table("sync_run")
+                .select("finished_at")
+                .eq("ok", True)
+                .not_.is_("finished_at", "null")
+                .order("finished_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            if not sync_resp.data:
+                print("[worker] No successful sync_run found — bypassing stale cache check")
+                return {"ok": True}
+
+            last_sync_str = sync_resp.data[0]["finished_at"]
+            last_sync = datetime.fromisoformat(last_sync_str.replace("Z", "+00:00"))
+            age_minutes = (datetime.now(timezone.utc) - last_sync).total_seconds() / 60
+            if age_minutes > _STALE_MINUTES:
+                print(
+                    f"[worker] Availability cache is {age_minutes:.1f} min old "
+                    f"(> {_STALE_MINUTES} min threshold). "
+                    "Bypassing pre-check — NightsBridge will be the gatekeeper."
+                )
+                return {"ok": True}
+        except Exception as stale_exc:
+            print(f"[worker] Staleness check error (non-blocking): {stale_exc}", file=sys.stderr)
+            return {"ok": True}
+
+        room_type_name = params.get("roomTypeName", "")
+        checkin = params.get("checkin", "")
+        checkout = params.get("checkout", "")
+
+        # Build list of night-dates to check (arrival night through night before checkout)
+        start = date.fromisoformat(checkin)
+        end = date.fromisoformat(checkout)
+        night_dates = []
+        d = start
+        while d < end:
+            night_dates.append(d.isoformat())
+            d += timedelta(days=1)
+
+        if not night_dates:
+            return {"ok": True}
+
+        # Get the bbrtid for this room type name
+        rt_resp = sb.table("room_type").select("bbrtid").eq("rtname", room_type_name).execute()
+        if not rt_resp.data:
+            # Room type unknown in our DB — let NightsBridge decide
+            print(f"[worker] Availability check: room type '{room_type_name}' not in DB, passing through")
+            return {"ok": True}
+
+        bbrtid = rt_resp.data[0]["bbrtid"]
+
+        # Get all physical rooms of this type
+        rooms_resp = sb.table("room").select("bbroomid").eq("bbrtid", bbrtid).execute()
+        if not rooms_resp.data:
+            return {"ok": True}
+
+        room_ids = [r["bbroomid"] for r in rooms_resp.data]
+
+        # Check if ANY physical room is available for ALL requested nights
+        for bbroomid in room_ids:
+            cache_resp = (
+                sb.table("availability_cache")
+                .select("check_date,is_available")
+                .eq("bbroomid", bbroomid)
+                .in_("check_date", night_dates)
+                .execute()
+            )
+            available_nights = {r["check_date"] for r in cache_resp.data if r["is_available"]}
+            if all(night in available_nights for night in night_dates):
+                # Found a room that's free the whole stay
+                print(f"[worker] Availability OK: bbroomid={bbroomid} free {checkin}–{checkout}")
+                return {"ok": True}
+
+        print(f"[worker] Availability FAIL: no '{room_type_name}' free {checkin}–{checkout}")
+        return {
+            "ok": False,
+            "error": (
+                f"Sorry, no {room_type_name} is available from {checkin} to {checkout}. "
+                "Please choose different dates or a different room type."
+            ),
+        }
+
+    except Exception as exc:
+        # Never block a booking on a DB error — NightsBridge will catch it
+        print(f"[worker] Availability check error (non-blocking): {exc}", file=sys.stderr)
+        return {"ok": True}
+
+
+def _run_sync() -> tuple[int, str]:
+    missing = _check_env()
+    if missing:
+        msg = f"Missing required env vars: {', '.join(missing)}. Set them in the Render dashboard."
+        print(f"[worker] ERROR: {msg}", file=sys.stderr)
+        return 1, msg
+
+    env = _build_env()
     proc = subprocess.run(
         [sys.executable, "main.py"],
         cwd=str(SCRAPER_DIR),
@@ -83,10 +242,34 @@ class Handler(BaseHTTPRequestHandler):
         if self.path in ("/", "/health"):
             self._json(200, {"ok": True, "service": "boga-nb-sync-worker"})
             return
+        if self.path == "/env-status":
+            missing = _check_env()
+            self._json(
+                200 if not missing else 503,
+                {
+                    "ok": not missing,
+                    "missing": missing,
+                    "message": "All env vars set" if not missing else f"Missing: {', '.join(missing)}",
+                },
+            )
+            return
         self._json(404, {"ok": False, "error": "not found"})
+
+    def _read_body(self) -> bytes:
+        length = int(self.headers.get("Content-Length", 0))
+        return self.rfile.read(length) if length else b""
 
     def do_POST(self) -> None:
         global _running
+
+        if self.path == "/book":
+            self._handle_book()
+            return
+
+        if self.path == "/manage-booking":
+            self._handle_manage_booking()
+            return
+
         if self.path not in ("/run", "/"):
             self._json(404, {"ok": False, "error": "not found"})
             return
@@ -113,11 +296,124 @@ class Handler(BaseHTTPRequestHandler):
             _running = False
             _lock.release()
 
+    def _handle_book(self) -> None:
+        if not _authorized(self.headers.get("Authorization")):
+            self._json(401, {"ok": False, "error": "unauthorized"})
+            return
+
+        body = self._read_body()
+        try:
+            params = json.loads(body)
+        except (json.JSONDecodeError, ValueError):
+            self._json(400, {"ok": False, "error": "invalid JSON body"})
+            return
+
+        required = ["checkin", "checkout", "roomTypeName", "mealPlanName",
+                    "firstname", "surname", "phone", "email"]
+        missing = [f for f in required if not params.get(f)]
+        if missing:
+            self._json(400, {"ok": False, "error": f"Missing: {', '.join(missing)}"})
+            return
+
+        # Availability pre-check — fast Supabase query before spinning up Playwright
+        avail = _check_room_availability(params)
+        if not avail["ok"]:
+            self._json(409, {"ok": False, "error": avail["error"]})
+            return
+
+        book_script = SCRAPER_DIR / "book_nightsbridge.py"
+        if not book_script.exists():
+            self._json(503, {"ok": False, "error": "Booking script not found"})
+            return
+
+        try:
+            proc = subprocess.run(
+                [sys.executable, str(book_script), "--params", json.dumps(params)],
+                capture_output=True,
+                text=True,
+                timeout=120,
+                env=_build_env(),
+            )
+            stdout = proc.stdout.strip()
+            if stdout:
+                try:
+                    result = json.loads(stdout)
+                    self._json(200 if result.get("ok") else 500, result)
+                    return
+                except json.JSONDecodeError:
+                    pass
+            self._json(500, {"ok": False, "error": proc.stderr or "Booking failed"})
+        except subprocess.TimeoutExpired:
+            self._json(504, {"ok": False, "error": "Booking timed out after 120 s"})
+        except Exception as exc:
+            self._json(500, {"ok": False, "error": str(exc)})
+
+
+    def _handle_manage_booking(self) -> None:
+        if not _authorized(self.headers.get("Authorization")):
+            self._json(401, {"ok": False, "error": "unauthorized"})
+            return
+
+        body = self._read_body()
+        try:
+            params = json.loads(body)
+        except (json.JSONDecodeError, ValueError):
+            self._json(400, {"ok": False, "error": "invalid JSON body"})
+            return
+
+        booking_ref = params.get("bookingRef")
+        action = params.get("action")
+
+        if not booking_ref or action not in ("checkin", "checkout"):
+            self._json(400, {"ok": False, "error": "bookingRef and action (checkin|checkout) required"})
+            return
+
+        manage_script = SCRAPER_DIR / "manage_booking.py"
+        if not manage_script.exists():
+            self._json(503, {"ok": False, "error": "manage_booking.py not found in scraper"})
+            return
+
+        try:
+            proc = subprocess.run(
+                [sys.executable, str(manage_script),
+                 "--booking-ref", str(booking_ref),
+                 "--action", action],
+                capture_output=True,
+                text=True,
+                timeout=120,
+                env=_build_env(),
+            )
+            stdout = proc.stdout.strip()
+            if stdout:
+                try:
+                    result = json.loads(stdout)
+                    self._json(200 if result.get("ok") else 500, result)
+                    return
+                except json.JSONDecodeError:
+                    pass
+            self._json(500, {"ok": False, "error": proc.stderr or "Action failed"})
+        except subprocess.TimeoutExpired:
+            self._json(504, {"ok": False, "error": "Action timed out after 120 s"})
+        except Exception as exc:
+            self._json(500, {"ok": False, "error": str(exc)})
+
 
 def main() -> None:
     if not SCRAPER_DIR.is_dir():
         print(f"Scraper not found at {SCRAPER_DIR}", file=sys.stderr)
         sys.exit(1)
+
+    # Warn on startup about any missing vars so they appear in Render deploy logs
+    missing = _check_env()
+    if missing:
+        print(
+            f"[worker] ⚠️  MISSING ENV VARS: {', '.join(missing)}\n"
+            "         Syncs will fail until these are set in the Render dashboard:\n"
+            "         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, CRON_SECRET, SITE_USER, SITE_PASS",
+            file=sys.stderr,
+        )
+    else:
+        print("[worker] ✓ All required env vars present")
 
     port = int(os.environ.get("PORT", "8080"))
     server = HTTPServer(("0.0.0.0", port), Handler)

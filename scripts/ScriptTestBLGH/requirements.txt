@@ -1,4 +1,9 @@
 playwright==1.44.0
 python-dotenv==1.0.1
-supabase==2.4.0
-httpx==0.25.2
+# Pin only the top-level supabase package and let it resolve its own internally
+# consistent transitive deps (gotrue/postgrest/httpx/etc.). The previous breakage
+# came from manually pinning httpx==0.25.2 against supabase 2.4.0, whose unpinned
+# gotrue floated to 2.9.1 (passes proxy= to httpx, unsupported in 0.25.2) →
+# "Client.__init__() got an unexpected keyword argument 'proxy'". A modern supabase
+# constrains its deps tightly, so they can't drift into that conflict.
+supabase==2.15.1
