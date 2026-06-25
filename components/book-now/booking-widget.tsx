@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { CheckCircle2, Loader2, AlertTriangle, ArrowRight, X } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { Loader2, AlertTriangle, ArrowRight, X, Check, CreditCard, Calendar, Moon, BedDouble, UtensilsCrossed, Utensils } from "lucide-react"
 import type { MealPlanRate } from "@/lib/nightsbridge-rates"
 
 // ---------------------------------------------------------------------------
@@ -21,7 +21,7 @@ interface BookingWidgetProps {
   maxOccupancy?: number | null
 }
 
-type Step = "idle" | "form" | "submitting" | "success" | "error"
+type Step = "idle" | "form" | "submitting" | "success" | "paying" | "error"
 
 interface ConfirmationData {
   bookingId?: string
@@ -43,10 +43,25 @@ interface ConfirmationData {
 }
 
 const MEAL_PLAN_ORDER = [5, 1, 3] // Room Only, B&B, DBB
-const MEAL_ICONS: Record<number, string> = { 1: "🍳", 3: "🍽️", 5: "🛏️" }
+
+function MealIcon({ id }: { id: number }) {
+  if (id === 5) return <BedDouble className="size-4 shrink-0 text-[#b8973a]" />
+  if (id === 1) return <Utensils className="size-4 shrink-0 text-[#b8973a]" />
+  if (id === 3) return <UtensilsCrossed className="size-4 shrink-0 text-[#b8973a]" />
+  return <BedDouble className="size-4 shrink-0 text-[#b8973a]" />
+}
 
 function fmt(n: number) {
   return `R ${Math.round(n).toLocaleString("en-ZA")}`
+}
+
+function fmtDateWidget(raw: string | undefined): string {
+  if (!raw) return ""
+  // Already formatted (e.g. "15 Jul 2026") — return as-is
+  if (/[a-zA-Z]/.test(raw)) return raw
+  // ISO date (e.g. "2026-07-15")
+  const d = new Date(raw)
+  return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" })
 }
 
 // ---------------------------------------------------------------------------
@@ -80,6 +95,11 @@ export function BookingWidget({
   const [bookingRef, setBookingRef] = useState<string | null>(null)
   const [confirmation, setConfirmation] = useState<ConfirmationData | null>(null)
   const [errorMsg, setErrorMsg] = useState("")
+  const [payError, setPayError] = useState("")
+  const [countdown, setCountdown] = useState(8)
+  const [payDismissed, setPayDismissed] = useState(false)
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const payAttemptedRef = useRef(false)
 
   // Form fields — every field NightsBridge collects
   const [adults, setAdults] = useState(2)
@@ -161,6 +181,7 @@ export function BookingWidget({
       }
 
       if (data.ok) {
+        payAttemptedRef.current = false
         setBookingRef(data.bookingRef ?? null)
         setConfirmation(data.confirmation ?? null)
         setStep("success")
@@ -174,113 +195,239 @@ export function BookingWidget({
     }
   }
 
+  // Auto-redirect to Paystack when booking succeeds (only once per booking)
+  useEffect(() => {
+    if (step !== "success") return
+    if (payAttemptedRef.current) return
+    setPayDismissed(false)
+    setCountdown(8)
+    countdownRef.current = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(countdownRef.current!)
+          handlePayNow()
+          return 0
+        }
+        return c - 1
+      })
+    }, 1000)
+    return () => clearInterval(countdownRef.current!)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step])
+
+  async function handlePayNow() {
+    if (!confirmation?.total) return
+    payAttemptedRef.current = true
+    setPayError("")
+    setStep("paying")
+
+    // Parse "R1,650.00" → 1650
+    const amountRands = parseFloat((confirmation.total ?? "0").replace(/[^0-9.]/g, ""))
+    if (!amountRands) {
+      setPayError("Could not read booking amount. Please contact us via WhatsApp.")
+      setStep("success")
+      return
+    }
+
+    // Use bookingRef from API, fall back to bookingId from confirmation data
+    const ref = bookingRef || confirmation?.bookingId || `BL-${Date.now()}`
+
+    try {
+      const res = await fetch("/api/payment/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          amountRands,
+          bookingRef: ref,
+          guestName: `${firstname} ${surname}`.trim(),
+          guestPhone: phone,
+          checkin: arrive,
+          checkout: depart,
+          roomTypeName,
+        }),
+      })
+      const data = (await res.json()) as { ok: boolean; authorization_url?: string; error?: string }
+      if (data.ok && data.authorization_url) {
+        window.location.href = data.authorization_url
+      } else {
+        setPayError(data.error ?? "Payment could not be started. Please try WhatsApp.")
+        setStep("success")
+      }
+    } catch {
+      setPayError("Network error. Please try WhatsApp or contact us directly.")
+      setStep("success")
+    }
+  }
+
   if (!available) return null
 
   // ── Success ──────────────────────────────────────────────────────────────
   if (step === "success") {
     const details = [
-      { label: "Booking ID", value: confirmation?.bookingId || bookingRef },
-      { label: "Arrival",    value: confirmation?.arrival },
-      { label: "Leaving",    value: confirmation?.leaving },
-      { label: "Nights",     value: confirmation?.nights },
-      { label: "Room",       value: confirmation?.rooms },
-      { label: "Total",      value: confirmation?.total },
-      { label: "Deposit",    value: confirmation?.deposit },
+      { label: "Booking ID", value: confirmation?.bookingId || bookingRef, icon: <Check className="size-3.5 text-[#b8973a]" /> },
+      { label: "Check-in",   value: fmtDateWidget(confirmation?.arrival),  icon: <Calendar className="size-3.5 text-[#b8973a]" /> },
+      { label: "Check-out",  value: fmtDateWidget(confirmation?.leaving),  icon: <Calendar className="size-3.5 text-[#b8973a]" /> },
+      { label: "Nights",     value: confirmation?.nights,                  icon: <Moon className="size-3.5 text-[#b8973a]" /> },
+      { label: "Room",       value: confirmation?.rooms,                   icon: <BedDouble className="size-3.5 text-[#b8973a]" /> },
+      { label: "Total",      value: confirmation?.total,                   icon: <CreditCard className="size-3.5 text-[#b8973a]" /> },
     ].filter((r) => r.value)
 
     return (
-      <div className="overflow-hidden rounded-xl border border-emerald-200 bg-white shadow-sm">
-        {/* Header */}
-        <div className="bg-emerald-500 px-6 py-5 text-center text-white">
-          <CheckCircle2 className="mx-auto mb-2 size-8" />
-          <h3 className="font-serif text-xl font-bold">Your booking is confirmed!</h3>
-          <p className="mt-1 font-body text-sm text-emerald-100">We look forward to seeing you!</p>
-        </div>
+      <div className="overflow-hidden rounded-xl border border-[#E8E0D4] bg-white shadow-sm">
 
-        {/* Property name */}
-        {confirmation?.propertyName && (
-          <div className="border-b border-gray-100 px-6 py-3 text-center">
-            <p className="font-body text-sm font-semibold text-gray-800">{confirmation.propertyName}</p>
+        {/* Lodge header */}
+        <div className="px-6 py-5 text-center" style={{ background: "#0A0A0A" }}>
+          <div
+            className="mx-auto mb-3 flex items-center justify-center rounded-full"
+            style={{ width: 48, height: 48, background: "#F2EDE4", border: "2px solid #C9A84C" }}
+          >
+            <Check className="size-5" style={{ color: "#C9A84C", strokeWidth: 2.5 }} />
           </div>
-        )}
-
-        {/* Booking details */}
-        {details.length > 0 && (
-          <div className="px-6 py-4">
-            {details.map((row) => (
-              <div key={row.label} className="flex gap-4 border-b border-gray-50 py-2 last:border-0">
-                <span className="w-20 shrink-0 pt-0.5 font-body text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                  {row.label}
-                </span>
-                <span className="font-body text-sm text-gray-900">{row.value}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Payment note */}
-        <div className="mx-6 mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="font-body text-xs text-amber-800">
-            {confirmation?.paymentNote ||
-              "The property will contact you directly with details on making payment."}
+          <h3 className="font-serif text-lg font-normal" style={{ color: "#C9A84C", letterSpacing: "0.02em" }}>
+            Booking Confirmed
+          </h3>
+          <p className="mt-1 font-body text-xs" style={{ color: "#8C7B6B" }}>
+            We look forward to welcoming you to the bush
           </p>
         </div>
 
-        {/* Contact */}
-        {(confirmation?.contacts || confirmation?.phone || confirmation?.cell || confirmation?.email) && (
-          <div className="border-t border-gray-100 px-6 py-4">
-            <p className="mb-2 font-body text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-              Contacts
-            </p>
-            {confirmation?.contacts && (
-              <p className="font-body text-sm font-medium text-gray-900">{confirmation.contacts}</p>
-            )}
-            {confirmation?.phone && (
-              <p className="font-body text-xs text-gray-600">{confirmation.phone}</p>
-            )}
-            {confirmation?.cell && (
-              <p className="font-body text-xs text-gray-600">{confirmation.cell}</p>
-            )}
-            {confirmation?.email && (
-              <p className="font-body text-xs text-gray-600">{confirmation.email}</p>
-            )}
-            {confirmation?.website && (
-              <p className="font-body text-xs text-gray-600">{confirmation.website}</p>
-            )}
+        {/* Booking details */}
+        {details.length > 0 && (
+          <div className="px-5 pt-4 pb-3">
+            <div className="overflow-hidden rounded-lg" style={{ border: "1px solid #E8E0D4" }}>
+              {details.map((row, i) => (
+                <div
+                  key={row.label}
+                  className="flex items-center gap-3 px-4 py-3"
+                  style={{
+                    background: i % 2 === 0 ? "#FAFAF8" : "#F2EDE4",
+                    borderBottom: i < details.length - 1 ? "1px solid #E8E0D4" : "none",
+                  }}
+                >
+                  {row.icon}
+                  <span className="font-body text-[11px] font-medium uppercase tracking-wide shrink-0" style={{ color: "#8C7B6B", width: 68 }}>
+                    {row.label}
+                  </span>
+                  <span
+                    className="font-body text-sm font-semibold ml-auto text-right"
+                    style={{ color: row.label === "Total" ? "#B8973B" : "#3D3532" }}
+                  >
+                    {row.value}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Address */}
-        {confirmation?.address && (
-          <div className="border-t border-gray-100 px-6 py-4">
-            <p className="mb-1 font-body text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-              Address
-            </p>
-            <p className="font-body text-sm text-gray-700">{confirmation.address}</p>
-          </div>
-        )}
+        {/* Payment section */}
+        <div className="px-5 pb-4 space-y-3">
+          {!payDismissed ? (
+            <>
+              {/* Countdown bar */}
+              <div className="rounded-xl px-5 py-4" style={{ background: "#0A0A0A" }}>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-body text-sm font-semibold" style={{ color: "#F2EDE4" }}>
+                    Proceeding to payment{confirmation?.total ? ` — ${confirmation.total}` : ""}
+                  </p>
+                  <span className="font-body text-sm font-bold tabular-nums" style={{ color: "#C9A84C" }}>
+                    {countdown}s
+                  </span>
+                </div>
+                <div className="h-1 w-full rounded-full overflow-hidden" style={{ background: "rgba(201,168,76,0.2)" }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-1000"
+                    style={{ width: `${((8 - countdown) / 8) * 100}%`, background: "#C9A84C" }}
+                  />
+                </div>
+              </div>
 
-        {/* Directions */}
-        {confirmation?.directions && (
-          <div className="border-t border-gray-100 px-6 py-4">
-            <p className="mb-1 font-body text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-              Directions
-            </p>
-            <p className="font-body text-xs leading-relaxed text-gray-600">{confirmation.directions}</p>
-          </div>
-        )}
+              {payError && (
+                <div className="flex items-start gap-2 rounded-lg px-4 py-3" style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}>
+                  <AlertTriangle className="size-4 shrink-0 mt-0.5 text-red-500" />
+                  <p className="font-body text-xs text-red-600">{payError}</p>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    clearInterval(countdownRef.current!)
+                    payAttemptedRef.current = false
+                    handlePayNow()
+                  }}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-body text-sm font-semibold transition-all hover:brightness-110"
+                  style={{ background: "#C9A84C", color: "#0A0A0A" }}
+                >
+                  <CreditCard className="size-4" />
+                  Pay Now
+                </button>
+                <button
+                  onClick={() => {
+                    clearInterval(countdownRef.current!)
+                    setPayDismissed(true)
+                  }}
+                  className="flex items-center justify-center rounded-xl px-4 py-3 font-body text-xs transition-all"
+                  style={{ background: "#F2EDE4", color: "#8C7B6B", border: "1px solid #E8E0D4" }}
+                >
+                  Pay later
+                </button>
+              </div>
+
+              <p className="font-body text-[11px] text-center" style={{ color: "#8C7B6B" }}>
+                Secure payment via Paystack — card, EFT and instant EFT accepted
+              </p>
+            </>
+          ) : (
+            <div className="rounded-xl px-5 py-4 text-center" style={{ background: "#F2EDE4", border: "1px solid #E8E0D4" }}>
+              <p className="font-body text-sm font-medium" style={{ color: "#3D3532" }}>
+                Your booking is held for 24 hours
+              </p>
+              <p className="font-body text-xs mt-1" style={{ color: "#8C7B6B" }}>
+                Check your email for booking details and a payment reminder.
+                Contact us via WhatsApp if you need assistance.
+              </p>
+              <button
+                onClick={() => {
+                  payAttemptedRef.current = false
+                  setPayDismissed(false)
+                  setCountdown(8)
+                  handlePayNow()
+                }}
+                className="mt-3 font-body text-xs underline underline-offset-2"
+                style={{ color: "#B8973B" }}
+              >
+                Ready to pay now
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-100 bg-gray-50 px-6 py-3 text-center">
-          <p className="font-body text-xs text-gray-500">
-            A confirmation has been sent to <strong>{email}</strong>
+        <div className="px-6 py-3 text-center" style={{ background: "#FAFAF8", borderTop: "1px solid #E8E0D4" }}>
+          <p className="font-body text-xs" style={{ color: "#8C7B6B" }}>
+            Booking details sent to <strong style={{ color: "#3D3532" }}>{email}</strong>
           </p>
         </div>
       </div>
     )
   }
 
-  // ── Credit card redirect ──────────────────────────────────────────────────
+  // ── Paying (redirecting to Paystack) ─────────────────────────────────────
+  if (step === "paying") {
+    return (
+      <div
+        className="flex flex-col items-center justify-center gap-3 rounded-xl py-10"
+        style={{ background: "#F2EDE4", border: "1px solid #E8E0D4" }}
+      >
+        <Loader2 className="size-8 animate-spin" style={{ color: "#C9A84C" }} />
+        <p className="text-sm font-medium" style={{ color: "#3D3532" }}>Redirecting to secure payment</p>
+        <p className="text-xs" style={{ color: "#8C7B6B" }}>You will be taken to Paystack</p>
+      </div>
+    )
+  }
+
   // ── Error ─────────────────────────────────────────────────────────────────
   if (step === "error") {
     return (
@@ -379,7 +526,7 @@ export function BookingWidget({
                       onChange={() => setSelectedPlan(plan)}
                       className="accent-[#b8973a]"
                     />
-                    <span className="text-base leading-none">{MEAL_ICONS[plan.mealplanid] ?? "🍴"}</span>
+                    <MealIcon id={plan.mealplanid} />
                     <span className="font-body text-sm text-gray-800">{plan.description}</span>
                   </div>
                   <span className="font-body text-sm font-semibold text-[#b8973a]">
@@ -399,8 +546,8 @@ export function BookingWidget({
           <div className="grid grid-cols-3 gap-2">
             {[
               { label: "Adults", value: adults, set: setAdults, min: 1, max: maxAdults },
-              { label: "Children 0–5", value: children1, set: setChildren1, min: 0, max: Math.max(0, maxOccupancy - adults - children2) },
-              { label: "Children 6–12", value: children2, set: setChildren2, min: 0, max: Math.max(0, maxOccupancy - adults - children1) },
+              { label: "Children 0-5", value: children1, set: setChildren1, min: 0, max: Math.max(0, maxOccupancy - adults - children2) },
+              { label: "Children 6-12", value: children2, set: setChildren2, min: 0, max: Math.max(0, maxOccupancy - adults - children1) },
             ].map(({ label, value, set, min, max }) => {
               const atMin = value <= min
               const atMax = value >= max
@@ -454,7 +601,7 @@ export function BookingWidget({
 
           {/* Policy hint */}
           <p className="mt-2 font-body text-[10px] text-gray-400">
-            Children 0–5 stay free &middot; Children 6–12 pay R150/night
+            Children 0-5 stay free &middot; Children 6-12 pay R150/night
             {rawMaxAdults ? ` · Max ${maxAdults} adult${maxAdults === 1 ? "" : "s"}, ${maxOccupancy} total` : ""}
           </p>
 
@@ -593,20 +740,20 @@ export function BookingWidget({
             Payment method
           </p>
           <div className="rounded-lg border border-[#b8973a] bg-[#fdf8ef] p-3">
-            <span className="font-body text-sm text-gray-800">Bank Transfer (EFT)</span>
+            <span className="font-body text-sm text-gray-800">Card or EFT via Paystack</span>
             <p className="mt-0.5 font-body text-[11px] text-gray-400">
-              Banking details will be emailed after confirmation. Booking is secured immediately.
+              You will be redirected to Paystack to complete payment securely after we confirm your booking.
             </p>
           </div>
           <p className="mt-2 font-body text-[11px] text-gray-400">
-            Prefer to pay by card?{" "}
+            Prefer to book directly?{" "}
             <a
               href={nbUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#b8973a] underline underline-offset-2 hover:brightness-75"
             >
-              Book directly on NightsBridge →
+              Continue on NightsBridge
             </a>
           </p>
         </div>
@@ -621,11 +768,29 @@ export function BookingWidget({
               className="text-[#b8973a] underline"
               onClick={(e) => e.preventDefault()}
             >
-              terms &amp; conditions
+              terms and conditions
             </a>{" "}
             including the cancellation policy.
           </span>
         </label>
+
+        {/* Cancellation note */}
+        <div className="rounded-lg px-4 py-3" style={{ background: "#F2EDE4", border: "1px solid #E8E0D4" }}>
+          <p className="font-body text-[11px] leading-relaxed" style={{ color: "#8C7B6B" }}>
+            <strong style={{ color: "#3D3532" }}>Need to cancel?</strong>{" "}
+            Contact us via{" "}
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-2"
+              style={{ color: "#b8973a" }}
+            >
+              WhatsApp
+            </a>{" "}
+            and quote your booking reference. Cancellation terms apply.
+          </p>
+        </div>
 
         {/* Submit */}
         <button

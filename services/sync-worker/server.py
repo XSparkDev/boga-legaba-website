@@ -11,7 +11,7 @@ import os
 import subprocess
 import sys
 import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 _server_dir = Path(__file__).resolve().parent
@@ -364,7 +364,7 @@ class Handler(BaseHTTPRequestHandler):
         booking_ref = params.get("bookingRef")
         action = params.get("action")
 
-        if not booking_ref or action not in ("checkin", "checkout"):
+        if not booking_ref or action not in ("checkin", "checkout", "confirm"):
             self._json(400, {"ok": False, "error": "bookingRef and action (checkin|checkout) required"})
             return
 
@@ -416,7 +416,7 @@ def main() -> None:
         print("[worker] ✓ All required env vars present")
 
     port = int(os.environ.get("PORT", "8080"))
-    server = HTTPServer(("0.0.0.0", port), Handler)
+    server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     print(f"Sync worker listening on :{port} (scraper: {SCRAPER_DIR})")
     server.serve_forever()
 
