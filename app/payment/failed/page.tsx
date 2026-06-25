@@ -46,9 +46,9 @@ function FailedContent() {
               Payment Unsuccessful
             </h1>
             <p style={{ color: "#8C7B6B", fontSize: "13px", lineHeight: 1.7 }}>
-              Your payment could not be processed. Don&apos;t worry —{" "}
-              <span style={{ color: "#3D3532" }}>your booking is still held</span> as
-              &ldquo;Waiting for Payment&rdquo; on our system.
+              Your payment could not be processed.{" "}
+              Your <span style={{ color: "#3D3532" }}>booking is still held</span>{" "}
+              as &ldquo;Waiting for Payment&rdquo; on our system.
             </p>
           </div>
 
@@ -91,7 +91,7 @@ function FailedContent() {
         </div>
 
         <p className="text-center mt-5" style={{ color: "#8C7B6B", fontSize: "11px", letterSpacing: "0.05em" }}>
-          PAYMENT PROCESSED SECURELY VIA PAYSTACK
+          SECURE PAYMENT BY PAYSTACK
         </p>
       </div>
     </div>

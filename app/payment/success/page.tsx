@@ -12,6 +12,14 @@ function SuccessContent() {
   const roomTypeName = params.get("roomTypeName") ?? ""
   const amount       = params.get("amount") ?? ""
 
+  const fmtDate = (iso: string) => {
+    if (!iso) return ""
+    const d = new Date(iso)
+    return isNaN(d.getTime())
+      ? iso
+      : d.toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" })
+  }
+
   const amountFormatted = amount
     ? `R ${parseFloat(amount).toLocaleString("en-ZA", { minimumFractionDigits: 2 })}`
     : ""
@@ -19,8 +27,8 @@ function SuccessContent() {
   const details = [
     { label: "Booking Reference", value: bookingRef },
     { label: "Room",              value: roomTypeName },
-    { label: "Check-in",         value: checkin },
-    { label: "Check-out",        value: checkout },
+    { label: "Check-in",         value: fmtDate(checkin) },
+    { label: "Check-out",        value: fmtDate(checkout) },
     { label: "Amount Paid",      value: amountFormatted, gold: true },
   ].filter((r) => r.value)
 
@@ -125,7 +133,7 @@ function SuccessContent() {
 
         {/* Footer note */}
         <p className="text-center mt-5" style={{ color: "#8C7B6B", fontSize: "11px", letterSpacing: "0.05em" }}>
-          PAYMENT PROCESSED SECURELY VIA PAYSTACK
+          SECURE PAYMENT BY PAYSTACK
         </p>
 
       </div>

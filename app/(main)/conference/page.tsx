@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Users, Projector, UtensilsCrossed, BedDouble, Wifi, ParkingCircle, LayoutGrid } from "lucide-react"
+import { Users, Projector, UtensilsCrossed, BedDouble, Wifi, ParkingCircle, LayoutGrid, MessageCircle, Check } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
 import { SiteImage } from "@/components/site-image"
 import { getSiteImage } from "@/lib/site-images"
@@ -86,7 +86,7 @@ export default function ConferencePage() {
                   "Central Mahikeng location, easy access",
                 ].map((point, i) => (
                   <div key={i} className="flex items-start gap-3 mb-4">
-                    <span className="text-gold mt-0.5 flex-shrink-0">✓</span>
+                    <Check className="size-4 shrink-0 text-gold mt-0.5" />
                     <span className="font-body text-sm text-white/80">{point}</span>
                   </div>
                 ))}
@@ -109,7 +109,7 @@ export default function ConferencePage() {
                   data-ga4-label="Conference"
                   className="inline-flex items-center gap-2 btn-glass text-xs px-4 py-2"
                 >
-                  <span>💬</span> WhatsApp Conference Team
+                  <MessageCircle className="size-4 shrink-0" /> WhatsApp Conference Team
                 </a>
               </div>
             </div>

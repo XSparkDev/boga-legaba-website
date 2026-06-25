@@ -21,9 +21,27 @@ import {
   Shirt,
   Waves,
   Utensils,
+  UtensilsCrossed,
   TreePine,
   Building2,
   ChevronDown,
+  Check,
+  Moon,
+  Baby,
+  Lock,
+  Flame,
+  Thermometer,
+  Monitor,
+  Droplets,
+  Bath,
+  ShowerHead,
+  Accessibility,
+  Dumbbell,
+  Sparkles,
+  CookingPot,
+  Home,
+  PawPrint,
+  BanIcon,
 } from "lucide-react"
 import { Reveal } from "@/components/reveal"
 import { properties, BUSINESS } from "@/data/rooms"
@@ -112,43 +130,46 @@ function waEnquiryUrl(
   return `https://wa.me/${num}?text=${encodeURIComponent(parts.join(""))}`
 }
 
-// Maps OTA amenity description → Lucide icon component name or emoji
-const AMENITY_ICONS: Record<string, string> = {
-  "Air conditioning": "❄️",
-  "Desk": "🪑",
-  "DSTV / Satellite TV": "📺",
-  "TV": "📺",
-  "Wi-Fi": "📶",
-  "Non-smoking": "🚭",
-  "Bathroom amenities": "🧴",
-  "Separate tub and shower": "🛁",
-  "Bathtub only": "🛁",
-  "Shower only": "🚿",
-  "Hairdryer": "💨",
-  "Coffee / tea facilities": "☕",
-  "Iron": "👔",
-  "Ironing board": "👔",
-}
-
-const PROPERTY_AMENITY_ICONS: Record<string, string> = {
-  "Wheelchair access": "♿",
-  "Bar / Lounge": "🍷",
-  "Secured parking": "🔒",
-  "Conference facilities": "📊",
-  "Free parking": "🅿️",
-  "Outdoor Pool": "🏊",
-  "Spa": "💆",
-  "BBQ / picnic area": "🔥",
-  "Wi-Fi": "📶",
-}
-
-const MEAL_PLAN_ICONS: Record<number, string> = {
-  5: "🌙", // Room Only
-  1: "🍳", // B&B
-  3: "🍽️", // DBB
-}
-
 const MEAL_PLAN_ORDER = [5, 1, 3] // Room Only first, then B&B, then DBB
+
+function AmenityIcon({ name, className = "size-3.5 shrink-0 text-[#b8973a]" }: { name: string; className?: string }) {
+  const n = name.toLowerCase()
+  if (n.includes("air con") || n.includes("cooling"))  return <Thermometer className={className} />
+  if (n.includes("wi-fi") || n.includes("wifi"))        return <Wifi className={className} />
+  if (n.includes("tv") || n.includes("dstv") || n.includes("satellite")) return <Monitor className={className} />
+  if (n.includes("coffee") || n.includes("tea"))        return <Coffee className={className} />
+  if (n.includes("iron"))                               return <Shirt className={className} />
+  if (n.includes("shower only"))                        return <ShowerHead className={className} />
+  if (n.includes("tub") || n.includes("bath"))          return <Bath className={className} />
+  if (n.includes("shower"))                             return <Droplets className={className} />
+  if (n.includes("hair"))                               return <Wind className={className} />
+  if (n.includes("smok"))                               return <XCircle className={className} />
+  if (n.includes("pool") || n.includes("swim"))         return <Waves className={className} />
+  if (n.includes("park"))                               return <Car className={className} />
+  if (n.includes("wheelchair") || n.includes("access")) return <Accessibility className={className} />
+  if (n.includes("bar") || n.includes("lounge"))        return <Utensils className={className} />
+  if (n.includes("conference") || n.includes("meeting")) return <Building2 className={className} />
+  if (n.includes("bbq") || n.includes("grill") || n.includes("picnic")) return <Flame className={className} />
+  if (n.includes("spa"))                                return <Sparkles className={className} />
+  if (n.includes("gym") || n.includes("fitness"))       return <Dumbbell className={className} />
+  if (n.includes("kitchen") || n.includes("cook"))      return <CookingPot className={className} />
+  return <Check className={className} />
+}
+
+function GroupIcon({ group, className = "size-3.5 shrink-0 text-gray-400" }: { group: string; className?: string }) {
+  const g = group.toLowerCase()
+  if (g.includes("bathroom"))  return <ShowerHead className={className} />
+  if (g.includes("kitchen"))   return <Coffee className={className} />
+  if (g.includes("in-room") || g.includes("room")) return <Home className={className} />
+  if (g.includes("outdoor"))   return <TreePine className={className} />
+  return <Star className={className} />
+}
+
+function MealPlanIcon({ id, className = "size-4 shrink-0 text-[#b8973a]" }: { id: number; className?: string }) {
+  if (id === 1) return <Utensils className={className} />
+  if (id === 3) return <UtensilsCrossed className={className} />
+  return <BedDouble className={className} />  // Room Only (5)
+}
 
 // ---------------------------------------------------------------------------
 // Room hero image
@@ -242,17 +263,6 @@ function RoomHero({
 }
 
 // ---------------------------------------------------------------------------
-// Amenity group icon helper
-// ---------------------------------------------------------------------------
-
-function groupIcon(group: string) {
-  if (group.includes("In-Room")) return "🏠"
-  if (group.includes("Bathroom")) return "🚿"
-  if (group.includes("Kitchen")) return "☕"
-  return "✦"
-}
-
-// ---------------------------------------------------------------------------
 // Room facts grid (reused in both normal and fallback flows)
 // ---------------------------------------------------------------------------
 
@@ -321,7 +331,7 @@ function RoomFactsBlock({ detail, rateFallback }: { detail: NbRoomTypeDetail | n
         ) : null}
         {d !== null && !d.allowSmoking ? (
           <div className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2.5">
-            <span className="shrink-0 text-lg leading-none">🚭</span>
+            <XCircle className="size-4 shrink-0 text-[#b8973a]" />
             <div>
               <p className="font-body text-[11px] text-gray-400">Smoking</p>
               <p className="text-sm font-semibold text-gray-800">Non-smoking</p>
@@ -342,14 +352,14 @@ function RoomAmenitiesBlock({ detail }: { detail: NbRoomTypeDetail | null }) {
         {detail.amenityGroups.map((g) => (
           <div key={g.group}>
             <p className="mb-2.5 flex items-center gap-1.5 font-body text-xs font-semibold text-gray-600">
-              <span className="text-base leading-none">{groupIcon(g.group)}</span>
+              <GroupIcon group={g.group} />
               {g.group}
             </p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {g.amenities.map((a) => (
                 <div key={a.otaamenitycode}
                   className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2">
-                  <span className="shrink-0 text-sm leading-none">{AMENITY_ICONS[a.description] ?? "✓"}</span>
+                  <AmenityIcon name={a.description} />
                   <span className="text-xs text-gray-600">{a.description}</span>
                 </div>
               ))}
@@ -421,7 +431,7 @@ function RoomDetailAndBooking({
           {/* Children policy */}
           {rate.childrenPolicy ? (
             <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/60 px-5 py-4">
-              <span className="mt-0.5 shrink-0 text-xl leading-none">👶</span>
+              <Baby className="mt-0.5 size-5 shrink-0 text-blue-500" />
               <div>
                 <p className="font-medium text-gray-800">Children policy</p>
                 <p className="mt-0.5 text-sm text-gray-600">{rate.childrenPolicy}</p>
@@ -495,9 +505,7 @@ function RoomDetailAndBooking({
                   {sortedPlans.map((plan) => (
                     <div key={plan.mealplanid} className="px-4 py-3">
                       <div className="flex items-center gap-1.5 mb-2">
-                        <span className="text-base leading-none">
-                          {MEAL_PLAN_ICONS[plan.mealplanid] ?? "🍴"}
-                        </span>
+                        <MealPlanIcon id={plan.mealplanid} />
                         <p className="text-[13px] font-semibold text-gray-800">
                           {plan.description}
                         </p>
@@ -825,12 +833,12 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
           ) : null}
           {est.allowPet ? (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 font-body text-xs text-gray-600">
-              🐾 {est.allowPet}
+              <PawPrint className="size-3.5 shrink-0" /> {est.allowPet}
             </span>
           ) : null}
           {!est.allowSmoking ? (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 font-body text-xs text-gray-600">
-              🚭 Non-smoking property
+              <BanIcon className="size-3.5 shrink-0" /> Non-smoking property
             </span>
           ) : null}
         </div>
@@ -850,9 +858,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
                 key={a.code}
                 className="inline-flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-700"
               >
-                <span className="text-base leading-none">
-                  {PROPERTY_AMENITY_ICONS[a.description] ?? "✦"}
-                </span>
+                <AmenityIcon name={a.description} className="size-3.5 shrink-0 text-[#b8973a]" />
                 {a.description}
               </span>
             ))}
@@ -1020,7 +1026,7 @@ function PoliciesSection({
       <div className="divide-y divide-gray-100">
         {hasChildren ? (
           <div className="flex gap-4 px-5 py-4 sm:px-6">
-            <span className="mt-0.5 shrink-0 text-lg leading-none">👶</span>
+            <Baby className="mt-0.5 size-5 shrink-0 text-blue-500" />
             <div>
               <p className="font-medium text-gray-800">Children</p>
               <ul className="mt-1 space-y-0.5 text-sm text-gray-600">

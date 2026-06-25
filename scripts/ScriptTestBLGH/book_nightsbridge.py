@@ -220,7 +220,9 @@ def _list_visible_room_types(page) -> list[str]:
                         el = el.parentElement;
                         const h = el.querySelector('h2,h3,h4,[class*="title"],[class*="name"]');
                         if (h && h.innerText?.trim()) {
-                            names.push(h.innerText.trim());
+                            // Strip any trailing 'Close' text from dismiss buttons inside the heading
+                            const name = h.innerText.trim().replace(/\\s*Close\\s*$/i, '').trim();
+                            if (name) names.push(name);
                             break;
                         }
                     }
@@ -233,22 +235,54 @@ def _list_visible_room_types(page) -> list[str]:
 
 
 def _click_view_rates(page, room_type_name: str) -> bool:
-    """Find the room card matching room_type_name and click its VIEW RATES AND BOOK button."""
+    """Find the room card matching room_type_name and click its VIEW RATES AND BOOK button.
+
+    Pass 1: exact substring match (fastest, most precise).
+    Pass 2: strip the parenthetical variant suffix (e.g. '(Bath & Shower)') from the
+            search term and match on the base name — handles cases where NightsBridge
+            lists 'Twin Room (Shower)' but our catalogue says 'Twin Room (Bath & Shower)'.
+    """
     return page.evaluate(
         """(roomTypeName) => {
+            // Normalise: strip trailing 'Close' text that NightsBridge injects into headings
+            function normalise(text) {
+                return (text || '').replace(/\\s*Close\\s*$/i, '').trim();
+            }
+            // Base name: everything before the first '(' — used as fallback
+            const baseName = roomTypeName.replace(/\\s*\\(.*$/, '').trim().toLowerCase();
+
             const buttons = Array.from(document.querySelectorAll('button.btn-show-rates'));
+
+            // Pass 1: exact match
             for (const btn of buttons) {
                 let el = btn;
                 for (let i = 0; i < 12; i++) {
                     if (!el.parentElement) break;
                     el = el.parentElement;
-                    if ((el.innerText || '').includes(roomTypeName)) {
+                    if (normalise(el.innerText).toLowerCase().includes(roomTypeName.toLowerCase())) {
                         btn.scrollIntoView({ behavior: 'instant', block: 'center' });
                         btn.click();
                         return true;
                     }
                 }
             }
+
+            // Pass 2: base-name fuzzy match (ignores parenthetical variant)
+            if (baseName) {
+                for (const btn of buttons) {
+                    let el = btn;
+                    for (let i = 0; i < 12; i++) {
+                        if (!el.parentElement) break;
+                        el = el.parentElement;
+                        if (normalise(el.innerText).toLowerCase().includes(baseName)) {
+                            btn.scrollIntoView({ behavior: 'instant', block: 'center' });
+                            btn.click();
+                            return true;
+                        }
+                    }
+                }
+            }
+
             return false;
         }""",
         room_type_name,

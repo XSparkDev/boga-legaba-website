@@ -13,11 +13,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Invalid request body" }, { status: 400 })
   }
 
-  const { email, amountRands, bookingRef, guestName, checkin, checkout, roomTypeName } = body as {
+  const { email, amountRands, bookingRef, guestName, guestPhone, checkin, checkout, roomTypeName } = body as {
     email: string
     amountRands: number
     bookingRef: string
     guestName: string
+    guestPhone: string
     checkin: string
     checkout: string
     roomTypeName: string
@@ -37,6 +38,7 @@ export async function POST(request: NextRequest) {
     `?bookingRef=${encodeURIComponent(bookingRef)}` +
     `&guestEmail=${encodeURIComponent(email)}` +
     `&guestName=${encodeURIComponent(guestName)}` +
+    `&guestPhone=${encodeURIComponent(guestPhone ?? "")}` +
     `&checkin=${encodeURIComponent(checkin)}` +
     `&checkout=${encodeURIComponent(checkout)}` +
     `&roomTypeName=${encodeURIComponent(roomTypeName)}`
@@ -57,6 +59,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           bookingRef,
           guestName,
+          guestPhone: guestPhone ?? "",
           checkin,
           checkout,
           roomTypeName,
@@ -65,6 +68,7 @@ export async function POST(request: NextRequest) {
             { display_name: "Room",         variable_name: "room_type",    value: roomTypeName },
             { display_name: "Check-in",     variable_name: "checkin",      value: checkin },
             { display_name: "Check-out",    variable_name: "checkout",     value: checkout },
+            { display_name: "Phone",        variable_name: "guest_phone",  value: guestPhone ?? "" },
           ],
         },
       }),
