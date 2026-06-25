@@ -2,58 +2,97 @@
 
 import { useSearchParams } from "next/navigation"
 import { Suspense } from "react"
-import { AlertTriangle } from "lucide-react"
 
 function FailedContent() {
-  const params = useSearchParams()
+  const params     = useSearchParams()
   const bookingRef = params.get("bookingRef") ?? ""
 
   return (
-    <div className="min-h-screen bg-[#f5f0e8] flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg overflow-hidden">
-        {/* Header */}
-        <div className="bg-[#1a3a2a] px-6 py-6 text-center">
-          <p className="text-[#d4a843] text-xl tracking-widest font-normal" style={{ fontFamily: "Georgia, serif" }}>
-            BOGA LEGABA
-          </p>
-          <p className="text-[#a8c5b4] text-xs tracking-widest mt-1">PRIVATE GAME LODGE</p>
-        </div>
+    <div className="min-h-screen flex flex-col items-center justify-center p-5" style={{ background: "#F2EDE4" }}>
+      <div className="w-full max-w-md">
 
-        {/* Red banner */}
-        <div className="bg-red-500 px-6 py-4 text-center">
-          <AlertTriangle className="mx-auto mb-1 size-7 text-white" />
-          <p className="text-white font-bold text-lg">Payment Failed</p>
-        </div>
+        <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.10)" }}>
 
-        {/* Body */}
-        <div className="px-6 py-6">
-          <p className="text-gray-700 text-sm mb-4">
-            Your payment could not be processed. Don&apos;t worry — your booking on NightsBridge is still held as
-            &ldquo;Waiting for Payment&rdquo;. You can try again or pay via bank transfer.
-          </p>
+          {/* Dark lodge header */}
+          <div className="px-8 py-7 text-center" style={{ background: "#0A0A0A" }}>
+            <p
+              className="tracking-[0.25em] font-normal"
+              style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: "#C9A84C", fontSize: "20px" }}
+            >
+              BOGA LEGABA
+            </p>
+            <p className="tracking-[0.18em] mt-1" style={{ color: "#8C7B6B", fontSize: "10px" }}>
+              PRIVATE GAME LODGE
+            </p>
+            <div className="mx-auto mt-4" style={{ height: "1px", width: "48px", background: "#C9A84C", opacity: 0.6 }} />
+          </div>
+
+          {/* Failed content */}
+          <div className="px-8 pt-8 pb-4 text-center">
+            <div
+              className="mx-auto mb-4 flex items-center justify-center rounded-full"
+              style={{ width: 56, height: 56, background: "#FEF2F2", border: "2px solid #FCA5A5" }}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M12 9v4M12 17h.01" stroke="#EF4444" strokeWidth="2.2" strokeLinecap="round" />
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#EF4444" strokeWidth="2" strokeLinejoin="round" />
+              </svg>
+            </div>
+
+            <h1
+              className="font-normal mb-2"
+              style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: "#0A0A0A", fontSize: "26px" }}
+            >
+              Payment Unsuccessful
+            </h1>
+            <p style={{ color: "#8C7B6B", fontSize: "13px", lineHeight: 1.7 }}>
+              Your payment could not be processed. Don&apos;t worry —{" "}
+              <span style={{ color: "#3D3532" }}>your booking is still held</span> as
+              &ldquo;Waiting for Payment&rdquo; on our system.
+            </p>
+          </div>
 
           {bookingRef && (
-            <div className="bg-[#f9f7f2] rounded-xl border border-gray-100 px-4 py-3 mb-4">
-              <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-0.5">Booking Reference</p>
-              <p className="text-sm font-semibold text-gray-900">{bookingRef}</p>
+            <div className="px-6 py-2">
+              <div className="px-5 py-3.5 rounded-xl" style={{ background: "#F2EDE4", border: "1px solid #E8E0D4" }}>
+                <p style={{ margin: 0, color: "#8C7B6B", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.12em" }}>
+                  Booking Reference
+                </p>
+                <p style={{ margin: "3px 0 0", color: "#3D3532", fontSize: "14px", fontWeight: 500 }}>
+                  {bookingRef}
+                </p>
+              </div>
             </div>
           )}
 
-          <div className="space-y-2">
+          <div className="mx-6 mt-4 mb-5 px-4 py-3 rounded-xl" style={{ background: "#F2EDE4", border: "1px solid #E8E0D4" }}>
+            <p style={{ margin: 0, fontSize: "12px", color: "#8C7B6B", lineHeight: 1.6, textAlign: "center" }}>
+              Please try again below, or contact us via WhatsApp if the problem persists.
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="px-6 pb-7 space-y-3">
             <button
               onClick={() => window.history.back()}
-              className="flex w-full items-center justify-center rounded-xl bg-[#b8973a] px-6 py-3 text-sm font-semibold text-white hover:brightness-110 transition-all"
+              className="flex w-full items-center justify-center rounded-xl py-3.5 text-sm font-semibold transition-all hover:brightness-110"
+              style={{ background: "#C9A84C", color: "#0A0A0A", letterSpacing: "0.04em" }}
             >
-              Try payment again
+              Try Payment Again
             </button>
             <a
               href="/"
-              className="flex w-full items-center justify-center rounded-xl border border-gray-200 px-6 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all"
+              className="flex w-full items-center justify-center rounded-xl py-3.5 text-sm transition-all"
+              style={{ background: "#F2EDE4", color: "#8C7B6B", border: "1px solid #E8E0D4", letterSpacing: "0.02em" }}
             >
-              Back to home
+              Back to Home
             </a>
           </div>
         </div>
+
+        <p className="text-center mt-5" style={{ color: "#8C7B6B", fontSize: "11px", letterSpacing: "0.05em" }}>
+          PAYMENT PROCESSED SECURELY VIA PAYSTACK
+        </p>
       </div>
     </div>
   )

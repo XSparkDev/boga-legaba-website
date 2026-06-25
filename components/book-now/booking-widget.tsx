@@ -83,6 +83,7 @@ export function BookingWidget({
   const [payError, setPayError] = useState("")
   const [countdown, setCountdown] = useState(3)
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const payAttemptedRef = useRef(false)
 
   // Form fields — every field NightsBridge collects
   const [adults, setAdults] = useState(2)
@@ -164,6 +165,7 @@ export function BookingWidget({
       }
 
       if (data.ok) {
+        payAttemptedRef.current = false
         setBookingRef(data.bookingRef ?? null)
         setConfirmation(data.confirmation ?? null)
         setStep("success")
@@ -177,9 +179,10 @@ export function BookingWidget({
     }
   }
 
-  // Auto-redirect to Paystack when booking succeeds
+  // Auto-redirect to Paystack when booking succeeds (only once per booking)
   useEffect(() => {
     if (step !== "success") return
+    if (payAttemptedRef.current) return
     setCountdown(3)
     countdownRef.current = setInterval(() => {
       setCountdown((c) => {
@@ -197,6 +200,7 @@ export function BookingWidget({
 
   async function handlePayNow() {
     if (!confirmation?.total) return
+    payAttemptedRef.current = true
     setPayError("")
     setStep("paying")
 
@@ -208,6 +212,9 @@ export function BookingWidget({
       return
     }
 
+    // Use bookingRef from API, fall back to bookingId from confirmation data
+    const ref = bookingRef || confirmation?.bookingId || `BL-${Date.now()}`
+
     try {
       const res = await fetch("/api/payment/initiate", {
         method: "POST",
@@ -215,7 +222,7 @@ export function BookingWidget({
         body: JSON.stringify({
           email,
           amountRands,
-          bookingRef: bookingRef ?? "",
+          bookingRef: ref,
           guestName: `${firstname} ${surname}`.trim(),
           checkin: arrive,
           checkout: depart,
@@ -294,7 +301,7 @@ export function BookingWidget({
             </div>
           </div>
           <button
-            onClick={() => { clearInterval(countdownRef.current!); handlePayNow() }}
+            onClick={() => { clearInterval(countdownRef.current!); payAttemptedRef.current = false; handlePayNow() }}
             className="font-body text-xs text-emerald-700 underline underline-offset-2 w-full text-center"
           >
             Go now →

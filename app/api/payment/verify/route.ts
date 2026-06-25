@@ -104,65 +104,91 @@ function buildPaymentEmail({
   const amount = `R ${amountPaid.toLocaleString("en-ZA", { minimumFractionDigits: 2 })}`
   return `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Payment Confirmed</title></head>
-<body style="margin:0;padding:0;background:#f5f0e8;font-family:Georgia,serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0e8;padding:40px 20px;">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Payment Confirmed – Boga Legaba</title>
+</head>
+<body style="margin:0;padding:0;background:#F2EDE4;font-family:'DM Sans',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F2EDE4;padding:48px 20px;">
 <tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.09);">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,0.09);">
 
-  <!-- Header -->
-  <tr><td style="background:#1a3a2a;padding:32px;text-align:center;">
-    <h1 style="color:#d4a843;margin:0;font-size:26px;letter-spacing:3px;font-weight:normal;">BOGA LEGABA</h1>
-    <p style="color:#a8c5b4;margin:6px 0 0;font-size:12px;letter-spacing:1px;">PRIVATE GAME LODGE</p>
+  <!-- Dark lodge header -->
+  <tr><td style="background:#0A0A0A;padding:36px 40px;text-align:center;">
+    <p style="color:#C9A84C;margin:0;font-size:18px;letter-spacing:4px;font-weight:400;font-family:Georgia,'Times New Roman',serif;">BOGA LEGABA</p>
+    <p style="color:#8C7B6B;margin:6px 0 0;font-size:10px;letter-spacing:2.5px;">PRIVATE GAME LODGE</p>
+    <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding-top:18px;">
+      <table align="center" cellpadding="0" cellspacing="0"><tr><td style="background:#C9A84C;height:1px;width:48px;opacity:0.6;font-size:0;">&nbsp;</td></tr></table>
+    </td></tr></table>
   </td></tr>
 
-  <!-- Green confirmed banner -->
-  <tr><td style="background:#22c55e;padding:18px;text-align:center;">
-    <p style="color:#fff;margin:0;font-size:17px;font-weight:bold;">✓ &nbsp;Payment Confirmed</p>
-  </td></tr>
+  <!-- Gold confirmation strip -->
+  <tr><td style="background:#C9A84C;padding:0;height:4px;font-size:0;">&nbsp;</td></tr>
 
-  <!-- Body -->
-  <tr><td style="padding:32px;">
-    <p style="color:#374151;font-size:16px;margin:0 0 8px;">Dear ${guestName || "Guest"},</p>
-    <p style="color:#374151;font-size:14px;line-height:1.7;margin:0 0 24px;">
-      Thank you! We have received your payment and your stay at Boga Legaba is fully confirmed.
-      We look forward to welcoming you.
-    </p>
-
-    <!-- Details box -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f7f2;border-radius:8px;border:1px solid #e5e7eb;">
-      <tr><td style="padding:16px 20px;border-bottom:1px solid #e5e7eb;">
-        <p style="margin:0;color:#9ca3af;font-size:10px;text-transform:uppercase;letter-spacing:1px;">Booking Reference</p>
-        <p style="margin:4px 0 0;color:#111827;font-size:18px;font-weight:bold;">${bookingRef || "—"}</p>
-      </td></tr>
-      <tr><td style="padding:16px 20px;border-bottom:1px solid #e5e7eb;">
-        <p style="margin:0;color:#9ca3af;font-size:10px;text-transform:uppercase;letter-spacing:1px;">Room</p>
-        <p style="margin:4px 0 0;color:#111827;font-size:14px;">${roomTypeName || "—"}</p>
-      </td></tr>
-      <tr><td style="padding:16px 20px;border-bottom:1px solid #e5e7eb;">
-        <p style="margin:0;color:#9ca3af;font-size:10px;text-transform:uppercase;letter-spacing:1px;">Check-in</p>
-        <p style="margin:4px 0 0;color:#111827;font-size:14px;">${checkin}</p>
-      </td></tr>
-      <tr><td style="padding:16px 20px;border-bottom:1px solid #e5e7eb;">
-        <p style="margin:0;color:#9ca3af;font-size:10px;text-transform:uppercase;letter-spacing:1px;">Check-out</p>
-        <p style="margin:4px 0 0;color:#111827;font-size:14px;">${checkout}</p>
-      </td></tr>
-      <tr><td style="padding:16px 20px;">
-        <p style="margin:0;color:#9ca3af;font-size:10px;text-transform:uppercase;letter-spacing:1px;">Amount Paid</p>
-        <p style="margin:4px 0 0;color:#22c55e;font-size:22px;font-weight:bold;">${amount}</p>
+  <!-- Success badge + heading -->
+  <tr><td style="padding:40px 40px 24px;text-align:center;">
+    <table align="center" cellpadding="0" cellspacing="0">
+      <tr><td style="width:52px;height:52px;border-radius:50%;border:2px solid #C9A84C;background:#F2EDE4;text-align:center;vertical-align:middle;">
+        <span style="color:#C9A84C;font-size:22px;line-height:52px;">&#10003;</span>
       </td></tr>
     </table>
-
-    <p style="color:#6b7280;font-size:13px;line-height:1.6;margin:24px 0 0;">
-      If you have any questions, feel free to reply to this email or reach out via WhatsApp.
-      We'll see you soon!
+    <p style="margin:20px 0 6px;color:#0A0A0A;font-size:24px;font-weight:400;font-family:Georgia,'Times New Roman',serif;letter-spacing:-0.01em;">Payment Confirmed</p>
+    <p style="margin:0;color:#8C7B6B;font-size:13px;line-height:1.7;">
+      Dear <strong style="color:#3D3532;">${guestName || "Guest"}</strong>,<br>
+      We have received your payment. Your stay at Boga Legaba is fully confirmed.
     </p>
+  </td></tr>
+
+  <!-- Booking details -->
+  <tr><td style="padding:0 32px 28px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-radius:10px;overflow:hidden;border:1px solid #E8E0D4;">
+
+      <tr><td style="background:#FAFAF8;padding:14px 20px;border-bottom:1px solid #E8E0D4;">
+        <p style="margin:0;color:#8C7B6B;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;">Booking Reference</p>
+        <p style="margin:4px 0 0;color:#3D3532;font-size:16px;font-weight:600;">${bookingRef || "—"}</p>
+      </td></tr>
+
+      <tr><td style="background:#F2EDE4;padding:14px 20px;border-bottom:1px solid #E8E0D4;">
+        <p style="margin:0;color:#8C7B6B;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;">Room</p>
+        <p style="margin:4px 0 0;color:#3D3532;font-size:14px;font-weight:500;">${roomTypeName || "—"}</p>
+      </td></tr>
+
+      <tr><td style="background:#FAFAF8;padding:14px 20px;border-bottom:1px solid #E8E0D4;">
+        <p style="margin:0;color:#8C7B6B;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;">Check-in</p>
+        <p style="margin:4px 0 0;color:#3D3532;font-size:14px;font-weight:500;">${checkin}</p>
+      </td></tr>
+
+      <tr><td style="background:#F2EDE4;padding:14px 20px;border-bottom:1px solid #E8E0D4;">
+        <p style="margin:0;color:#8C7B6B;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;">Check-out</p>
+        <p style="margin:4px 0 0;color:#3D3532;font-size:14px;font-weight:500;">${checkout}</p>
+      </td></tr>
+
+      <tr><td style="background:#FAFAF8;padding:14px 20px;">
+        <p style="margin:0;color:#8C7B6B;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;">Amount Paid</p>
+        <p style="margin:4px 0 0;color:#B8973B;font-size:22px;font-weight:700;font-family:Georgia,'Times New Roman',serif;">${amount}</p>
+      </td></tr>
+
+    </table>
+  </td></tr>
+
+  <!-- Message -->
+  <tr><td style="padding:0 32px 28px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#F2EDE4;border-radius:10px;border:1px solid #E8E0D4;">
+      <tr><td style="padding:16px 20px;text-align:center;">
+        <p style="margin:0;color:#8C7B6B;font-size:12px;line-height:1.8;">
+          If you have any questions, please reply to this email or reach out via WhatsApp.<br>
+          We look forward to welcoming you to the bush.
+        </p>
+      </td></tr>
+    </table>
   </td></tr>
 
   <!-- Footer -->
-  <tr><td style="background:#f9f7f2;border-top:1px solid #e5e7eb;padding:20px;text-align:center;">
-    <p style="color:#9ca3af;font-size:11px;margin:0;">Boga Legaba Private Game Lodge</p>
-    <p style="color:#d1d5db;font-size:10px;margin:4px 0 0;">This is an automated payment confirmation. Please keep it for your records.</p>
+  <tr><td style="background:#0A0A0A;padding:24px 32px;text-align:center;">
+    <p style="color:#C9A84C;margin:0;font-size:11px;letter-spacing:2px;font-family:Georgia,'Times New Roman',serif;">BOGA LEGABA</p>
+    <p style="color:#8C7B6B;margin:6px 0 0;font-size:10px;letter-spacing:0.5px;">Mahikeng, North West · South Africa</p>
+    <p style="color:#3D3532;margin:12px 0 0;font-size:10px;">Payment processed securely via Paystack · Please keep this email for your records.</p>
   </td></tr>
 
 </table>
