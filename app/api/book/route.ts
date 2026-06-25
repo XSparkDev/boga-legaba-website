@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkRoomTypeAvailableLive } from "@/lib/nightsbridge-api"
+import { Resend } from "resend"
+import { buildGuestPendingEmail } from "@/lib/payment-utils"
 
 export const maxDuration = 90
 
@@ -60,11 +62,14 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // SYNC_WORKER_URL may end with /run — strip that to get the base URL
-  const bookUrl = workerUrl.replace(/\/run$/, "") + "/book"
+  const baseUrl = workerUrl.replace(/\/run$/, "")
+
+  // Pre-warm the sync worker — fires an unauthenticated GET to /health which wakes
+  // a sleeping Render free-tier service before we send the real booking request.
+  fetch(`${baseUrl}/health`, { signal: AbortSignal.timeout(10_000) }).catch(() => {})
 
   try {
-    const res = await fetch(bookUrl, {
+    const res = await fetch(`${baseUrl}/book`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${cronSecret}`,
@@ -75,6 +80,34 @@ export async function POST(request: NextRequest) {
     })
 
     const data = (await res.json()) as Record<string, unknown>
+
+    // After a successful booking, send the guest a "pending payment" email so they
+    // have booking details in their inbox even if they close the browser before paying.
+    if (res.ok && data.ok) {
+      const resendKey = process.env.RESEND_API_KEY
+      if (resendKey && resendKey !== "re_REPLACE_ME") {
+        const guestEmail = String(body.email ?? "")
+        if (guestEmail) {
+          const resend = new Resend(resendKey)
+          const from   = process.env.RESEND_FROM_EMAIL ?? "Boga Legaba <onboarding@resend.dev>"
+          const conf   = (data.confirmation ?? {}) as Record<string, string>
+          resend.emails.send({
+            from,
+            to:      guestEmail,
+            subject: "Your Boga Legaba booking is reserved – complete payment",
+            html:    buildGuestPendingEmail({
+              guestName:      `${body.firstname ?? ""} ${body.surname ?? ""}`.trim(),
+              bookingRef:     String(data.bookingRef ?? conf.bookingId ?? ""),
+              checkin:        String(body.checkin ?? ""),
+              checkout:       String(body.checkout ?? ""),
+              roomTypeName:   String(body.roomTypeName ?? ""),
+              estimatedTotal: conf.total ?? "",
+            }),
+          }).catch((err: unknown) => console.error("[book] Pending email error:", err))
+        }
+      }
+    }
+
     return NextResponse.json(data, { status: res.ok ? 200 : res.status })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Booking request failed"

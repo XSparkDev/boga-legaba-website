@@ -159,6 +159,41 @@ def perform_action(booking_ref: str | int, action: str) -> dict:
                     "nbUrl": booking_url,
                 }
 
+            elif action == "confirm":
+                matched = _click_first(page, [
+                    "button:has-text('Confirm Booking')",
+                    "button:has-text('CONFIRM BOOKING')",
+                    "button:has-text('Confirm')",
+                    "button:has-text('CONFIRM')",
+                    "button:has-text('Approve')",
+                    "a:has-text('Confirm')",
+                    "[data-action='confirm']",
+                    "[class*='btn-confirm']",
+                ])
+                if not matched:
+                    return {
+                        "ok": False,
+                        "error": (
+                            "Confirm button not found — the booking may already be confirmed, "
+                            "or the NightsBridge dashboard layout has changed."
+                        ),
+                        "nbUrl": booking_url,
+                    }
+
+                time.sleep(3)
+                _click_first(page, [
+                    "button:has-text('Yes')",
+                    "button:has-text('OK')",
+                    "button:has-text('Confirm')",
+                ])
+                time.sleep(2)
+
+                return {
+                    "ok": True,
+                    "message": f"Booking {ref} confirmed on NightsBridge",
+                    "nbUrl": booking_url,
+                }
+
             else:
                 return {"ok": False, "error": f"Unknown action: {action}"}
 
@@ -176,7 +211,7 @@ def perform_action(booking_ref: str | int, action: str) -> dict:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="NightsBridge admin booking actions")
     parser.add_argument("--booking-ref", required=True, help="NightsBridge booking reference number")
-    parser.add_argument("--action", required=True, choices=["checkin", "checkout"])
+    parser.add_argument("--action", required=True, choices=["checkin", "checkout", "confirm"])
     args = parser.parse_args()
 
     result = perform_action(args.booking_ref, args.action)

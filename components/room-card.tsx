@@ -1,5 +1,6 @@
 import Link from "next/link"
 import type { Property, Room } from "@/data/rooms"
+import { MessageCircle } from "lucide-react"
 
 const NB_BBID = 21091
 import { SiteImage } from "@/components/site-image"
@@ -29,10 +30,10 @@ const COLOR_VARS: Record<string, string> = {
   transnet: "var(--color-transnet)",
 }
 
-function bathroomEmoji(bathroom: string) {
-  if (bathroom.includes("Shower")) return "🚿 Shower only"
-  if (bathroom.includes("Bath &")) return "🛁 Bath & Shower"
-  if (bathroom.includes("Bath")) return "🛁 Bath only"
+function bathroomLabel(bathroom: string) {
+  if (bathroom.includes("Shower") && !bathroom.includes("Bath")) return "Shower only"
+  if (bathroom.includes("Bath &")) return "Bath & Shower"
+  if (bathroom.includes("Bath")) return "Bath only"
   return bathroom
 }
 
@@ -119,7 +120,7 @@ export function RoomCard({
             {room.config}
           </span>
           <span className="font-mono text-[10px] tracking-[0.1em] uppercase px-2.5 py-1 rounded-full bg-sand text-body-text">
-            {bathroomEmoji(room.bathroom)}
+            {bathroomLabel(room.bathroom)}
           </span>
         </div>
 
@@ -164,7 +165,7 @@ export function RoomCard({
             data-ga4-label={property.name}
             className="flex items-center justify-center gap-2 font-body text-sm text-taupe hover:text-gold transition-colors duration-200 py-1"
           >
-            <span className="text-base">💬</span> Enquire via WhatsApp
+            <MessageCircle className="size-4 shrink-0" /> Enquire via WhatsApp
           </a>
         </div>
       </div>
