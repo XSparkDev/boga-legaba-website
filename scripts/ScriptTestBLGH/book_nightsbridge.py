@@ -325,17 +325,26 @@ def _click_book_now(page, meal_plan_name: str) -> bool:
 
 
 def _ng_set(page, name: str, value: str) -> None:
-    """Set an Angular-controlled number input using the native value setter."""
+    """Set any Angular-controlled input using the native value setter.
+
+    Playwright's fill() sets the visible text but bypasses Angular's reactive-form
+    change detection.  Using the native HTMLInputElement setter + dispatching both
+    'input' and 'change' forces Angular to register the new value in its model.
+    Works for both <input> and <textarea> elements.
+    """
     page.evaluate(
         """([name, value]) => {
-            const inp = document.querySelector(`input[name="${name}"]`);
-            if (!inp) return;
-            const setter = Object.getOwnPropertyDescriptor(
-                window.HTMLInputElement.prototype, 'value'
-            ).set;
-            setter.call(inp, value);
-            inp.dispatchEvent(new Event('input', { bubbles: true }));
-            inp.dispatchEvent(new Event('change', { bubbles: true }));
+            const el = document.querySelector(`[name="${name}"]`);
+            if (!el) return;
+            const tag = el.tagName.toLowerCase();
+            const proto = tag === 'textarea'
+                ? window.HTMLTextAreaElement.prototype
+                : window.HTMLInputElement.prototype;
+            const setter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+            setter.call(el, value);
+            el.dispatchEvent(new Event('input',  { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+            el.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
         }""",
         [name, value],
     )
@@ -363,30 +372,23 @@ def _fill_guest_form(
         _ng_set(page, "child2-c1", str(children2))
     time.sleep(0.5)
 
-    # Text inputs — Playwright fill triggers Angular reactive-form events
+    # Text inputs — use _ng_set (native Angular setter) so the reactive-form
+    # model actually receives the values, not just the visible DOM text.
     for name, val in [
-        ("firstname", firstname),
-        ("surname", surname),
-        ("phoneno", phone),
-        ("email", email),
+        ("firstname",   firstname),
+        ("surname",     surname),
+        ("phoneno",     phone),
+        ("email",       email),
         ("emailverify", email),   # NightsBridge requires email confirmation
-        ("airline", airline),
-        ("flightno", flightno),
+        ("airline",     airline),
+        ("flightno",    flightno),
+        ("arrivaltime", arrival_time),
     ]:
         if val:
-            loc = page.locator(f'input[name="{name}"]').first
-            if loc.count():
-                loc.fill(str(val))
-
-    if arrival_time:
-        loc = page.locator('input[name="arrivaltime"]').first
-        if loc.count():
-            loc.fill(arrival_time)
+            _ng_set(page, name, str(val))
 
     if notes:
-        loc = page.locator('textarea[name="notes"]').first
-        if loc.count():
-            loc.fill(notes)
+        _ng_set(page, "notes", notes)
 
 
 def _check_occupancy_error(page) -> str | None:
