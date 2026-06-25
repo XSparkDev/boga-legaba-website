@@ -115,11 +115,11 @@ def book_room(params: dict) -> dict:
 
             # ── Step 5: Select payment method ─────────────────────────────
             _select_payment(page, payment_method)
-            time.sleep(0.5)
+            time.sleep(1)
 
             # ── Step 6: Accept T&Cs ───────────────────────────────────────
             _accept_tcs(page)
-            time.sleep(0.5)
+            time.sleep(1.5)  # give Angular form validation time to re-evaluate
 
             # ── Step 7: Submit ────────────────────────────────────────────
             submitted = _submit_booking(page)
@@ -129,8 +129,9 @@ def book_room(params: dict) -> dict:
                     "error": "Could not find the submit/confirm button on the booking form",
                 }
 
-            # Wait for confirmation OR a known error — much more reliable than a fixed sleep
-            _wait_for_result(page, timeout_ms=20_000)
+            # Give Angular time to validate and navigate after submit, then wait for result
+            time.sleep(3)
+            _wait_for_result(page, timeout_ms=25_000)
 
             # ── Step 8: Analyse result page ───────────────────────────────
             page_url = page.url
@@ -162,7 +163,28 @@ def book_room(params: dict) -> dict:
                     "error": "NightsBridge indicated no availability for these dates. " + page_text[:300],
                 }
 
+            # Require clear confirmation signals — "reference" excluded as it appears on the form page
+            confirmation_keywords = ["confirmed", "thank you", "booking number", "booking id"]
+            has_confirmation = booking_ref or any(kw in text_lower for kw in confirmation_keywords)
+            if not has_confirmation:
+                try:
+                    page.screenshot(path="/tmp/booking_no_confirm.png")
+                except Exception:
+                    pass
+                return {
+                    "ok": False,
+                    "error": (
+                        "The booking form was not accepted by NightsBridge — "
+                        "terms & conditions may not have been checked or the payment method was not selected. "
+                        "Please try again. If this repeats, contact the property directly."
+                    ),
+                }
+
             confirmation = _parse_confirmation(page)
+            try:
+                page.screenshot(path="/tmp/booking_confirmed.png")
+            except Exception:
+                pass
             return {
                 "ok": True,
                 "bookingRef": booking_ref,
@@ -198,7 +220,9 @@ def _list_visible_room_types(page) -> list[str]:
                         el = el.parentElement;
                         const h = el.querySelector('h2,h3,h4,[class*="title"],[class*="name"]');
                         if (h && h.innerText?.trim()) {
-                            names.push(h.innerText.trim());
+                            // Strip any trailing 'Close' text from dismiss buttons inside the heading
+                            const name = h.innerText.trim().replace(/\\s*Close\\s*$/i, '').trim();
+                            if (name) names.push(name);
                             break;
                         }
                     }
@@ -211,22 +235,54 @@ def _list_visible_room_types(page) -> list[str]:
 
 
 def _click_view_rates(page, room_type_name: str) -> bool:
-    """Find the room card matching room_type_name and click its VIEW RATES AND BOOK button."""
+    """Find the room card matching room_type_name and click its VIEW RATES AND BOOK button.
+
+    Pass 1: exact substring match (fastest, most precise).
+    Pass 2: strip the parenthetical variant suffix (e.g. '(Bath & Shower)') from the
+            search term and match on the base name — handles cases where NightsBridge
+            lists 'Twin Room (Shower)' but our catalogue says 'Twin Room (Bath & Shower)'.
+    """
     return page.evaluate(
         """(roomTypeName) => {
+            // Normalise: strip trailing 'Close' text that NightsBridge injects into headings
+            function normalise(text) {
+                return (text || '').replace(/\\s*Close\\s*$/i, '').trim();
+            }
+            // Base name: everything before the first '(' — used as fallback
+            const baseName = roomTypeName.replace(/\\s*\\(.*$/, '').trim().toLowerCase();
+
             const buttons = Array.from(document.querySelectorAll('button.btn-show-rates'));
+
+            // Pass 1: exact match
             for (const btn of buttons) {
                 let el = btn;
                 for (let i = 0; i < 12; i++) {
                     if (!el.parentElement) break;
                     el = el.parentElement;
-                    if ((el.innerText || '').includes(roomTypeName)) {
+                    if (normalise(el.innerText).toLowerCase().includes(roomTypeName.toLowerCase())) {
                         btn.scrollIntoView({ behavior: 'instant', block: 'center' });
                         btn.click();
                         return true;
                     }
                 }
             }
+
+            // Pass 2: base-name fuzzy match (ignores parenthetical variant)
+            if (baseName) {
+                for (const btn of buttons) {
+                    let el = btn;
+                    for (let i = 0; i < 12; i++) {
+                        if (!el.parentElement) break;
+                        el = el.parentElement;
+                        if (normalise(el.innerText).toLowerCase().includes(baseName)) {
+                            btn.scrollIntoView({ behavior: 'instant', block: 'center' });
+                            btn.click();
+                            return true;
+                        }
+                    }
+                }
+            }
+
             return false;
         }""",
         room_type_name,
@@ -269,17 +325,26 @@ def _click_book_now(page, meal_plan_name: str) -> bool:
 
 
 def _ng_set(page, name: str, value: str) -> None:
-    """Set an Angular-controlled number input using the native value setter."""
+    """Set any Angular-controlled input using the native value setter.
+
+    Playwright's fill() sets the visible text but bypasses Angular's reactive-form
+    change detection.  Using the native HTMLInputElement setter + dispatching both
+    'input' and 'change' forces Angular to register the new value in its model.
+    Works for both <input> and <textarea> elements.
+    """
     page.evaluate(
         """([name, value]) => {
-            const inp = document.querySelector(`input[name="${name}"]`);
-            if (!inp) return;
-            const setter = Object.getOwnPropertyDescriptor(
-                window.HTMLInputElement.prototype, 'value'
-            ).set;
-            setter.call(inp, value);
-            inp.dispatchEvent(new Event('input', { bubbles: true }));
-            inp.dispatchEvent(new Event('change', { bubbles: true }));
+            const el = document.querySelector(`[name="${name}"]`);
+            if (!el) return;
+            const tag = el.tagName.toLowerCase();
+            const proto = tag === 'textarea'
+                ? window.HTMLTextAreaElement.prototype
+                : window.HTMLInputElement.prototype;
+            const setter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+            setter.call(el, value);
+            el.dispatchEvent(new Event('input',  { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+            el.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
         }""",
         [name, value],
     )
@@ -307,30 +372,23 @@ def _fill_guest_form(
         _ng_set(page, "child2-c1", str(children2))
     time.sleep(0.5)
 
-    # Text inputs — Playwright fill triggers Angular reactive-form events
+    # Text inputs — use _ng_set (native Angular setter) so the reactive-form
+    # model actually receives the values, not just the visible DOM text.
     for name, val in [
-        ("firstname", firstname),
-        ("surname", surname),
-        ("phoneno", phone),
-        ("email", email),
+        ("firstname",   firstname),
+        ("surname",     surname),
+        ("phoneno",     phone),
+        ("email",       email),
         ("emailverify", email),   # NightsBridge requires email confirmation
-        ("airline", airline),
-        ("flightno", flightno),
+        ("airline",     airline),
+        ("flightno",    flightno),
+        ("arrivaltime", arrival_time),
     ]:
         if val:
-            loc = page.locator(f'input[name="{name}"]').first
-            if loc.count():
-                loc.fill(str(val))
-
-    if arrival_time:
-        loc = page.locator('input[name="arrivaltime"]').first
-        if loc.count():
-            loc.fill(arrival_time)
+            _ng_set(page, name, str(val))
 
     if notes:
-        loc = page.locator('textarea[name="notes"]').first
-        if loc.count():
-            loc.fill(notes)
+        _ng_set(page, "notes", notes)
 
 
 def _check_occupancy_error(page) -> str | None:
@@ -371,13 +429,12 @@ def _wait_for_result(page, timeout_ms: int = 20_000) -> None:
         page.wait_for_function(
             """() => {
                 const text = document.body.innerText.toLowerCase();
-                // Success signals
-                if (text.includes('confirmed') || text.includes('reference') ||
-                    text.includes('thank you') || text.includes('booking number')) return true;
+                // Success signals — "reference" excluded: it appears on the form page too
+                if (text.includes('confirmed') || text.includes('thank you') ||
+                    text.includes('booking number') || text.includes('booking id')) return true;
                 // Error signals
                 if (text.includes('not available') || text.includes('booking failed') ||
-                    text.includes('error') || text.includes('unable to complete')) return true;
-                // Payment gateway redirect (URL-based check done separately)
+                    text.includes('unable to complete')) return true;
                 return false;
             }""",
             timeout=timeout_ms,
@@ -387,27 +444,142 @@ def _wait_for_result(page, timeout_ms: int = 20_000) -> None:
 
 
 def _select_payment(page, method: str = "bank_transfer") -> None:
-    value = "1" if method == "bank_transfer" else "2"
+    # For Angular forms: click the label/container, not the raw input.
     page.evaluate(
-        """(value) => {
-            const radios = document.querySelectorAll('input[type="radio"]');
+        """(method) => {
+            const isBankTransfer = method === 'bank_transfer';
+
+            // Click the Angular-friendly container (label wrapping the radio)
+            const clickAngular = el => {
+                // Try label first (Angular Material uses label as click target)
+                const label = el.closest('label') || el.parentElement;
+                if (label && label !== el) { label.click(); }
+                // Also fire events on the input itself
+                el.click();
+                el.checked = true;
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+            };
+
+            const radios = Array.from(document.querySelectorAll('input[type="radio"]'));
+            if (!radios.length) return;
+
+            // Strategy 1: value "1" = bank transfer
+            if (isBankTransfer) {
+                const r1 = radios.find(r => r.value === '1');
+                if (r1) { clickAngular(r1); return; }
+            }
+
+            // Strategy 2: nearby text contains bank/eft/transfer (or card/credit)
             for (const r of radios) {
-                if (r.value === value) {
-                    r.click();
-                    r.checked = true;
-                    r.dispatchEvent(new Event('change', { bubbles: true }));
-                    return;
+                let el = r;
+                for (let i = 0; i < 5; i++) {
+                    if (!el.parentElement) break;
+                    el = el.parentElement;
+                    const t = (el.innerText || '').toLowerCase();
+                    if (isBankTransfer && (t.includes('bank') || t.includes('eft') || t.includes('transfer'))) {
+                        clickAngular(r); return;
+                    }
+                    if (!isBankTransfer && (t.includes('card') || t.includes('credit') || t.includes('visa'))) {
+                        clickAngular(r); return;
+                    }
                 }
             }
+
+            // Strategy 3: only one radio — just click it
+            if (radios.length === 1) { clickAngular(radios[0]); return; }
+
+            // Strategy 4: fall back to first radio
+            clickAngular(radios[0]);
         }""",
-        value,
+        method,
     )
 
 
 def _accept_tcs(page) -> None:
-    tcs = page.locator('input[name="tcs"]').first
-    if tcs.count() and not tcs.is_checked():
-        tcs.check()
+    import re as _re
+
+    # Strategy 1: Playwright native click on mat-checkbox containing T&C text.
+    # Angular Material's click target is the mat-checkbox component, NOT the
+    # hidden native input — clicking the component dispatches the correct events.
+    try:
+        loc = page.locator("mat-checkbox").filter(
+            has_text=_re.compile(r"term|condition|agree|policy", _re.IGNORECASE)
+        ).first
+        if loc.count():
+            loc.scroll_into_view_if_needed()
+            loc.click(force=True)
+            time.sleep(0.4)
+            return
+    except Exception:
+        pass
+
+    # Strategy 2: Playwright native click on label containing T&C text
+    try:
+        loc = page.locator("label").filter(
+            has_text=_re.compile(r"term|condition|agree|policy", _re.IGNORECASE)
+        ).first
+        if loc.count():
+            loc.scroll_into_view_if_needed()
+            loc.click(force=True)
+            time.sleep(0.4)
+            return
+    except Exception:
+        pass
+
+    # Strategy 3: Named inputs → click their enclosing label
+    for name in ["tcs", "terms", "tandc"]:
+        loc = page.locator(f'input[name="{name}"]').first
+        if loc.count():
+            try:
+                label = page.locator(f'label:has(input[name="{name}"])').first
+                if label.count():
+                    label.scroll_into_view_if_needed()
+                    label.click(force=True)
+                else:
+                    loc.check(force=True)
+                time.sleep(0.4)
+                return
+            except Exception:
+                pass
+
+    # Strategy 4: JavaScript — click every checkbox near T&C text plus its container
+    page.evaluate(
+        """() => {
+            const boxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+            for (const cb of boxes) {
+                let el = cb;
+                for (let i = 0; i < 6; i++) {
+                    if (!el.parentElement) break;
+                    el = el.parentElement;
+                    const t = (el.innerText || '').toLowerCase();
+                    if (t.includes('term') || t.includes('condition') || t.includes('agree') || t.includes('policy')) {
+                        const label = cb.closest('label') || cb.parentElement;
+                        if (label && label !== cb) label.click();
+                        cb.click();
+                        cb.checked = true;
+                        cb.dispatchEvent(new Event('change', {bubbles: true}));
+                        cb.dispatchEvent(new Event('input', {bubbles: true}));
+                        return;
+                    }
+                }
+            }
+        }"""
+    )
+
+    # Strategy 5: mat-checkbox JS click (Angular Material)
+    page.evaluate(
+        """() => {
+            const matCbs = document.querySelectorAll('mat-checkbox');
+            for (const mc of matCbs) {
+                const t = (mc.innerText || '').toLowerCase();
+                if (t.includes('term') || t.includes('condition') || t.includes('agree') || t.includes('policy')) {
+                    mc.click();
+                    return;
+                }
+            }
+        }"""
+    )
 
 
 def _submit_booking(page) -> str:

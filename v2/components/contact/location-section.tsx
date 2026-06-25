@@ -1,6 +1,6 @@
 "use client"
 
-import { Clock, Link2, Navigation, Share2 } from "lucide-react"
+import { Clock, Link2, Navigation, Share2, MapPin, Radio } from "lucide-react"
 import { toast } from "sonner"
 import { BUSINESS, LOCATION, getLocationFullAddress } from "@/data/rooms"
 import { cn } from "@v2/lib/utils"
@@ -118,12 +118,12 @@ export function LocationSection() {
             {LOCATION.travelNote}
           </span>
 
-          <p className="mt-3 font-sans text-xs leading-relaxed text-body-brown">
-            <span aria-hidden>📍 </span>
+          <p className="mt-3 flex items-center gap-1.5 font-sans text-xs leading-relaxed text-body-brown">
+            <MapPin className="size-3.5 shrink-0" />
             {REGION_LINE}
           </p>
-          <p className="mt-1 font-mono text-[11px] leading-relaxed text-muted-brown/90">
-            <span aria-hidden>📡 </span>
+          <p className="mt-1 flex items-center gap-1.5 font-mono text-[11px] leading-relaxed text-muted-brown/90">
+            <Radio className="size-3.5 shrink-0" />
             GPS: {GPS_LABEL}
           </p>
 
