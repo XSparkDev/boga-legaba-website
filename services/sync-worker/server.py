@@ -364,7 +364,7 @@ class Handler(BaseHTTPRequestHandler):
         booking_ref = params.get("bookingRef")
         action = params.get("action")
 
-        if not booking_ref or action not in ("checkin", "checkout"):
+        if not booking_ref or action not in ("checkin", "checkout", "confirm"):
             self._json(400, {"ok": False, "error": "bookingRef and action (checkin|checkout) required"})
             return
 
