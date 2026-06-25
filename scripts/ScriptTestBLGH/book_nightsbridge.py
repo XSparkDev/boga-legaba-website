@@ -115,11 +115,11 @@ def book_room(params: dict) -> dict:
 
             # ── Step 5: Select payment method ─────────────────────────────
             _select_payment(page, payment_method)
-            time.sleep(0.5)
+            time.sleep(1)
 
             # ── Step 6: Accept T&Cs ───────────────────────────────────────
             _accept_tcs(page)
-            time.sleep(0.5)
+            time.sleep(1.5)  # give Angular form validation time to re-evaluate
 
             # ── Step 7: Submit ────────────────────────────────────────────
             submitted = _submit_booking(page)
@@ -162,7 +162,28 @@ def book_room(params: dict) -> dict:
                     "error": "NightsBridge indicated no availability for these dates. " + page_text[:300],
                 }
 
+            # Require clear confirmation signals — if none, the form was never submitted
+            confirmation_keywords = ["confirmed", "thank you", "booking number", "booking id", "reference"]
+            has_confirmation = booking_ref or any(kw in text_lower for kw in confirmation_keywords)
+            if not has_confirmation:
+                try:
+                    page.screenshot(path="/tmp/booking_no_confirm.png")
+                except Exception:
+                    pass
+                return {
+                    "ok": False,
+                    "error": (
+                        "The booking form was not accepted by NightsBridge — "
+                        "terms & conditions may not have been checked or the payment method was not selected. "
+                        "Please try again. If this repeats, contact the property directly."
+                    ),
+                }
+
             confirmation = _parse_confirmation(page)
+            try:
+                page.screenshot(path="/tmp/booking_confirmed.png")
+            except Exception:
+                pass
             return {
                 "ok": True,
                 "bookingRef": booking_ref,
@@ -387,27 +408,115 @@ def _wait_for_result(page, timeout_ms: int = 20_000) -> None:
 
 
 def _select_payment(page, method: str = "bank_transfer") -> None:
-    value = "1" if method == "bank_transfer" else "2"
+    # For Angular forms: click the label/container, not the raw input.
     page.evaluate(
-        """(value) => {
-            const radios = document.querySelectorAll('input[type="radio"]');
+        """(method) => {
+            const isBankTransfer = method === 'bank_transfer';
+
+            // Click the Angular-friendly container (label wrapping the radio)
+            const clickAngular = el => {
+                // Try label first (Angular Material uses label as click target)
+                const label = el.closest('label') || el.parentElement;
+                if (label && label !== el) { label.click(); }
+                // Also fire events on the input itself
+                el.click();
+                el.checked = true;
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+            };
+
+            const radios = Array.from(document.querySelectorAll('input[type="radio"]'));
+            if (!radios.length) return;
+
+            // Strategy 1: value "1" = bank transfer
+            if (isBankTransfer) {
+                const r1 = radios.find(r => r.value === '1');
+                if (r1) { clickAngular(r1); return; }
+            }
+
+            // Strategy 2: nearby text contains bank/eft/transfer (or card/credit)
             for (const r of radios) {
-                if (r.value === value) {
-                    r.click();
-                    r.checked = true;
-                    r.dispatchEvent(new Event('change', { bubbles: true }));
-                    return;
+                let el = r;
+                for (let i = 0; i < 5; i++) {
+                    if (!el.parentElement) break;
+                    el = el.parentElement;
+                    const t = (el.innerText || '').toLowerCase();
+                    if (isBankTransfer && (t.includes('bank') || t.includes('eft') || t.includes('transfer'))) {
+                        clickAngular(r); return;
+                    }
+                    if (!isBankTransfer && (t.includes('card') || t.includes('credit') || t.includes('visa'))) {
+                        clickAngular(r); return;
+                    }
                 }
             }
+
+            // Strategy 3: only one radio — just click it
+            if (radios.length === 1) { clickAngular(radios[0]); return; }
+
+            // Strategy 4: fall back to first radio
+            clickAngular(radios[0]);
         }""",
-        value,
+        method,
     )
 
 
 def _accept_tcs(page) -> None:
-    tcs = page.locator('input[name="tcs"]').first
-    if tcs.count() and not tcs.is_checked():
-        tcs.check()
+    # For Angular Material: the click target is the label, not the hidden native input.
+    # We try Playwright's .check(force=True) first (works for real checkboxes),
+    # then fall back to clicking the Angular container/label.
+    accepted = False
+    for selector in ['input[name="tcs"]', 'input[name="terms"]', 'input[name="tandc"]']:
+        loc = page.locator(selector).first
+        if loc.count():
+            try:
+                if not loc.is_checked():
+                    loc.check(force=True)
+                accepted = True
+                break
+            except Exception:
+                pass
+
+    if not accepted:
+        # Fallback: find any checkbox near "terms/conditions/agree" and click its label
+        page.evaluate(
+            """() => {
+                const boxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+                for (const cb of boxes) {
+                    let el = cb;
+                    for (let i = 0; i < 6; i++) {
+                        if (!el.parentElement) break;
+                        el = el.parentElement;
+                        const t = (el.innerText || '').toLowerCase();
+                        if (t.includes('term') || t.includes('condition') || t.includes('agree') || t.includes('policy')) {
+                            if (!cb.checked) {
+                                // Click the label container (Angular click target)
+                                const label = cb.closest('label') || cb.parentElement;
+                                if (label && label !== cb) label.click();
+                                cb.click();
+                                cb.checked = true;
+                                cb.dispatchEvent(new Event('change', {bubbles: true}));
+                                cb.dispatchEvent(new Event('input', {bubbles: true}));
+                            }
+                            return;
+                        }
+                    }
+                }
+            }"""
+        )
+
+    # Also try clicking mat-checkbox element directly (Angular Material component)
+    page.evaluate(
+        """() => {
+            const matCbs = document.querySelectorAll('mat-checkbox');
+            for (const mc of matCbs) {
+                const t = (mc.innerText || '').toLowerCase();
+                if (t.includes('term') || t.includes('condition') || t.includes('agree') || t.includes('policy')) {
+                    mc.click();
+                    return;
+                }
+            }
+        }"""
+    )
 
 
 def _submit_booking(page) -> str:
