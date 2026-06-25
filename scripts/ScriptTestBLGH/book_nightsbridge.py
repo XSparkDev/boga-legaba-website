@@ -77,6 +77,26 @@ def book_room(params: dict) -> dict:
             page.goto(url, wait_until="networkidle", timeout=35_000)
             time.sleep(4)
 
+            # Wait explicitly for room cards to render in Angular before proceeding.
+            # On slower infrastructure the SPA may finish network requests but still
+            # be painting room cards — we try btn-show-rates first, then fall back to
+            # any button whose text mentions "rates" in case the class changed.
+            try:
+                page.wait_for_selector(
+                    "button.btn-show-rates, button.btn-view-rates",
+                    timeout=12_000,
+                )
+            except Exception:
+                # Fallback: wait for any button referencing "rates"
+                try:
+                    page.wait_for_function(
+                        "() => Array.from(document.querySelectorAll('button'))"
+                        ".some(b => /rates/i.test(b.innerText))",
+                        timeout=8_000,
+                    )
+                except Exception:
+                    pass  # proceed anyway; _click_view_rates will report what it finds
+
             # ── Step 2: Find room card and click VIEW RATES AND BOOK ──────
             clicked = _click_view_rates(page, room_type)
             if not clicked:
@@ -212,7 +232,12 @@ def _list_visible_room_types(page) -> list[str]:
     try:
         return page.evaluate(
             """() => {
-                const buttons = Array.from(document.querySelectorAll('button.btn-show-rates'));
+                let buttons = Array.from(document.querySelectorAll('button.btn-show-rates, button.btn-view-rates'));
+                if (!buttons.length) {
+                    buttons = Array.from(document.querySelectorAll('button')).filter(
+                        b => /rates/i.test(b.innerText?.trim() || '')
+                    );
+                }
                 const names = [];
                 for (const btn of buttons) {
                     let el = btn;
@@ -252,7 +277,14 @@ def _click_view_rates(page, room_type_name: str) -> bool:
             // Base name: everything before the first '(' — used as fallback
             const baseName = roomTypeName.replace(/\\s*\\(.*$/, '').trim().toLowerCase();
 
-            const buttons = Array.from(document.querySelectorAll('button.btn-show-rates'));
+            // Try known class first; fall back to any "rates"-labelled button in case
+            // NightsBridge updated their CSS class name between deployments.
+            let buttons = Array.from(document.querySelectorAll('button.btn-show-rates, button.btn-view-rates'));
+            if (!buttons.length) {
+                buttons = Array.from(document.querySelectorAll('button')).filter(
+                    b => /rates/i.test(b.innerText?.trim() || '')
+                );
+            }
 
             // Pass 1: exact match
             for (const btn of buttons) {
