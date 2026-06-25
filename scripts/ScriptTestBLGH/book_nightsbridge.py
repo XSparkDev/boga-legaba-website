@@ -102,7 +102,8 @@ def book_room(params: dict) -> dict:
 
             # ── Step 4: Fill guest form ────────────────────────────────────
             _fill_guest_form(
-                page, adults, children1, children2,
+                page, checkin, checkout,
+                adults, children1, children2,
                 firstname, surname, phone, email,
                 arrival_time, airline, flightno, notes,
             )
@@ -267,19 +268,39 @@ def _click_view_rates(page, room_type_name: str) -> bool:
                 }
             }
 
-            // Pass 2: base-name fuzzy match (ignores parenthetical variant)
+            // Pass 2: scored best-match on the room heading only (not full card text).
+            // Extracts each room's heading, scores it by how many words from the
+            // requested name appear in it, and picks the highest-scoring heading.
+            // Ties broken by heading length (shorter = more specific = better).
             if (baseName) {
+                const reqWords = roomTypeName.toLowerCase()
+                    .replace(/[()&,+]/g, ' ').split(/\\s+/).filter(Boolean);
+                const candidates = [];
+
                 for (const btn of buttons) {
                     let el = btn;
                     for (let i = 0; i < 12; i++) {
                         if (!el.parentElement) break;
                         el = el.parentElement;
-                        if (normalise(el.innerText).toLowerCase().includes(baseName)) {
-                            btn.scrollIntoView({ behavior: 'instant', block: 'center' });
-                            btn.click();
-                            return true;
+                        const h = el.querySelector('h2,h3,h4,[class*="title"],[class*="name"]');
+                        if (h && h.innerText?.trim()) {
+                            const headingName = normalise(h.innerText).toLowerCase();
+                            if (headingName.includes(baseName)) {
+                                const score = reqWords.filter(w => headingName.includes(w)).length;
+                                candidates.push({ btn, score, len: headingName.length });
+                            }
+                            break;
                         }
                     }
+                }
+
+                if (candidates.length > 0) {
+                    // highest score first; ties → prefer shorter (more specific) heading
+                    candidates.sort((a, b) => b.score - a.score || a.len - b.len);
+                    const best = candidates[0];
+                    best.btn.scrollIntoView({ behavior: 'instant', block: 'center' });
+                    best.btn.click();
+                    return true;
                 }
             }
 
@@ -352,6 +373,8 @@ def _ng_set(page, name: str, value: str) -> None:
 
 def _fill_guest_form(
     page,
+    checkin: str,
+    checkout: str,
     adults: int,
     children1: int,
     children2: int,
@@ -364,6 +387,12 @@ def _fill_guest_form(
     flightno: str,
     notes: str,
 ) -> None:
+    # Re-set dates — NightsBridge's Angular SPA may reset arrive/depart to today
+    # when navigating between booking steps, ignoring the original URL params.
+    _ng_set(page, "arrive", checkin)
+    _ng_set(page, "depart", checkout)
+    time.sleep(0.3)
+
     # Pax counts
     _ng_set(page, "adult-c1", str(adults))
     if children1:

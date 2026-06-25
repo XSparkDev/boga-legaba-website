@@ -42,6 +42,7 @@ import {
   Home,
   PawPrint,
   BanIcon,
+  Calendar,
 } from "lucide-react"
 import { Reveal } from "@/components/reveal"
 import { properties, BUSINESS } from "@/data/rooms"
@@ -614,7 +615,7 @@ function AvailabilityTable({
       {/* Date banner */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <span className="text-lg">📅</span>
+          <Calendar className="size-4 shrink-0 text-[#b8973a]" />
           <span>
             {fmtDate(arrive)} → {fmtDate(depart)}
           </span>
