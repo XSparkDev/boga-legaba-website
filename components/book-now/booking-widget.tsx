@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Loader2, AlertTriangle, ArrowRight, X, Check, Mail, Calendar, Moon, BedDouble, UtensilsCrossed, Utensils } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { Loader2, AlertTriangle, ArrowRight, X, Check, CreditCard, Calendar, Moon, BedDouble, UtensilsCrossed, Utensils } from "lucide-react"
 import type { MealPlanRate } from "@/lib/nightsbridge-rates"
 
 // ---------------------------------------------------------------------------
@@ -21,7 +21,7 @@ interface BookingWidgetProps {
   maxOccupancy?: number | null
 }
 
-type Step = "idle" | "form" | "submitting" | "success" | "error"
+type Step = "idle" | "form" | "submitting" | "success" | "paying" | "error"
 
 interface ConfirmationData {
   bookingId?: string
@@ -95,6 +95,11 @@ export function BookingWidget({
   const [bookingRef, setBookingRef] = useState<string | null>(null)
   const [confirmation, setConfirmation] = useState<ConfirmationData | null>(null)
   const [errorMsg, setErrorMsg] = useState("")
+  const [payError, setPayError] = useState("")
+  const [countdown, setCountdown] = useState(8)
+  const [payDismissed, setPayDismissed] = useState(false)
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const payAttemptedRef = useRef(false)
 
   // Form fields — every field NightsBridge collects
   const [adults, setAdults] = useState(2)
@@ -176,6 +181,7 @@ export function BookingWidget({
       }
 
       if (data.ok) {
+        payAttemptedRef.current = false
         setBookingRef(data.bookingRef ?? null)
         setConfirmation(data.confirmation ?? null)
         setStep("success")
@@ -189,6 +195,71 @@ export function BookingWidget({
     }
   }
 
+  // Auto-redirect to Paystack when booking succeeds (only once per booking)
+  useEffect(() => {
+    if (step !== "success") return
+    if (payAttemptedRef.current) return
+    setPayDismissed(false)
+    setCountdown(8)
+    countdownRef.current = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(countdownRef.current!)
+          handlePayNow()
+          return 0
+        }
+        return c - 1
+      })
+    }, 1000)
+    return () => clearInterval(countdownRef.current!)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step])
+
+  async function handlePayNow() {
+    if (!confirmation?.total) return
+    payAttemptedRef.current = true
+    setPayError("")
+    setStep("paying")
+
+    // Parse "R1,650.00" → 1650
+    const amountRands = parseFloat((confirmation.total ?? "0").replace(/[^0-9.]/g, ""))
+    if (!amountRands) {
+      setPayError("Could not read booking amount. Please contact us via WhatsApp.")
+      setStep("success")
+      return
+    }
+
+    // Use bookingRef from API, fall back to bookingId from confirmation data
+    const ref = bookingRef || confirmation?.bookingId || `BL-${Date.now()}`
+
+    try {
+      const res = await fetch("/api/payment/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          amountRands,
+          bookingRef: ref,
+          guestName: `${firstname} ${surname}`.trim(),
+          guestPhone: phone,
+          checkin: arrive,
+          checkout: depart,
+          roomTypeName,
+        }),
+      })
+      const data = (await res.json()) as { ok: boolean; authorization_url?: string; error?: string }
+      if (data.ok && data.authorization_url) {
+        window.location.href = data.authorization_url
+      } else {
+        setPayError(data.error ?? "Payment could not be started. Please try WhatsApp.")
+        setStep("success")
+      }
+    } catch {
+      setPayError("Network error. Please try WhatsApp or contact us directly.")
+      setStep("success")
+    }
+  }
+
   if (!available) return null
 
   // ── Success ──────────────────────────────────────────────────────────────
@@ -199,7 +270,7 @@ export function BookingWidget({
       { label: "Check-out",  value: fmtDateWidget(confirmation?.leaving),  icon: <Calendar className="size-3.5 text-[#b8973a]" /> },
       { label: "Nights",     value: confirmation?.nights,                  icon: <Moon className="size-3.5 text-[#b8973a]" /> },
       { label: "Room",       value: confirmation?.rooms,                   icon: <BedDouble className="size-3.5 text-[#b8973a]" /> },
-      { label: "Total",      value: confirmation?.total,                   icon: <Check className="size-3.5 text-[#b8973a]" /> },
+      { label: "Total",      value: confirmation?.total,                   icon: <CreditCard className="size-3.5 text-[#b8973a]" /> },
     ].filter((r) => r.value)
 
     return (
@@ -250,38 +321,109 @@ export function BookingWidget({
           </div>
         )}
 
-        {/* Payment instructions — NightsBridge emails the guest how to pay */}
+        {/* Payment section */}
         <div className="px-5 pb-4 space-y-3">
-          <div className="flex items-start gap-3 rounded-xl px-4 py-4" style={{ background: "#F2EDE4", border: "1px solid #E8E0D4" }}>
-            <Mail className="size-5 shrink-0 mt-0.5" style={{ color: "#B8973B" }} />
-            <div>
-              <p className="font-body text-sm font-semibold" style={{ color: "#3D3532" }}>
-                Check your email to complete payment
-              </p>
-              <p className="font-body text-xs mt-1 leading-relaxed" style={{ color: "#8C7B6B" }}>
-                NightsBridge has emailed <strong style={{ color: "#3D3532" }}>{email}</strong> with your
-                booking confirmation and payment instructions. Please follow those instructions to secure your stay.
-              </p>
-            </div>
-          </div>
+          {!payDismissed ? (
+            <>
+              {/* Countdown bar */}
+              <div className="rounded-xl px-5 py-4" style={{ background: "#0A0A0A" }}>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-body text-sm font-semibold" style={{ color: "#F2EDE4" }}>
+                    Proceeding to payment{confirmation?.total ? ` — ${confirmation.total}` : ""}
+                  </p>
+                  <span className="font-body text-sm font-bold tabular-nums" style={{ color: "#C9A84C" }}>
+                    {countdown}s
+                  </span>
+                </div>
+                <div className="h-1 w-full rounded-full overflow-hidden" style={{ background: "rgba(201,168,76,0.2)" }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-1000"
+                    style={{ width: `${((8 - countdown) / 8) * 100}%`, background: "#C9A84C" }}
+                  />
+                </div>
+              </div>
 
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="flex w-full items-center justify-center gap-2 rounded-xl py-3 font-body text-sm font-medium transition-all"
-            style={{ background: "#FAFAF8", color: "#8C7B6B", border: "1px solid #E8E0D4" }}
-          >
-            Need help? Message us on WhatsApp
-          </a>
+              {payError && (
+                <div className="flex items-start gap-2 rounded-lg px-4 py-3" style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}>
+                  <AlertTriangle className="size-4 shrink-0 mt-0.5 text-red-500" />
+                  <p className="font-body text-xs text-red-600">{payError}</p>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    clearInterval(countdownRef.current!)
+                    payAttemptedRef.current = false
+                    handlePayNow()
+                  }}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-body text-sm font-semibold transition-all hover:brightness-110"
+                  style={{ background: "#C9A84C", color: "#0A0A0A" }}
+                >
+                  <CreditCard className="size-4" />
+                  Pay Now
+                </button>
+                <button
+                  onClick={() => {
+                    clearInterval(countdownRef.current!)
+                    setPayDismissed(true)
+                  }}
+                  className="flex items-center justify-center rounded-xl px-4 py-3 font-body text-xs transition-all"
+                  style={{ background: "#F2EDE4", color: "#8C7B6B", border: "1px solid #E8E0D4" }}
+                >
+                  Pay later
+                </button>
+              </div>
+
+              <p className="font-body text-[11px] text-center" style={{ color: "#8C7B6B" }}>
+                Secure payment via Paystack — card, EFT and instant EFT accepted
+              </p>
+            </>
+          ) : (
+            <div className="rounded-xl px-5 py-4 text-center" style={{ background: "#F2EDE4", border: "1px solid #E8E0D4" }}>
+              <p className="font-body text-sm font-medium" style={{ color: "#3D3532" }}>
+                Your booking is held for 24 hours
+              </p>
+              <p className="font-body text-xs mt-1" style={{ color: "#8C7B6B" }}>
+                Check your email for booking details and a payment reminder.
+                Contact us via WhatsApp if you need assistance.
+              </p>
+              <button
+                onClick={() => {
+                  payAttemptedRef.current = false
+                  setPayDismissed(false)
+                  setCountdown(8)
+                  handlePayNow()
+                }}
+                className="mt-3 font-body text-xs underline underline-offset-2"
+                style={{ color: "#B8973B" }}
+              >
+                Ready to pay now
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
         <div className="px-6 py-3 text-center" style={{ background: "#FAFAF8", borderTop: "1px solid #E8E0D4" }}>
           <p className="font-body text-xs" style={{ color: "#8C7B6B" }}>
-            A confirmation has been sent to <strong style={{ color: "#3D3532" }}>{email}</strong>
+            Booking details sent to <strong style={{ color: "#3D3532" }}>{email}</strong>
           </p>
         </div>
+      </div>
+    )
+  }
+
+  // ── Paying (redirecting to Paystack) ─────────────────────────────────────
+  if (step === "paying") {
+    return (
+      <div
+        className="flex flex-col items-center justify-center gap-3 rounded-xl py-10"
+        style={{ background: "#F2EDE4", border: "1px solid #E8E0D4" }}
+      >
+        <Loader2 className="size-8 animate-spin" style={{ color: "#C9A84C" }} />
+        <p className="text-sm font-medium" style={{ color: "#3D3532" }}>Redirecting to secure payment</p>
+        <p className="text-xs" style={{ color: "#8C7B6B" }}>You will be taken to Paystack</p>
       </div>
     )
   }
@@ -592,16 +734,15 @@ export function BookingWidget({
 
         <div className="border-t border-gray-100" />
 
-        {/* Payment */}
+        {/* Payment method */}
         <div>
           <p className="mb-2 font-body text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Payment
+            Payment method
           </p>
           <div className="rounded-lg border border-[#b8973a] bg-[#fdf8ef] p-3">
-            <span className="font-body text-sm text-gray-800">Pay via the NightsBridge email</span>
+            <span className="font-body text-sm text-gray-800">Card or EFT via Paystack</span>
             <p className="mt-0.5 font-body text-[11px] text-gray-400">
-              Once we confirm your booking, NightsBridge emails you the booking details and payment
-              instructions. Complete payment from that email to secure your stay.
+              You will be redirected to Paystack to complete payment securely after we confirm your booking.
             </p>
           </div>
           <p className="mt-2 font-body text-[11px] text-gray-400">
