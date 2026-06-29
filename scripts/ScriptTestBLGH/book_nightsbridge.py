@@ -26,6 +26,7 @@ Optional params:
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import re
 import sys
@@ -35,6 +36,21 @@ from playwright.sync_api import sync_playwright
 
 NB_BBID = 21091
 NB_BASE = f"https://book.nightsbridge.com/{NB_BBID}"
+
+_MONTH_NAMES = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+]
+
+
+def _month_label(iso: str) -> str:
+    """'2026-09-10' -> 'September 2026' (matches the ngx-daterangepicker header)."""
+    d = datetime.date.fromisoformat(iso)
+    return f"{_MONTH_NAMES[d.month - 1]} {d.year}"
+
+
+def _day_of(iso: str) -> int:
+    return datetime.date.fromisoformat(iso).day
 
 
 # ---------------------------------------------------------------------------
@@ -72,10 +88,26 @@ def book_room(params: dict) -> dict:
         page = context.new_page()
 
         try:
-            # ── Step 1: Load booking page with dates pre-filled ──────────
+            # ── Step 1: Load booking page ────────────────────────────────
+            # (The ?arrive=&depart= params are IGNORED by NightsBridge for the
+            #  actual booking — we set the real dates via the date picker below.)
             url = f"{NB_BASE}?arrive={checkin}&depart={checkout}"
             page.goto(url, wait_until="networkidle", timeout=35_000)
             time.sleep(4)
+
+            # ── Step 1b: Set the real stay dates in the picker ────────────
+            # NightsBridge defaults the picker to today; without this the booking
+            # would be registered for today, not the guest's chosen dates.
+            if not _set_dates(page, checkin, checkout):
+                return {
+                    "ok": False,
+                    "error": (
+                        f"Could not set the stay dates ({checkin} → {checkout}) on the "
+                        "NightsBridge calendar. Please try again or book directly."
+                    ),
+                }
+            _click_check_availability(page)
+            time.sleep(4)  # let availability reload for the chosen dates
 
             # Wait explicitly for room cards to render in Angular before proceeding.
             # On slower infrastructure the SPA may finish network requests but still
@@ -122,7 +154,7 @@ def book_room(params: dict) -> dict:
 
             # ── Step 4: Fill guest form ────────────────────────────────────
             _fill_guest_form(
-                page, checkin, checkout,
+                page,
                 adults, children1, children2,
                 firstname, surname, phone, email,
                 arrival_time, airline, flightno, notes,
@@ -265,6 +297,83 @@ def _list_visible_room_types(page) -> list[str]:
         )
     except Exception:
         return []
+
+
+def _visible_picker_months(page) -> list[str]:
+    """Month headers currently shown in the ngx-daterangepicker (e.g. ['June 2026','July 2026'])."""
+    return page.evaluate(
+        r"""() => [...document.querySelectorAll('table')]
+            .map(t => { const m = t.querySelector('.month, th.month');
+                        return m ? m.innerText.replace(/\s+/g,' ').trim() : null; })
+            .filter(Boolean)"""
+    )
+
+
+def _set_dates(page, checkin: str, checkout: str) -> bool:
+    """Drive NightsBridge's ngx-daterangepicker to the requested stay dates.
+
+    CRITICAL: NightsBridge IGNORES the ?arrive=&depart= URL params for the actual
+    booking — the date picker always defaults to *today*. So unless we set the
+    picker ourselves, every booking is registered for today + 1 night, not the
+    guest's chosen dates. We navigate the inline calendar (clicking the ❯ "next"
+    arrow, which needs a re-render tick between clicks) and click the check-in
+    then check-out day cells in the correct month.
+    """
+    ci_label, co_label = _month_label(checkin), _month_label(checkout)
+    ci_day, co_day = _day_of(checkin), _day_of(checkout)
+
+    def goto_month(label: str, max_hops: int = 24) -> bool:
+        for _ in range(max_hops):
+            if label in _visible_picker_months(page):
+                return True
+            clicked = page.evaluate(
+                """() => { const n = document.querySelector('th.next.available');
+                           if (n) { n.click(); return true; } return false; }"""
+            )
+            if not clicked:
+                return label in _visible_picker_months(page)
+            time.sleep(1.0)  # let Angular re-render the calendar
+        return label in _visible_picker_months(page)
+
+    def click_day(label: str, day: int) -> bool:
+        return page.evaluate(
+            r"""([label, day]) => {
+                const t = [...document.querySelectorAll('table')].find(tb => {
+                    const m = tb.querySelector('.month, th.month');
+                    return m && m.innerText.replace(/\s+/g,' ').trim().toLowerCase() === label.toLowerCase();
+                });
+                if (!t) return false;
+                const cell = [...t.querySelectorAll('td.available')].find(td =>
+                    !/off|disabled|hidden/.test(td.className) && td.innerText.trim() === String(day));
+                if (!cell) return false;
+                cell.click();
+                return true;
+            }""",
+            [label, day],
+        )
+
+    if not goto_month(ci_label):
+        return False
+    if not click_day(ci_label, ci_day):
+        return False
+    time.sleep(0.8)
+    if not goto_month(co_label):
+        return False
+    if not click_day(co_label, co_day):
+        return False
+    time.sleep(0.8)
+    return True
+
+
+def _click_check_availability(page) -> None:
+    """Click the calendar's CHECK AVAILABILITY button to reload rooms for the picked dates."""
+    page.evaluate(
+        """() => {
+            const b = [...document.querySelectorAll('button')]
+                .find(x => /check availability/i.test(x.innerText || ''));
+            if (b) b.click();
+        }"""
+    )
 
 
 def _click_view_rates(page, room_type_name: str) -> bool:
@@ -423,8 +532,6 @@ def _ng_set(page, name: str, value: str) -> None:
 
 def _fill_guest_form(
     page,
-    checkin: str,
-    checkout: str,
     adults: int,
     children1: int,
     children2: int,
@@ -437,11 +544,8 @@ def _fill_guest_form(
     flightno: str,
     notes: str,
 ) -> None:
-    # Re-set dates — NightsBridge's Angular SPA may reset arrive/depart to today
-    # when navigating between booking steps, ignoring the original URL params.
-    _ng_set(page, "arrive", checkin)
-    _ng_set(page, "depart", checkout)
-    time.sleep(0.3)
+    # Dates are set on the calendar in Step 1b (_set_dates) — the guest form has
+    # no arrive/depart fields, so nothing date-related is done here.
 
     # Pax counts
     _ng_set(page, "adult-c1", str(adults))
@@ -662,22 +766,50 @@ def _accept_tcs(page) -> None:
 
 
 def _submit_booking(page) -> str:
+    """Click the booking-form's CONFIRM BOOKING button.
+
+    CRITICAL: NightsBridge renders the whole flow on ONE Angular page, so the
+    DOM contains ~30 `type="submit"` buttons at once — CHECK AVAILABILITY, SHOW
+    MORE, VIEW RATES AND BOOK, BOOK NOW, etc. The previous code grabbed the FIRST
+    `button[type=submit]`, which is CHECK AVAILABILITY — so it re-ran the search
+    instead of submitting the booking, and nothing was ever registered.
+
+    We now target the confirm button specifically: by its `confirm-button` class
+    first, then by exact "CONFIRM BOOKING"/"COMPLETE BOOKING"/etc. text, and we
+    explicitly skip the calendar / rates / book-now / show-more buttons.
+    """
     result = page.evaluate(
         """() => {
-            // 1. Prefer type=submit
-            const s = document.querySelector('button[type="submit"]:not([disabled])');
-            if (s) { s.click(); return s.innerText.trim(); }
-            // 2. Match by text
-            const texts = [
-                'CONFIRM BOOKING', 'CONFIRM', 'COMPLETE BOOKING',
-                'PLACE BOOKING', 'SUBMIT', 'BOOK',
-            ];
-            for (const txt of texts) {
-                const btn = Array.from(document.querySelectorAll('button')).find(
-                    b => b.innerText?.trim().toUpperCase() === txt && !b.disabled
-                );
-                if (btn) { btn.click(); return btn.innerText.trim(); }
+            const click = (b) => { b.scrollIntoView({behavior:'instant',block:'center'});
+                                   b.click(); return b.innerText.trim() || b.className; };
+            const visible = (b) => b.offsetParent !== null && !b.disabled;
+            const all = Array.from(document.querySelectorAll('button')).filter(visible);
+
+            // 1. Strongest signal: the confirm-button class NightsBridge uses
+            const byClass = all.find(b => /confirm[-_ ]?button/i.test(b.className));
+            if (byClass) return click(byClass);
+
+            // 2. Exact confirm/complete text (NOT 'CHECK AVAILABILITY', 'BOOK NOW',
+            //    'VIEW RATES AND BOOK', 'SHOW MORE', 'HIDE …')
+            const SKIP = /check availability|view rates|book now|show more|hide |hide$|search|login/i;
+            const WANT = ['CONFIRM BOOKING', 'COMPLETE BOOKING', 'PLACE BOOKING',
+                          'CONFIRM RESERVATION', 'CONFIRM'];
+            for (const want of WANT) {
+                const btn = all.find(b => {
+                    const t = (b.innerText || '').trim().toUpperCase();
+                    return t === want && !SKIP.test(t);
+                });
+                if (btn) return click(btn);
             }
+
+            // 3. Last resort: any submit button that mentions "confirm"/"complete"
+            //    in its text, excluding the known non-submit actions.
+            const loose = all.find(b => {
+                const t = (b.innerText || '').trim();
+                return /confirm|complete/i.test(t) && !SKIP.test(t);
+            });
+            if (loose) return click(loose);
+
             return '';
         }"""
     )
