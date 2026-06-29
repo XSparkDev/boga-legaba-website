@@ -11,7 +11,6 @@ import {
   ExternalLink,
   RefreshCw,
   CheckCircle2,
-  XCircle,
   Star,
   Wifi,
   Car,
@@ -22,8 +21,6 @@ import {
   Globe,
   BarChart3,
   Shield,
-  CreditCard,
-  ArrowUpRight,
   CalendarDays,
 } from "lucide-react"
 import {
@@ -34,7 +31,7 @@ import {
 } from "@/lib/nightsbridge-api"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { AdminSignOutButton } from "@/components/admin/sign-out-button"
-import { SyncTransactionsButton } from "@/components/admin/sync-transactions-button"
+import { AnalyticsCharts } from "@/components/admin/analytics-charts"
 
 export const metadata: Metadata = {
   title: "Admin Dashboard | Boga Legaba",
@@ -59,11 +56,21 @@ async function isAuthenticated() {
 // Supabase stats helpers
 // ---------------------------------------------------------------------------
 
+type OccBooking = { from_date: string; to_date: string; rooms: number }
+
 async function fetchSupabaseStats() {
+  // Real-booking occupancy window: today → +31 days
+  const winStart = new Date().toISOString().slice(0, 10)
+  const winEnd = (() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 31)
+    return d.toISOString().slice(0, 10)
+  })()
+
   try {
     const sb = createSupabaseAdminClient()
 
-    const [roomsRes, rateCacheRes, availCacheRes, txnRes] = await Promise.all([
+    const [roomsRes, rateCacheRes, availCacheRes, txnRes, bookingsRes] = await Promise.all([
       sb.from("room").select("bbroomid, room_name, property_name, is_active", { count: "exact" }),
       sb
         .from("rate_cache")
@@ -83,7 +90,25 @@ async function fetchSupabaseStats() {
         )
         .order("pay_id", { ascending: false })
         .limit(30),
+      // Real bookings overlapping the next 31 days — used for actual room occupancy
+      sb
+        .from("booking")
+        .select("from_date, to_date, raw")
+        .eq("is_cancelled", false)
+        .gte("to_date", winStart)
+        .lte("from_date", winEnd)
+        .limit(500),
     ])
+
+    const bookings: OccBooking[] = (bookingsRes.data ?? []).map((b) => {
+      const raw = (b.raw as Record<string, unknown>) ?? {}
+      const rooms = raw.rooms as unknown[] | undefined
+      return {
+        from_date: b.from_date as string,
+        to_date: b.to_date as string,
+        rooms: Array.isArray(rooms) && rooms.length > 0 ? rooms.length : 1,
+      }
+    })
 
     return {
       rooms: roomsRes.data ?? [],
@@ -94,6 +119,7 @@ async function fetchSupabaseStats() {
       availCacheCount: availCacheRes.count ?? 0,
       transactions: txnRes.data ?? [],
       transactionCount: txnRes.count ?? 0,
+      bookings,
     }
   } catch {
     return {
@@ -105,8 +131,31 @@ async function fetchSupabaseStats() {
       availCacheCount: 0,
       transactions: [],
       transactionCount: 0,
+      bookings: [] as OccBooking[],
     }
   }
+}
+
+// Build real per-day room occupancy from bookings (rooms booked vs total rooms)
+function buildRoomOccupancy(
+  bookings: OccBooking[],
+  totalRooms: number,
+  days = 30,
+): Array<{ date: string; booked: number; available: number; total: number }> {
+  const out = []
+  const base = new Date()
+  for (let i = 0; i < days; i++) {
+    const d = new Date(base)
+    d.setDate(base.getDate() + i)
+    const iso = d.toISOString().slice(0, 10)
+    let booked = 0
+    for (const b of bookings) {
+      if (b.from_date <= iso && b.to_date > iso) booked += b.rooms
+    }
+    booked = Math.min(booked, totalRooms)
+    out.push({ date: iso, booked, available: Math.max(0, totalRooms - booked), total: totalRooms })
+  }
+  return out
 }
 
 // ---------------------------------------------------------------------------
@@ -135,38 +184,106 @@ function daysAhead(n: number) {
 }
 
 // ---------------------------------------------------------------------------
-// Occupancy calendar grid
+// Availability calendar — proper month-grid view (replaces the old flat grid)
 // ---------------------------------------------------------------------------
 
-function OccupancyGrid({ days }: { days: OccupancyDay[] }) {
-  const show = days.slice(0, 30)
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+function AvailabilityCalendar({ days }: { days: OccupancyDay[] }) {
+  if (days.length === 0) return null
+
+  // Index occupancy by ISO date for quick lookup
+  const byDate = new Map(days.map((d) => [d.date, d]))
+
+  // Build a continuous run of dates from the first to the last day we have,
+  // laid out in Monday-start weeks (leading blanks for alignment).
+  const firstISO = days[0].date
+  const lastISO = days[days.length - 1].date
+  const start = new Date(`${firstISO}T12:00:00`)
+  const end = new Date(`${lastISO}T12:00:00`)
+
+  const cells: Array<{ iso: string; day: number; inRange: boolean } | null> = []
+  const lead = (start.getDay() + 6) % 7 // Mon=0 … Sun=6
+  for (let i = 0; i < lead; i++) cells.push(null)
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const iso = d.toISOString().slice(0, 10)
+    cells.push({ iso, day: d.getDate(), inRange: true })
+  }
+  while (cells.length % 7 !== 0) cells.push(null)
+
+  const weeks: (typeof cells)[] = []
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
+
+  const monthSpan = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(start)
+  const endMonth = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(end)
+  const heading = monthSpan === endMonth ? monthSpan : `${monthSpan} – ${endMonth}`
+  const todayISO = today()
+
   return (
-    <div className="grid grid-cols-7 gap-1 sm:grid-cols-10 lg:grid-cols-15">
-      {show.map((d) => {
-        const pct = d.total > 0 ? d.available / d.total : 0
-        const bg =
-          pct === 0
-            ? "bg-red-100 border-red-200"
-            : pct < 0.5
-              ? "bg-amber-50 border-amber-200"
-              : "bg-emerald-50 border-emerald-200"
-        const text =
-          pct === 0 ? "text-red-700" : pct < 0.5 ? "text-amber-700" : "text-emerald-700"
-        return (
-          <div
-            key={d.date}
-            className={`rounded-lg border p-1.5 text-center ${bg}`}
-            title={`${d.date}: ${d.available}/${d.total} room types available`}
-          >
-            <p className="font-mono text-[9px] font-bold text-gray-500">
-              {new Date(`${d.date}T12:00:00`).getDate()}
-            </p>
-            <p className={`font-mono text-[9px] font-semibold ${text}`}>
-              {d.available}/{d.total}
-            </p>
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="mb-4 flex items-center justify-between">
+        <p className="font-serif text-lg font-semibold text-gray-900">{heading}</p>
+        <div className="flex items-center gap-3 font-mono text-[10px] text-gray-400">
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2.5 w-2.5 rounded bg-emerald-400" /> Available
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2.5 w-2.5 rounded bg-amber-300" /> Limited
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2.5 w-2.5 rounded bg-red-300" /> Full
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1.5">
+        {WEEKDAYS.map((w) => (
+          <div key={w} className="pb-1 text-center font-mono text-[10px] uppercase tracking-wider text-gray-400">
+            {w}
           </div>
-        )
-      })}
+        ))}
+
+        {weeks.flat().map((cell, i) => {
+          if (!cell) return <div key={`b${i}`} className="aspect-square" />
+          const occ = byDate.get(cell.iso)
+          const total = occ?.total ?? 0
+          const avail = occ?.available ?? 0
+          const pct = total > 0 ? avail / total : 0
+          const isToday = cell.iso === todayISO
+
+          const tone =
+            !occ
+              ? { bg: "bg-gray-50 border-gray-100", dot: "bg-gray-200", txt: "text-gray-300" }
+              : pct === 0
+                ? { bg: "bg-red-50 border-red-100", dot: "bg-red-400", txt: "text-red-600" }
+                : pct < 0.5
+                  ? { bg: "bg-amber-50 border-amber-100", dot: "bg-amber-400", txt: "text-amber-700" }
+                  : { bg: "bg-emerald-50 border-emerald-100", dot: "bg-emerald-500", txt: "text-emerald-700" }
+
+          return (
+            <div
+              key={cell.iso}
+              title={occ ? `${cell.iso}: ${avail} of ${total} rooms available` : cell.iso}
+              className={`relative flex aspect-square flex-col items-center justify-center rounded-lg border ${tone.bg} ${
+                isToday ? "ring-2 ring-[#b8973a] ring-offset-1" : ""
+              }`}
+            >
+              <span className="absolute left-1.5 top-1 font-mono text-[10px] font-semibold text-gray-500">
+                {cell.day}
+              </span>
+              {occ ? (
+                <>
+                  <span className={`mt-2 inline-block h-2 w-2 rounded-full ${tone.dot}`} />
+                  <span className={`mt-1 font-mono text-[11px] font-bold ${tone.txt}`}>
+                    {avail}
+                    <span className="font-normal text-gray-400">/{total}</span>
+                  </span>
+                </>
+              ) : null}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -217,12 +334,52 @@ export default async function AdminDashboardPage() {
   ])
 
   const todayOccupancy = occupancy[0]
-  const availableToday = todayOccupancy?.available ?? 0
-  const totalToday = todayOccupancy?.total ?? 0
+
+  // ── REAL room occupancy from the booking table (rooms booked vs 28 total) ──
+  const totalRooms = sbStats.roomCount || 28
+  const roomOccupancy = buildRoomOccupancy(sbStats.bookings, totalRooms, 30)
+  const bookedToday = roomOccupancy[0]?.booked ?? 0
+  const availableToday = roomOccupancy[0]?.available ?? totalRooms
+  const totalToday = totalRooms
 
   const roomTypesWithImages = estData
     ? [...estData.roomTypes.values()].filter((rt) => rt.images.length > 0)
     : []
+
+  // ── Analytics chart data (plain serialisable shapes for the client charts) ──
+  const trendData = roomOccupancy.map((d) => ({
+    date: new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(
+      new Date(`${d.date}T12:00:00`),
+    ),
+    booked: d.booked,
+    available: d.available,
+  }))
+
+  // Rates per room type — latest cached rate wins (rateCache is ordered newest first)
+  const rateByName = new Map<string, { single: number | null; double: number | null }>()
+  for (const r of sbStats.rateCache as Array<{
+    rtname: string
+    rate_single: string | null
+    rate_double: string | null
+  }>) {
+    if (!rateByName.has(r.rtname)) {
+      rateByName.set(r.rtname, {
+        single: r.rate_single != null ? Number(r.rate_single) : null,
+        double: r.rate_double != null ? Number(r.rate_double) : null,
+      })
+    }
+  }
+  // Fall back to today's occupancy single rates if the cache is empty
+  if (rateByName.size === 0 && todayOccupancy) {
+    for (const room of todayOccupancy.rooms) {
+      if (room.rateSingle != null) rateByName.set(room.rtname, { single: room.rateSingle, double: null })
+    }
+  }
+  const ratesData = [...rateByName.entries()].map(([name, v]) => ({
+    name: name.replace(/\s*\(.*\)/, "").trim(),
+    single: v.single,
+    double: v.double,
+  }))
 
   const NB_DASHBOARD = "https://www.nightsbridge.com/dashboard/home"
   const NB_TRANSACTIONS = "https://www.nightsbridge.com/dashboard/payments/transactions"
@@ -275,7 +432,7 @@ export default async function AdminDashboardPage() {
           <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
             Overview · Live from NightsBridge
           </h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3">
             <StatCard
               label="Room types"
               value={estData?.roomTypes.size ?? "—"}
@@ -284,9 +441,9 @@ export default async function AdminDashboardPage() {
               color="bg-[#b8973a]/10 text-[#b8973a]"
             />
             <StatCard
-              label="Available today"
+              label="Rooms available today"
               value={`${availableToday} / ${totalToday}`}
-              sub={today()}
+              sub={`${bookedToday} booked · ${today()}`}
               icon={CheckCircle2}
               color="bg-emerald-50 text-emerald-600"
             />
@@ -297,14 +454,22 @@ export default async function AdminDashboardPage() {
               icon={Database}
               color="bg-blue-50 text-blue-600"
             />
-            <StatCard
-              label="Transactions"
-              value={sbStats.transactionCount ?? 0}
-              sub="Scraped this month"
-              icon={CreditCard}
-              color="bg-purple-50 text-purple-600"
-            />
           </div>
+        </div>
+
+        {/* ── Section 1b: Analytics ─────────────────────────── */}
+        <div>
+          <h2 className="mb-4 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
+            <BarChart3 className="size-3.5 text-[#b8973a]" />
+            Analytics
+          </h2>
+          <AnalyticsCharts
+            trend={trendData}
+            rates={ratesData}
+            totalRooms={totalRooms}
+            todayAvailable={availableToday}
+            todayBooked={bookedToday}
+          />
         </div>
 
         {/* ── Section 2: Property overview ──────────────────── */}
@@ -383,7 +548,6 @@ export default async function AdminDashboardPage() {
                 </h3>
                 <div className="space-y-2">
                   {[...estData.roomTypes.values()].map((rt) => {
-                    const today = todayOccupancy?.rooms.find((r) => r.rtid === rt.rtid)
                     return (
                       <div
                         key={rt.rtid}
@@ -416,17 +580,6 @@ export default async function AdminDashboardPage() {
                             ) : null}
                           </div>
                         </div>
-                        {today ? (
-                          <span
-                            className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[9px] font-semibold uppercase ${
-                              today.available
-                                ? "bg-emerald-50 text-emerald-700"
-                                : "bg-red-50 text-red-600"
-                            }`}
-                          >
-                            {today.available ? "Avail" : "Sold"}
-                          </span>
-                        ) : null}
                       </div>
                     )
                   })}
@@ -477,34 +630,27 @@ export default async function AdminDashboardPage() {
           </div>
         ) : null}
 
-        {/* ── Section 3: 30-day occupancy calendar ──────────── */}
-        {occupancy.length > 0 ? (
+        {/* ── Section 3: Availability calendar (real bookings) ── */}
+        {roomOccupancy.length > 0 ? (
           <div>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
-                Occupancy calendar · next 30 days
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <h2 className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
+                <CalendarDays className="size-3.5 text-[#b8973a]" />
+                Availability calendar · {totalRooms} rooms
               </h2>
-              <div className="flex items-center gap-3 font-mono text-[10px] text-gray-400">
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded bg-emerald-200 border border-emerald-300" />
-                  Available
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded bg-amber-100 border border-amber-200" />
-                  Partial
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded bg-red-100 border border-red-200" />
-                  Full
-                </span>
-              </div>
+              <a
+                href={NB_CALENDAR}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-mono text-[10px] text-gray-500 transition-colors hover:text-gray-800"
+              >
+                Open in NightsBridge
+                <ExternalLink className="size-3" />
+              </a>
             </div>
-            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-              <div className="mb-3 text-xs text-gray-500">
-                Each cell shows <strong>available / total</strong> room types for that date.
-              </div>
-              <OccupancyGrid days={occupancy} />
-            </div>
+            <AvailabilityCalendar
+              days={roomOccupancy.map((d) => ({ date: d.date, available: d.available, total: d.total, rooms: [] }))}
+            />
           </div>
         ) : null}
 
@@ -626,189 +772,6 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* ── Section 6: Payment Transactions ──────────────── */}
-        <div>
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <h2 className="font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
-              Payment transactions · {sbStats.transactionCount ?? 0} scraped
-            </h2>
-            <SyncTransactionsButton />
-          </div>
-
-          {sbStats.transactions && sbStats.transactions.length > 0 ? (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-              {/* Revenue summary */}
-              <div className="grid grid-cols-3 divide-x divide-gray-100 border-b border-gray-100 bg-gray-50">
-                {(() => {
-                  const paid = (sbStats.transactions ?? []).filter(
-                    (t: { status_code: string }) => t.status_code === "P",
-                  )
-                  const pending = (sbStats.transactions ?? []).filter(
-                    (t: { status_code: string }) => t.status_code === "W",
-                  )
-                  const totalPaid = paid.reduce(
-                    (s: number, t: { amount: number | null }) => s + (t.amount ?? 0),
-                    0,
-                  )
-                  const totalPending = pending.reduce(
-                    (s: number, t: { amount: number | null }) => s + (t.amount ?? 0),
-                    0,
-                  )
-                  return (
-                    <>
-                      <div className="px-5 py-3 text-center">
-                        <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">
-                          Paid
-                        </p>
-                        <p className="text-lg font-bold text-emerald-600">{fmt(totalPaid)}</p>
-                        <p className="font-mono text-[10px] text-gray-400">{paid.length} txns</p>
-                      </div>
-                      <div className="px-5 py-3 text-center">
-                        <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">
-                          Pending auth
-                        </p>
-                        <p className="text-lg font-bold text-amber-600">{fmt(totalPending)}</p>
-                        <p className="font-mono text-[10px] text-gray-400">{pending.length} txns</p>
-                      </div>
-                      <div className="px-5 py-3 text-center">
-                        <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">
-                          Total
-                        </p>
-                        <p className="text-lg font-bold text-[#b8973a]">
-                          {fmt(totalPaid + totalPending)}
-                        </p>
-                        <p className="font-mono text-[10px] text-gray-400">
-                          {(sbStats.transactions ?? []).length} txns
-                        </p>
-                      </div>
-                    </>
-                  )
-                })()}
-              </div>
-
-              {/* Transactions table */}
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[700px] text-xs">
-                  <thead>
-                    <tr className="border-b border-gray-100 bg-gray-50">
-                      <th className="px-4 py-2.5 text-left font-mono text-[10px] uppercase tracking-wider text-gray-400">
-                        Pay ID
-                      </th>
-                      <th className="px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-wider text-gray-400">
-                        Date
-                      </th>
-                      <th className="px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-wider text-gray-400">
-                        Guest
-                      </th>
-                      <th className="px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-wider text-gray-400">
-                        Booking
-                      </th>
-                      <th className="px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-wider text-gray-400">
-                        Gateway
-                      </th>
-                      <th className="px-3 py-2.5 text-right font-mono text-[10px] uppercase tracking-wider text-gray-400">
-                        Amount
-                      </th>
-                      <th className="px-3 py-2.5 text-center font-mono text-[10px] uppercase tracking-wider text-gray-400">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {(sbStats.transactions ?? []).map(
-                      (t: {
-                        pay_id: number
-                        txn_date: string | null
-                        guest_name: string | null
-                        booking_ref: string | null
-                        arriving: string | null
-                        gateway: string | null
-                        amount: number | null
-                        status_code: string | null
-                        status_text: string | null
-                        success: boolean
-                      }) => (
-                        <tr key={t.pay_id} className="hover:bg-gray-50/60">
-                          <td className="px-4 py-2.5 font-mono text-gray-400">{t.pay_id}</td>
-                          <td className="px-3 py-2.5 text-gray-600">
-                            {t.txn_date?.replace(" • ", " ") ?? "—"}
-                          </td>
-                          <td className="px-3 py-2.5 font-medium text-gray-800">
-                            {t.guest_name ?? "—"}
-                          </td>
-                          <td className="px-3 py-2.5">
-                            {t.booking_ref ? (
-                              <a
-                                href={`https://www.nightsbridge.com/dashboard/booking/${t.booking_ref}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex items-center gap-1 font-mono text-blue-600 hover:text-blue-800"
-                              >
-                                #{t.booking_ref}
-                                <ArrowUpRight className="size-3" />
-                              </a>
-                            ) : (
-                              "—"
-                            )}
-                            {t.arriving ? (
-                              <p className="mt-0.5 font-mono text-[10px] text-gray-400">
-                                Arr: {t.arriving}
-                              </p>
-                            ) : null}
-                          </td>
-                          <td className="px-3 py-2.5">
-                            <span className="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-500">
-                              {t.gateway ?? "—"}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2.5 text-right font-semibold text-[#b8973a]">
-                            {t.amount != null ? fmt(t.amount) : "—"}
-                          </td>
-                          <td className="px-3 py-2.5 text-center">
-                            <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold ${
-                                t.status_code === "P"
-                                  ? "bg-emerald-50 text-emerald-700"
-                                  : t.status_code === "W"
-                                    ? "bg-amber-50 text-amber-700"
-                                    : "bg-gray-50 text-gray-500"
-                              }`}
-                            >
-                              {t.status_code === "P" ? "Paid" : t.status_code === "W" ? "Pending" : (t.status_code ?? "?")}
-                            </span>
-                          </td>
-                        </tr>
-                      ),
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {(sbStats.transactionCount ?? 0) > 30 ? (
-                <div className="border-t border-gray-100 px-4 py-2.5 text-center font-mono text-[10px] text-gray-400">
-                  Showing latest 30 of {sbStats.transactionCount} transactions · Run sync to refresh
-                </div>
-              ) : null}
-            </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-gray-200 bg-white p-8 text-center">
-              <CreditCard className="mx-auto mb-3 size-8 text-gray-300" />
-              <p className="font-mono text-[11px] uppercase tracking-wider text-gray-400">
-                No transactions scraped yet
-              </p>
-              <p className="mt-1 text-xs text-gray-400">
-                Click &quot;Sync from NightsBridge&quot; above to scrape the latest transactions.
-              </p>
-              <p className="mt-1 font-mono text-[10px] text-gray-400">
-                Or run:{" "}
-                <code className="rounded bg-gray-100 px-1 py-0.5">
-                  cd services/nightsbridge-sync && python get_transactions.py
-                </code>
-              </p>
-            </div>
-          )}
-        </div>
-
         {/* ── Section 8: NightsBridge quick links ───────────── */}
         <div>
           <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
@@ -867,67 +830,6 @@ export default async function AdminDashboardPage() {
           </div>
 
         </div>
-
-        {/* ── Section 9: Availability detail for next 7 days ── */}
-        {occupancy.slice(0, 7).length > 0 ? (
-          <div>
-            <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
-              Detailed availability · next 7 days
-            </h2>
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[600px] text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3 text-left font-mono text-[11px] uppercase tracking-wider text-gray-500">
-                        Date
-                      </th>
-                      {occupancy[0]?.rooms.map((r) => (
-                        <th
-                          key={r.rtid}
-                          className="px-3 py-3 text-center font-mono text-[11px] uppercase tracking-wider text-gray-500"
-                        >
-                          {r.rtname.replace(/\s*\(.*\)/, "").trim()}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {occupancy.slice(0, 7).map((day) => (
-                      <tr key={day.date} className="hover:bg-gray-50/60">
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-gray-800">
-                            {new Intl.DateTimeFormat("en-GB", {
-                              weekday: "short",
-                              day: "numeric",
-                              month: "short",
-                            }).format(new Date(`${day.date}T12:00:00`))}
-                          </p>
-                        </td>
-                        {day.rooms.map((r) => (
-                          <td key={r.rtid} className="px-3 py-3 text-center">
-                            {r.available ? (
-                              <div>
-                                <CheckCircle2 className="mx-auto size-4 text-emerald-500" />
-                                {r.rateSingle ? (
-                                  <p className="mt-0.5 font-mono text-[10px] text-[#b8973a]">
-                                    {fmt(r.rateSingle)}
-                                  </p>
-                                ) : null}
-                              </div>
-                            ) : (
-                              <XCircle className="mx-auto size-4 text-red-400" />
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        ) : null}
 
         {/* ── Footer ───────────────────────────────────────── */}
         <div className="border-t border-gray-200 pb-8 pt-4 text-center">
