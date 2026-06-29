@@ -238,19 +238,26 @@ def _list_visible_room_types(page) -> list[str]:
                         b => /rates/i.test(b.innerText?.trim() || '')
                     );
                 }
+                // Room names are NOT in heading tags on this page — they sit at the
+                // start of each room card's text ("Twin Room (Bath & Shower) Bedroom
+                // with..."). Walk up from each button and grab the first line that
+                // looks like a room name (mentions room/suite/family/etc, and is not
+                // a price "From R..." or the button label "View rates and book").
+                const ROOM_RE = /\\b(room|suite|chalet|cottage|villa|unit|apartment|family|cabin|lodge|dorm)\\b/i;
                 const names = [];
                 for (const btn of buttons) {
                     let el = btn;
                     for (let i = 0; i < 12; i++) {
                         if (!el.parentElement) break;
                         el = el.parentElement;
-                        const h = el.querySelector('h2,h3,h4,[class*="title"],[class*="name"]');
-                        if (h && h.innerText?.trim()) {
-                            // Strip any trailing 'Close' text from dismiss buttons inside the heading
-                            const name = h.innerText.trim().replace(/\\s*Close\\s*$/i, '').trim();
-                            if (name) names.push(name);
-                            break;
-                        }
+                        const txt = (el.innerText || '').replace(/\\s*Close\\s*$/i, '').trim();
+                        if (txt.length < 4 || txt.length > 900) continue;
+                        // First non-empty line that reads like a room name
+                        const line = txt.split(/\\n+/).map(s => s.trim()).find(s =>
+                            s.length >= 4 && s.length <= 60 &&
+                            ROOM_RE.test(s) && !/^from\\b/i.test(s) &&
+                            !/^view rates/i.test(s) && !/^\\d/.test(s));
+                        if (line) { names.push(line); break; }
                     }
                 }
                 return [...new Set(names)];
@@ -263,22 +270,32 @@ def _list_visible_room_types(page) -> list[str]:
 def _click_view_rates(page, room_type_name: str) -> bool:
     """Find the room card matching room_type_name and click its VIEW RATES AND BOOK button.
 
-    Pass 1: exact substring match (fastest, most precise).
-    Pass 2: strip the parenthetical variant suffix (e.g. '(Bath & Shower)') from the
-            search term and match on the base name — handles cases where NightsBridge
-            lists 'Twin Room (Shower)' but our catalogue says 'Twin Room (Bath & Shower)'.
+    CRITICAL — each room card sits inside a shared parent that lists EVERY room, so
+    matching with `.includes()` on ancestor text falsely matches the first room
+    (its high-level ancestor "contains" every room name). We therefore match with
+    `.startsWith()`: a button only matches the ancestor card whose text BEGINS with
+    the requested room name — that card belongs to this button alone.
+
+    Pass 1: exact — the button's own card starts with the full requested name
+            (e.g. "Double Room (Bath)"). Most precise; prefers visible buttons.
+    Pass 2: fallback — strip the parenthetical variant (e.g. "(Bath & Shower)")
+            and score every card that starts with the base name by word overlap,
+            picking the closest variant. Handles catalogue/NB naming differences
+            like our "Twin Room (Bath & Shower)" vs NB's "Twin Room (Shower)".
     """
     return page.evaluate(
         """(roomTypeName) => {
-            // Normalise: strip trailing 'Close' text that NightsBridge injects into headings
             function normalise(text) {
                 return (text || '').replace(/\\s*Close\\s*$/i, '').trim();
             }
+            function isVisible(el) { return !!(el && el.offsetParent !== null); }
+
             // Base name: everything before the first '(' — used as fallback
             const baseName = roomTypeName.replace(/\\s*\\(.*$/, '').trim().toLowerCase();
+            const wanted = roomTypeName.toLowerCase();
 
-            // Try known class first; fall back to any "rates"-labelled button in case
-            // NightsBridge updated their CSS class name between deployments.
+            // Known class first; fall back to any "rates"-labelled button in case
+            // NightsBridge renames their CSS class between deployments.
             let buttons = Array.from(document.querySelectorAll('button.btn-show-rates, button.btn-view-rates'));
             if (!buttons.length) {
                 buttons = Array.from(document.querySelectorAll('button')).filter(
@@ -286,53 +303,54 @@ def _click_view_rates(page, room_type_name: str) -> bool:
                 );
             }
 
-            // Pass 1: exact match
-            for (const btn of buttons) {
-                let el = btn;
-                for (let i = 0; i < 12; i++) {
-                    if (!el.parentElement) break;
-                    el = el.parentElement;
-                    if (normalise(el.innerText).toLowerCase().includes(roomTypeName.toLowerCase())) {
-                        btn.scrollIntoView({ behavior: 'instant', block: 'center' });
-                        btn.click();
-                        return true;
+            function clickBtn(btn) {
+                btn.scrollIntoView({ behavior: 'instant', block: 'center' });
+                btn.click();
+                return true;
+            }
+
+            // ── Pass 1: exact start-of-card match (visible buttons first) ──────
+            for (const requireVisible of [true, false]) {
+                for (const btn of buttons) {
+                    if (requireVisible && !isVisible(btn)) continue;
+                    let el = btn;
+                    for (let i = 0; i < 12; i++) {
+                        if (!el.parentElement) break;
+                        el = el.parentElement;
+                        const txt = normalise(el.innerText).toLowerCase();
+                        if (txt.startsWith(wanted)) return clickBtn(btn);
+                        // Reached this button's own card (starts with base name) but
+                        // it's not the exact variant — stop walking up so we don't
+                        // bleed into the shared parent that lists every room.
+                        if (baseName && txt.startsWith(baseName)) break;
                     }
                 }
             }
 
-            // Pass 2: scored best-match on the room heading only (not full card text).
-            // Extracts each room's heading, scores it by how many words from the
-            // requested name appear in it, and picks the highest-scoring heading.
-            // Ties broken by heading length (shorter = more specific = better).
+            // ── Pass 2: scored best variant among cards starting with base name ─
             if (baseName) {
                 const reqWords = roomTypeName.toLowerCase()
                     .replace(/[()&,+]/g, ' ').split(/\\s+/).filter(Boolean);
                 const candidates = [];
-
                 for (const btn of buttons) {
                     let el = btn;
                     for (let i = 0; i < 12; i++) {
                         if (!el.parentElement) break;
                         el = el.parentElement;
-                        const h = el.querySelector('h2,h3,h4,[class*="title"],[class*="name"]');
-                        if (h && h.innerText?.trim()) {
-                            const headingName = normalise(h.innerText).toLowerCase();
-                            if (headingName.includes(baseName)) {
-                                const score = reqWords.filter(w => headingName.includes(w)).length;
-                                candidates.push({ btn, score, len: headingName.length });
-                            }
-                            break;
+                        const txt = normalise(el.innerText).toLowerCase();
+                        if (txt.startsWith(baseName)) {
+                            const name = txt.slice(0, 60);   // room name + a little
+                            const score = reqWords.filter(w => name.includes(w)).length;
+                            candidates.push({ btn, score, len: txt.length, vis: isVisible(btn) });
+                            break;  // this is the button's own card
                         }
                     }
                 }
-
                 if (candidates.length > 0) {
-                    // highest score first; ties → prefer shorter (more specific) heading
-                    candidates.sort((a, b) => b.score - a.score || a.len - b.len);
-                    const best = candidates[0];
-                    best.btn.scrollIntoView({ behavior: 'instant', block: 'center' });
-                    best.btn.click();
-                    return true;
+                    // best score → prefer visible → prefer tighter (more specific) card
+                    candidates.sort((a, b) =>
+                        b.score - a.score || (b.vis - a.vis) || a.len - b.len);
+                    return clickBtn(candidates[0].btn);
                 }
             }
 
