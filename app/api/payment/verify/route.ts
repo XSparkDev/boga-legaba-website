@@ -87,12 +87,13 @@ export async function GET(request: NextRequest) {
     maxOccupancy: meta.maxOccupancy ?? undefined,
   }
 
-  const { booked, bookingRef } = await processPayment(ctx)
+  const { booked, bookingRef, refunded } = await processPayment(ctx)
 
-  // Payment succeeded but the booking could not be created → tell the guest we
-  // have their money and will sort it out (admin already got a refund alert).
+  // Payment succeeded but the booking could not be created. If we managed to
+  // auto-refund, tell the guest they've been refunded; otherwise tell them we
+  // have their payment and will sort it out (admin already alerted).
   if (!booked) {
-    return fail(bookingRef, "paid-not-booked")
+    return fail(bookingRef, refunded ? "refunded" : "paid-not-booked")
   }
 
   const successUrl = new URL(

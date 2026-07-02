@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkRoomTypeAvailableLive } from "@/lib/nightsbridge-api"
+import { hasActiveHold, createHold, releaseHold } from "@/lib/booking-holds"
 
 const NB_BBID = 21091
 
@@ -66,11 +67,29 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // ── Soft-hold gate: is another guest already paying for this room/dates? ────
+  // Blocks a second guest HERE (before they pay) while an active hold exists,
+  // instead of letting them pay and then discover the booking failed.
+  const heldByAnother = await hasActiveHold(gateBbid, roomTypeName, checkin, checkout)
+  if (heldByAnother) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `${roomTypeName} is being booked by another guest right now for ${checkin} to ${checkout}. Please try again in a few minutes or choose another room.`,
+      },
+      { status: 409 },
+    )
+  }
+
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ||
     `https://${request.headers.get("host")}`
 
   const reference = `BL-${bookingRef}-${Date.now()}`
+
+  // Place the hold now (keyed by this payment reference) so a second guest is
+  // blocked while this one pays. Auto-expires (~15 min); released on booking.
+  await createHold({ reference, bbid: gateBbid, roomTypeName, checkin, checkout })
   const callbackUrl = `${siteUrl}/api/payment/verify`
 
   try {
@@ -123,6 +142,8 @@ export async function POST(request: NextRequest) {
 
     const data = (await res.json()) as { status: boolean; message: string; data?: { authorization_url: string; reference: string } }
     if (!data.status || !data.data) {
+      // Payment never started — don't leave a hold blocking the room.
+      await releaseHold(reference)
       return NextResponse.json({ ok: false, error: data.message || "Paystack init failed" }, { status: 400 })
     }
 
@@ -132,6 +153,8 @@ export async function POST(request: NextRequest) {
       reference: data.data.reference,
     })
   } catch (err) {
+    // Payment never started — release the hold so the room isn't locked for 15 min.
+    await releaseHold(reference)
     const msg = err instanceof Error ? err.message : "Payment initiation failed"
     return NextResponse.json({ ok: false, error: msg }, { status: 502 })
   }

@@ -3,6 +3,32 @@
  * route and the Paystack webhook handler so logic is never duplicated.
  */
 import { Resend } from "resend"
+import { releaseHold } from "@/lib/booking-holds"
+
+/**
+ * Attempt an automatic full refund of a Paystack transaction. Returns true only
+ * if Paystack accepts the refund request. Best-effort — never throws.
+ */
+async function attemptPaystackRefund(reference: string): Promise<boolean> {
+  const secretKey = process.env.PAYSTACK_SECRET_KEY
+  if (!secretKey || !reference) return false
+  try {
+    const res = await fetch("https://api.paystack.co/refund", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ transaction: reference }),
+      signal: AbortSignal.timeout(20_000),
+    })
+    const data = (await res.json().catch(() => ({}))) as { status?: boolean }
+    return data.status === true
+  } catch (err) {
+    console.error("[payment] Automatic refund error:", err)
+    return false
+  }
+}
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
@@ -61,7 +87,7 @@ export interface PaymentContext {
  */
 export async function processPayment(
   ctx: PaymentContext,
-): Promise<{ booked: boolean; bookingRef: string; confirmation?: Record<string, string> }> {
+): Promise<{ booked: boolean; bookingRef: string; confirmation?: Record<string, string>; refunded?: boolean }> {
   const resendKey  = process.env.RESEND_API_KEY
   const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL ?? "bogalegaba@gmail.com"
   const from       = process.env.RESEND_FROM_EMAIL ?? "Boga Legaba <onboarding@resend.dev>"
@@ -120,6 +146,18 @@ export async function processPayment(
 
   const ctxRef: PaymentContext = { ...ctx, bookingRef }
 
+  // Release the soft hold: its job is done once we've attempted the booking
+  // (booked → room is now really booked; failed → we're about to refund).
+  await releaseHold(ctx.reference)
+
+  // ── Step 1b: Booking failed after payment → try to REFUND automatically ──
+  // Only fall back to a manual "staff must refund by hand" alert if the
+  // automatic refund itself fails.
+  let refunded = false
+  if (!booked) {
+    refunded = await attemptPaystackRefund(ctx.reference)
+  }
+
   // ── Step 2: Emails ───────────────────────────────────────────────────────
   if (useResend) {
     const resend = new Resend(resendKey!)
@@ -138,6 +176,20 @@ export async function processPayment(
       }
     }
 
+    // Guest refund notice — booking failed but we auto-refunded them.
+    if (!booked && refunded && ctx.guestEmail) {
+      try {
+        await resend.emails.send({
+          from,
+          to:      ctx.guestEmail,
+          subject: "Refund processed – Boga Legaba",
+          html:    buildGuestRefundEmail(ctxRef),
+        })
+      } catch (err) {
+        console.error("[payment] Guest refund email error:", err)
+      }
+    }
+
     // Admin payment notification (always).
     try {
       await resend.emails.send({
@@ -150,20 +202,64 @@ export async function processPayment(
       console.error("[payment] Admin notification email error:", err)
     }
 
-    // Payment succeeded but booking FAILED → urgent refund alert.
+    // Payment succeeded but booking FAILED.
     if (!booked) {
-      try {
-        await resend.emails.send({
-          from,
-          to:      adminEmail,
-          subject: `ACTION REQUIRED – PAID but booking FAILED (refund) – ${ctx.guestName}`,
-          html:    buildNBFailureEmail(ctxRef),
-        })
-      } catch { /* best effort alert */ }
+      if (refunded) {
+        // Auto-refund worked — just inform admin (no manual action needed).
+        try {
+          await resend.emails.send({
+            from,
+            to:      adminEmail,
+            subject: `Auto-refunded – booking failed after payment – ${ctx.guestName}`,
+            html:    buildNBFailureEmail(ctxRef),
+          })
+        } catch { /* best effort */ }
+      } else {
+        // Auto-refund also failed → urgent manual refund required.
+        try {
+          await resend.emails.send({
+            from,
+            to:      adminEmail,
+            subject: `ACTION REQUIRED – PAID, booking FAILED, AUTO-REFUND FAILED – ${ctx.guestName}`,
+            html:    buildNBFailureEmail(ctxRef),
+          })
+        } catch { /* best effort */ }
+      }
     }
   }
 
-  return { booked, bookingRef, confirmation }
+  return { booked, bookingRef, confirmation, refunded }
+}
+
+// ── Email: guest auto-refund notice ───────────────────────────────────────────
+
+export function buildGuestRefundEmail(ctx: PaymentContext) {
+  const amount = fmtAmount(ctx.amountPaid)
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0;background:#F2EDE4;font-family:Arial,Helvetica,sans-serif;color:#3D3532;">
+  <div style="max-width:520px;margin:0 auto;padding:24px;">
+    <div style="background:#fff;border:1px solid #E8E0D4;border-radius:16px;overflow:hidden;">
+      <div style="background:#0A0A0A;padding:24px;text-align:center;">
+        <p style="margin:0;color:#C9A84C;letter-spacing:0.2em;font-size:18px;">BOGA LEGABA</p>
+      </div>
+      <div style="padding:24px;">
+        <h1 style="font-size:20px;margin:0 0 12px;">Your payment has been refunded</h1>
+        <p style="font-size:14px;line-height:1.7;color:#8C7B6B;margin:0 0 16px;">
+          Hi ${ctx.guestName || "there"}, we're sorry — we were unable to confirm your room
+          (${ctx.roomTypeName || "your booking"}) for ${fmtDate(ctx.checkin)} to ${fmtDate(ctx.checkout)}
+          after your payment. We have <strong>refunded ${amount}</strong> back to you. Depending on your
+          bank, it may take a few business days to reflect.
+        </p>
+        <p style="font-size:14px;line-height:1.7;color:#8C7B6B;margin:0;">
+          Please feel free to try again or contact us and we'll gladly help you book.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`
 }
 
 // ── Email: guest payment confirmation ─────────────────────────────────────────

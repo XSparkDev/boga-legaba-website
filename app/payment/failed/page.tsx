@@ -6,13 +6,22 @@ import { Suspense } from "react"
 function FailedContent() {
   const params     = useSearchParams()
   const bookingRef = params.get("bookingRef") ?? ""
-  // "paid-not-booked" = payment DID succeed but the booking could not be created.
-  const paidNotBooked = params.get("reason") === "paid-not-booked"
+  const reason = params.get("reason") ?? ""
+  // "refunded"        = paid, booking failed, and we auto-refunded the guest.
+  // "paid-not-booked" = paid, booking failed, auto-refund also failed (manual).
+  const refunded = reason === "refunded"
+  const paidNotBooked = reason === "paid-not-booked" || refunded
 
-  const heading = paidNotBooked ? "We're finalising your booking" : "Payment Unsuccessful"
-  const message = paidNotBooked
-    ? "Your payment went through, but we hit a snag confirming the room automatically. Our team has already been alerted and will contact you shortly to confirm your booking or arrange a refund. You do not need to do anything."
-    : "Your payment could not be processed, so no booking was made and you have not been charged. Please try again below, or contact us on WhatsApp."
+  const heading = refunded
+    ? "Payment refunded"
+    : paidNotBooked
+      ? "We're finalising your booking"
+      : "Payment Unsuccessful"
+  const message = refunded
+    ? "Your payment went through, but we couldn't confirm the room automatically — so we've refunded you in full. Depending on your bank it may take a few business days to reflect. Please feel free to try again or contact us on WhatsApp and we'll help you book."
+    : paidNotBooked
+      ? "Your payment went through, but we hit a snag confirming the room automatically. Our team has already been alerted and will contact you shortly to confirm your booking or arrange a refund. You do not need to do anything."
+      : "Your payment could not be processed, so no booking was made and you have not been charged. Please try again below, or contact us on WhatsApp."
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-5" style={{ background: "#F2EDE4" }}>
