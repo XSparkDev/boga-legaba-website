@@ -8,6 +8,7 @@ import {
   addLineItem,
   deleteLineItem,
   setInvoiceStatus,
+  sendInvoice,
 } from "@/lib/booking-extras"
 
 export const dynamic = "force-dynamic"
@@ -92,6 +93,11 @@ export async function POST(request: NextRequest) {
       }
       const ok = await setInvoiceStatus(Number(body.invoiceId), status)
       return NextResponse.json({ ok })
+    }
+
+    case "sendInvoice": {
+      const result = await sendInvoice(Number(body.invoiceId))
+      return NextResponse.json(result, { status: result.ok ? 200 : 400 })
     }
 
     default:
