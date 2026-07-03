@@ -8,6 +8,7 @@
  */
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { Resend } from "resend"
+import { emailShell, EMAIL_COLORS } from "@/lib/email-theme"
 
 export type DepartmentFlag = {
   bookingid: number | null
@@ -225,47 +226,55 @@ function fmtZar(n: number) {
   return `R ${Number(n).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-/** Build a simple branded invoice email (HTML). */
+/** Build a branded invoice email (HTML), matching the site's email theme. */
 export function buildInvoiceEmail(invoice: Invoice): string {
+  const c = EMAIL_COLORS
   const rows = (invoice.items ?? [])
     .map(
-      (it) => `<tr>
-        <td style="padding:8px 0;color:#3D3532;">${it.description}</td>
-        <td style="padding:8px 0;text-align:center;color:#8C7B6B;">${it.quantity}</td>
-        <td style="padding:8px 0;text-align:right;color:#8C7B6B;">${fmtZar(it.unit_price)}</td>
-        <td style="padding:8px 0;text-align:right;color:#3D3532;">${fmtZar(it.amount)}</td>
+      (it, i) => `<tr>
+        <td style="padding:10px 0;color:${c.bodyText};font-size:13px;border-bottom:${i === (invoice.items?.length ?? 0) - 1 ? "none" : `1px solid ${c.border}`};">${it.description}</td>
+        <td style="padding:10px 0;text-align:center;color:${c.muted};font-size:13px;border-bottom:${i === (invoice.items?.length ?? 0) - 1 ? "none" : `1px solid ${c.border}`};">${it.quantity}</td>
+        <td style="padding:10px 0;text-align:right;color:${c.muted};font-size:13px;border-bottom:${i === (invoice.items?.length ?? 0) - 1 ? "none" : `1px solid ${c.border}`};">${fmtZar(it.unit_price)}</td>
+        <td style="padding:10px 0;text-align:right;color:${c.bodyText};font-size:13px;font-weight:600;border-bottom:${i === (invoice.items?.length ?? 0) - 1 ? "none" : `1px solid ${c.border}`};">${fmtZar(it.amount)}</td>
       </tr>`,
     )
     .join("")
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
-<body style="margin:0;background:#F2EDE4;font-family:Arial,Helvetica,sans-serif;color:#3D3532;">
-  <div style="max-width:560px;margin:0 auto;padding:24px;">
-    <div style="background:#fff;border:1px solid #E8E0D4;border-radius:16px;overflow:hidden;">
-      <div style="background:#0A0A0A;padding:22px 24px;">
-        <span style="color:#C9A84C;letter-spacing:0.2em;font-size:16px;">BOGA LEGABA</span>
-        <span style="float:right;color:#8C7B6B;font-size:12px;">Invoice ${invoice.invoice_no}</span>
-      </div>
-      <div style="padding:24px;">
-        <p style="margin:0 0 4px;font-size:14px;">Hi ${invoice.guest_name || "Guest"},</p>
-        <p style="margin:0 0 16px;font-size:13px;color:#8C7B6B;">Please find your invoice below.</p>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;">
-          <thead><tr style="border-bottom:1px solid #E8E0D4;">
-            <th style="text-align:left;padding:6px 0;color:#8C7B6B;">Item</th>
-            <th style="text-align:center;padding:6px 0;color:#8C7B6B;">Qty</th>
-            <th style="text-align:right;padding:6px 0;color:#8C7B6B;">Unit</th>
-            <th style="text-align:right;padding:6px 0;color:#8C7B6B;">Amount</th>
-          </tr></thead>
-          <tbody>${rows || `<tr><td colspan="4" style="padding:8px 0;color:#8C7B6B;">No line items</td></tr>`}</tbody>
-          <tfoot><tr style="border-top:2px solid #E8E0D4;">
-            <td colspan="3" style="padding:10px 0;text-align:right;font-weight:bold;">Total</td>
-            <td style="padding:10px 0;text-align:right;font-weight:bold;color:#B8973B;">${fmtZar(invoice.total)}</td>
-          </tr></tfoot>
+
+  return emailShell({
+    title: `Invoice ${invoice.invoice_no} – Boga Legaba`,
+    preheader: `Your invoice ${invoice.invoice_no} — total ${fmtZar(invoice.total)}`,
+    eyebrow: `Invoice ${invoice.invoice_no}`,
+    bodyHtml: `
+      <tr><td style="padding:32px 40px 8px;">
+        <p style="margin:0;color:${c.bodyText};font-size:14px;">Hi ${invoice.guest_name || "there"},</p>
+        <p style="margin:6px 0 0;color:${c.muted};font-size:13px;line-height:1.7;">Please find your invoice from Boga Legaba below.</p>
+      </td></tr>
+      <tr><td style="padding:20px 40px 8px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="border-radius:12px;overflow:hidden;border:1px solid ${c.border};">
+          <tr><td style="background:${c.sand};padding:14px 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="color:${c.muted};font-size:9px;text-transform:uppercase;letter-spacing:1.5px;">Item</td>
+              <td style="color:${c.muted};font-size:9px;text-transform:uppercase;letter-spacing:1.5px;text-align:center;">Qty</td>
+              <td style="color:${c.muted};font-size:9px;text-transform:uppercase;letter-spacing:1.5px;text-align:right;">Unit</td>
+              <td style="color:${c.muted};font-size:9px;text-transform:uppercase;letter-spacing:1.5px;text-align:right;">Amount</td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="background:#ffffff;padding:6px 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              ${rows || `<tr><td style="padding:12px 0;color:${c.muted};font-size:13px;">No line items</td></tr>`}
+            </table>
+          </td></tr>
+          <tr><td style="background:${c.black};padding:16px 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="color:${c.muted};font-size:11px;text-transform:uppercase;letter-spacing:1.5px;">Total Due</td>
+              <td style="color:${c.gold};font-size:20px;font-weight:700;text-align:right;font-family:'Playfair Display',Georgia,serif;">${fmtZar(invoice.total)}</td>
+            </tr></table>
+          </td></tr>
         </table>
-        ${invoice.notes ? `<p style="margin-top:16px;font-size:12px;color:#8C7B6B;">${invoice.notes}</p>` : ""}
-      </div>
-    </div>
-  </div>
-</body></html>`
+      </td></tr>
+      ${invoice.notes ? `<tr><td style="padding:0 40px 24px;"><p style="margin:0;color:${c.muted};font-size:12px;line-height:1.7;">${invoice.notes}</p></td></tr>` : ""}
+    `,
+  })
 }
 
 /** Release an invoice: email it to the guest and mark it "sent". */
