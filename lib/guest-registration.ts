@@ -4,6 +4,7 @@
  * client. Fails soft if the table isn't applied yet.
  */
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
+import { emailShell, emailHero, emailInfoTable, emailParagraph, EMAIL_COLORS, type InfoRow } from "@/lib/email-theme"
 
 export type RegistrationInput = {
   bookingid?: number | null
@@ -65,6 +66,63 @@ export async function createRegistration(
     console.warn("[guest-registration] error:", err)
     return { ok: false, error: "Registration service unavailable" }
   }
+}
+
+// ── Emails ───────────────────────────────────────────────────────────────────
+
+/** Guest-facing confirmation that their registration was received. */
+export function buildRegistrationGuestEmail(input: RegistrationInput): string {
+  const first = (input.full_name || "").trim().split(/\s+/)[0] || "Guest"
+  const rows: InfoRow[] = [{ label: "Full Name", value: input.full_name }]
+  if (input.booking_ref) rows.push({ label: "Booking Reference", value: input.booking_ref })
+  if (input.num_guests) rows.push({ label: "Number of Guests", value: String(input.num_guests) })
+
+  return emailShell({
+    title: "Registration Received – Boga Legaba",
+    eyebrow: "Digital Check-in",
+    bodyHtml:
+      emailHero({
+        eyebrow: "Registration Received",
+        heading: `Thank you, ${first}`,
+        subtext: "Your registration details have been received. We look forward to welcoming you to Boga Legaba.",
+      }) +
+      emailInfoTable(rows, { title: "What you submitted" }) +
+      emailParagraph(
+        "If any of your details change before arrival, please contact us and we'll update your registration.",
+      ),
+  })
+}
+
+/** Staff notification with every field the guest submitted. */
+export function buildRegistrationStaffEmail(input: RegistrationInput): string {
+  const rows: InfoRow[] = [
+    { label: "Full Name", value: input.full_name },
+    { label: "Email", value: input.email || "—" },
+    { label: "Phone", value: input.phone || "—" },
+    { label: "Booking Reference", value: input.booking_ref || "—" },
+    { label: "Home Address", value: input.home_address || "—" },
+    { label: "Nationality", value: input.nationality || "—" },
+    { label: "ID / Passport", value: input.id_or_passport || "—" },
+    { label: "Date of Birth", value: input.date_of_birth || "—" },
+    { label: "Vehicle Registration", value: input.vehicle_reg || "—" },
+    { label: "Number of Guests", value: input.num_guests != null ? String(input.num_guests) : "—" },
+    { label: "Names of All Guests", value: input.guest_names || "—" },
+    { label: "Emergency Contact", value: input.emergency_contact_name || "—" },
+    { label: "Emergency Contact Phone", value: input.emergency_contact_phone || "—" },
+    { label: "Purpose of Visit", value: input.purpose || "—" },
+  ]
+
+  return emailShell({
+    title: "New Guest Registration",
+    eyebrow: "Admin Notification",
+    bodyHtml:
+      `<tr><td style="padding:32px 40px 8px;">
+        <p style="margin:0 0 4px;color:${EMAIL_COLORS.muted};font-size:10px;text-transform:uppercase;letter-spacing:1.5px;">New Guest Registration</p>
+        <p style="margin:0;color:${EMAIL_COLORS.black};font-size:22px;font-weight:400;font-family:'Playfair Display',Georgia,serif;">${input.full_name}</p>
+      </td></tr>` +
+      emailInfoTable(rows, { title: "Registration Details" }),
+    footerNote: "Automated admin notification · Do not reply to this email.",
+  })
 }
 
 export async function listRegistrations(limit = 100): Promise<Registration[]> {

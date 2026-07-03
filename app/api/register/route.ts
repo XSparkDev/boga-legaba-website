@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createRegistration, type RegistrationInput } from "@/lib/guest-registration"
+import { Resend } from "resend"
+import {
+  createRegistration,
+  buildRegistrationGuestEmail,
+  buildRegistrationStaffEmail,
+  type RegistrationInput,
+} from "@/lib/guest-registration"
 
 export const dynamic = "force-dynamic"
 
@@ -36,5 +42,36 @@ export async function POST(request: NextRequest) {
   }
 
   const result = await createRegistration(input)
+
+  if (result.ok) {
+    const resendKey = process.env.RESEND_API_KEY
+    if (resendKey && resendKey !== "re_REPLACE_ME") {
+      const resend = new Resend(resendKey)
+      const from = process.env.RESEND_FROM_EMAIL ?? "Boga Legaba <onboarding@resend.dev>"
+      const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL ?? "bogalegaba@gmail.com"
+
+      const sends = [
+        resend.emails.send({
+          from,
+          to: adminEmail,
+          subject: `New Guest Registration – ${input.full_name}`,
+          html: buildRegistrationStaffEmail(input),
+        }),
+      ]
+      if (input.email) {
+        sends.push(
+          resend.emails.send({
+            from,
+            to: input.email,
+            subject: "Registration Received – Boga Legaba",
+            html: buildRegistrationGuestEmail(input),
+          }),
+        )
+      }
+      // Best-effort — the registration is already saved regardless of email outcome.
+      await Promise.allSettled(sends)
+    }
+  }
+
   return NextResponse.json(result, { status: result.ok ? 200 : 400 })
 }

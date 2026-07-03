@@ -156,7 +156,7 @@ export default async function SpecialsPage() {
               Subscribe to be the first to hear about new offers and seasonal promotions.
             </p>
             <div className="mt-8 rounded-2xl border border-border bg-card p-6 sm:p-8">
-              <InterestForm submitLabel="Subscribe for Offers" gaEvent="specials_subscribe" />
+              <InterestForm submitLabel="Subscribe for Offers" gaEvent="specials_subscribe" source="Specials" />
             </div>
           </Reveal>
         </div>
