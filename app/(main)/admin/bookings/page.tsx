@@ -3,6 +3,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { BookingsClient } from "@/components/admin/bookings-client"
+import { getDepartmentBookingIds } from "@/lib/booking-extras"
 
 export const metadata: Metadata = {
   title: "Bookings | Boga Legaba Admin",
@@ -33,6 +34,8 @@ export type BookingRow = {
   avg_rate: number | null
   checked_in: boolean
   checked_out: boolean
+  // app-owned (from booking_department table, joined read-only)
+  is_department: boolean
 }
 
 async function fetchBookings(): Promise<BookingRow[]> {
@@ -76,6 +79,7 @@ async function fetchBookings(): Promise<BookingRow[]> {
         avg_rate: (firstRoom.avgrate as number | null) ?? null,
         checked_in: !!(firstRoom.checkedin),
         checked_out: !!(firstRoom.checkedout),
+        is_department: false,
       }
     })
   } catch {
@@ -88,5 +92,9 @@ export default async function BookingsPage() {
 
   const bookings = await fetchBookings()
 
-  return <BookingsClient bookings={bookings} />
+  // Read-only join against the app-owned booking_department table for badges.
+  const deptIds = await getDepartmentBookingIds(bookings.map((b) => b.bookingid))
+  const withDept = bookings.map((b) => ({ ...b, is_department: deptIds.has(b.bookingid) }))
+
+  return <BookingsClient bookings={withDept} />
 }

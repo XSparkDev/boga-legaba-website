@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Loader2, AlertTriangle, ArrowRight, X, Check, Mail, Calendar, Moon, BedDouble, UtensilsCrossed, Utensils } from "lucide-react"
+import { Loader2, AlertTriangle, ArrowRight, X, BedDouble, UtensilsCrossed, Utensils } from "lucide-react"
 import type { MealPlanRate } from "@/lib/nightsbridge-rates"
 
 // ---------------------------------------------------------------------------
@@ -21,26 +21,7 @@ interface BookingWidgetProps {
   maxOccupancy?: number | null
 }
 
-type Step = "idle" | "form" | "submitting" | "success" | "error"
-
-interface ConfirmationData {
-  bookingId?: string
-  propertyName?: string
-  arrival?: string
-  leaving?: string
-  nights?: string
-  rooms?: string
-  total?: string
-  deposit?: string
-  paymentNote?: string
-  contacts?: string
-  phone?: string
-  cell?: string
-  email?: string
-  website?: string
-  address?: string
-  directions?: string
-}
+type Step = "idle" | "form" | "paying" | "error"
 
 const MEAL_PLAN_ORDER = [5, 1, 3] // Room Only, B&B, DBB
 
@@ -53,15 +34,6 @@ function MealIcon({ id }: { id: number }) {
 
 function fmt(n: number) {
   return `R ${Math.round(n).toLocaleString("en-ZA")}`
-}
-
-function fmtDateWidget(raw: string | undefined): string {
-  if (!raw) return ""
-  // Already formatted (e.g. "15 Jul 2026") — return as-is
-  if (/[a-zA-Z]/.test(raw)) return raw
-  // ISO date (e.g. "2026-07-15")
-  const d = new Date(raw)
-  return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" })
 }
 
 // ---------------------------------------------------------------------------
@@ -92,8 +64,6 @@ export function BookingWidget({
 
   const [step, setStep] = useState<Step>("idle")
   const [selectedPlan, setSelectedPlan] = useState<MealPlanRate | null>(sorted[0] ?? null)
-  const [bookingRef, setBookingRef] = useState<string | null>(null)
-  const [confirmation, setConfirmation] = useState<ConfirmationData | null>(null)
   const [errorMsg, setErrorMsg] = useState("")
 
   // Form fields — every field NightsBridge collects
@@ -119,11 +89,29 @@ export function BookingWidget({
   const adultsOverLimit = adults > maxAdults
   const totalOverLimit = totalGuests > maxOccupancy
 
+  // Nights between arrive and depart — used to estimate the amount to charge
+  function nightsBetween(a: string, b: string): number {
+    const n = Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000)
+    return n > 0 ? n : 1
+  }
+
+  // Estimated total to charge on Paystack, from the selected plan's per-night rate.
+  // Pay-first: there is no NightsBridge booking yet, so we estimate from the
+  // displayed rate. Children 6–12 add R150/night; 0–5 are free.
+  function estimateTotal(): number {
+    if (!selectedPlan) return 0
+    const perNight =
+      adults >= 2
+        ? (selectedPlan.rateDouble ?? selectedPlan.rateSingle ?? 0)
+        : (selectedPlan.rateSingle ?? selectedPlan.rateDouble ?? 0)
+    return Math.round((perNight + children2 * 150) * nightsBetween(arrive, depart))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!selectedPlan) return
 
-    // Mirror NightsBridge occupancy validation before hitting the bot
+    // Mirror NightsBridge occupancy validation before charging
     if (adultsOverLimit) {
       setOccupancyError(`This room allows a maximum of ${maxAdults} adult${maxAdults === 1 ? "" : "s"}.`)
       return
@@ -140,47 +128,50 @@ export function BookingWidget({
     }
     setEmailMismatch(false)
 
-    setStep("submitting")
+    const amountRands = estimateTotal()
+    if (!amountRands) {
+      setErrorMsg("Could not work out the price for these dates. Please contact us via WhatsApp.")
+      setStep("error")
+      return
+    }
 
+    // PAY FIRST: send the guest to Paystack. The NightsBridge booking is only
+    // created after payment succeeds (see /api/payment/verify).
+    setStep("paying")
     try {
-      const res = await fetch("/api/book", {
+      const res = await fetch("/api/payment/initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          email,
+          amountRands,
+          bookingRef: `BL-${Date.now()}`,
+          guestName: `${firstname} ${surname}`.trim(),
+          guestPhone: phone,
           checkin: arrive,
           checkout: depart,
           roomTypeName,
+          // Full booking payload carried through Paystack, used to book after payment
           mealPlanName: selectedPlan.description,
           adults,
           children1,
           children2,
           firstname,
           surname,
-          phone,
-          email,
           arrivalTime,
           airline,
           flightno,
           notes,
-          paymentMethod: "bank_transfer",
+          bbid,
           maxAdults,
           maxOccupancy,
         }),
       })
-
-      const data = (await res.json()) as {
-        ok: boolean
-        bookingRef?: string
-        error?: string
-        confirmation?: ConfirmationData
-      }
-
-      if (data.ok) {
-        setBookingRef(data.bookingRef ?? null)
-        setConfirmation(data.confirmation ?? null)
-        setStep("success")
+      const data = (await res.json()) as { ok: boolean; authorization_url?: string; error?: string }
+      if (data.ok && data.authorization_url) {
+        window.location.href = data.authorization_url
       } else {
-        setErrorMsg(data.error ?? "Booking failed. Please try WhatsApp or call us.")
+        setErrorMsg(data.error ?? "Payment could not be started. Please try WhatsApp or contact us.")
         setStep("error")
       }
     } catch {
@@ -191,97 +182,17 @@ export function BookingWidget({
 
   if (!available) return null
 
-  // ── Success ──────────────────────────────────────────────────────────────
-  if (step === "success") {
-    const details = [
-      { label: "Booking ID", value: confirmation?.bookingId || bookingRef, icon: <Check className="size-3.5 text-[#b8973a]" /> },
-      { label: "Check-in",   value: fmtDateWidget(confirmation?.arrival),  icon: <Calendar className="size-3.5 text-[#b8973a]" /> },
-      { label: "Check-out",  value: fmtDateWidget(confirmation?.leaving),  icon: <Calendar className="size-3.5 text-[#b8973a]" /> },
-      { label: "Nights",     value: confirmation?.nights,                  icon: <Moon className="size-3.5 text-[#b8973a]" /> },
-      { label: "Room",       value: confirmation?.rooms,                   icon: <BedDouble className="size-3.5 text-[#b8973a]" /> },
-      { label: "Total",      value: confirmation?.total,                   icon: <Check className="size-3.5 text-[#b8973a]" /> },
-    ].filter((r) => r.value)
 
+  // ── Paying (redirecting to Paystack) ─────────────────────────────────────
+  if (step === "paying") {
     return (
-      <div className="overflow-hidden rounded-xl border border-[#E8E0D4] bg-white shadow-sm">
-
-        {/* Lodge header */}
-        <div className="px-6 py-5 text-center" style={{ background: "#0A0A0A" }}>
-          <div
-            className="mx-auto mb-3 flex items-center justify-center rounded-full"
-            style={{ width: 48, height: 48, background: "#F2EDE4", border: "2px solid #C9A84C" }}
-          >
-            <Check className="size-5" style={{ color: "#C9A84C", strokeWidth: 2.5 }} />
-          </div>
-          <h3 className="font-serif text-lg font-normal" style={{ color: "#C9A84C", letterSpacing: "0.02em" }}>
-            Booking Confirmed
-          </h3>
-          <p className="mt-1 font-body text-xs" style={{ color: "#8C7B6B" }}>
-            We look forward to welcoming you to the bush
-          </p>
-        </div>
-
-        {/* Booking details */}
-        {details.length > 0 && (
-          <div className="px-5 pt-4 pb-3">
-            <div className="overflow-hidden rounded-lg" style={{ border: "1px solid #E8E0D4" }}>
-              {details.map((row, i) => (
-                <div
-                  key={row.label}
-                  className="flex items-center gap-3 px-4 py-3"
-                  style={{
-                    background: i % 2 === 0 ? "#FAFAF8" : "#F2EDE4",
-                    borderBottom: i < details.length - 1 ? "1px solid #E8E0D4" : "none",
-                  }}
-                >
-                  {row.icon}
-                  <span className="font-body text-[11px] font-medium uppercase tracking-wide shrink-0" style={{ color: "#8C7B6B", width: 68 }}>
-                    {row.label}
-                  </span>
-                  <span
-                    className="font-body text-sm font-semibold ml-auto text-right"
-                    style={{ color: row.label === "Total" ? "#B8973B" : "#3D3532" }}
-                  >
-                    {row.value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Payment instructions — NightsBridge emails the guest how to pay */}
-        <div className="px-5 pb-4 space-y-3">
-          <div className="flex items-start gap-3 rounded-xl px-4 py-4" style={{ background: "#F2EDE4", border: "1px solid #E8E0D4" }}>
-            <Mail className="size-5 shrink-0 mt-0.5" style={{ color: "#B8973B" }} />
-            <div>
-              <p className="font-body text-sm font-semibold" style={{ color: "#3D3532" }}>
-                Check your email to complete payment
-              </p>
-              <p className="font-body text-xs mt-1 leading-relaxed" style={{ color: "#8C7B6B" }}>
-                NightsBridge has emailed <strong style={{ color: "#3D3532" }}>{email}</strong> with your
-                booking confirmation and payment instructions. Please follow those instructions to secure your stay.
-              </p>
-            </div>
-          </div>
-
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="flex w-full items-center justify-center gap-2 rounded-xl py-3 font-body text-sm font-medium transition-all"
-            style={{ background: "#FAFAF8", color: "#8C7B6B", border: "1px solid #E8E0D4" }}
-          >
-            Need help? Message us on WhatsApp
-          </a>
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-3 text-center" style={{ background: "#FAFAF8", borderTop: "1px solid #E8E0D4" }}>
-          <p className="font-body text-xs" style={{ color: "#8C7B6B" }}>
-            A confirmation has been sent to <strong style={{ color: "#3D3532" }}>{email}</strong>
-          </p>
-        </div>
+      <div
+        className="flex flex-col items-center justify-center gap-3 rounded-xl py-10"
+        style={{ background: "#F2EDE4", border: "1px solid #E8E0D4" }}
+      >
+        <Loader2 className="size-8 animate-spin" style={{ color: "#C9A84C" }} />
+        <p className="text-sm font-medium" style={{ color: "#3D3532" }}>Redirecting to secure payment</p>
+        <p className="text-xs" style={{ color: "#8C7B6B" }}>You will be taken to Paystack</p>
       </div>
     )
   }
@@ -327,17 +238,6 @@ export function BookingWidget({
         Book This Room
         <ArrowRight className="size-4" />
       </button>
-    )
-  }
-
-  // ── Submitting ────────────────────────────────────────────────────────────
-  if (step === "submitting") {
-    return (
-      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-[#b8973a]/30 bg-[#fdf8ef] py-8">
-        <Loader2 className="size-8 animate-spin text-[#b8973a]" />
-        <p className="text-sm font-medium text-gray-700">Processing your booking&hellip;</p>
-        <p className="text-xs text-gray-400">This can take up to 60 seconds</p>
-      </div>
     )
   }
 
@@ -592,16 +492,15 @@ export function BookingWidget({
 
         <div className="border-t border-gray-100" />
 
-        {/* Payment */}
+        {/* Payment method */}
         <div>
           <p className="mb-2 font-body text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Payment
+            Payment method
           </p>
           <div className="rounded-lg border border-[#b8973a] bg-[#fdf8ef] p-3">
-            <span className="font-body text-sm text-gray-800">Pay via the NightsBridge email</span>
+            <span className="font-body text-sm text-gray-800">Card or EFT via Paystack</span>
             <p className="mt-0.5 font-body text-[11px] text-gray-400">
-              Once we confirm your booking, NightsBridge emails you the booking details and payment
-              instructions. Complete payment from that email to secure your stay.
+              You will be redirected to Paystack to complete payment securely after we confirm your booking.
             </p>
           </div>
           <p className="mt-2 font-body text-[11px] text-gray-400">

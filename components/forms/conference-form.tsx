@@ -1,12 +1,14 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
-import { CheckCircle2 } from "lucide-react"
+import { CheckCircle2, Loader2, AlertTriangle } from "lucide-react"
 import { Field, CheckboxRow, inputClass } from "@/components/forms/form-ui"
 import { CONFERENCE_AV, CONFERENCE_CATERING, CONFERENCE_SETUPS } from "@/data/conference"
 
 export function ConferenceForm() {
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [accommodation, setAccommodation] = useState(false)
   const [av, setAv] = useState<string[]>([])
@@ -39,11 +41,44 @@ export function ConferenceForm() {
     return Object.keys(e).length === 0
   }
 
-  function onSubmit(ev: FormEvent) {
+  async function onSubmit(ev: FormEvent) {
     ev.preventDefault()
     if (!validate()) return
-    // [→ Microsoft 365 / CRM integration point]
-    setSubmitted(true)
+    setSubmitting(true)
+    setSubmitError("")
+    try {
+      const res = await fetch("/api/enquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "conference",
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          entity: form.company,
+          message: form.notes,
+          details: {
+            dates: form.dates,
+            attendees: form.attendees,
+            setup: form.setup,
+            av,
+            catering,
+            accommodation,
+            rooms: form.rooms,
+          },
+        }),
+      })
+      const data = (await res.json()) as { ok: boolean; error?: string }
+      if (data.ok) {
+        setSubmitted(true)
+      } else {
+        setSubmitError(data.error ?? "Could not send your enquiry. Please try again.")
+      }
+    } catch {
+      setSubmitError("Network error. Please try again or contact us via WhatsApp.")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (submitted) {
@@ -169,11 +204,19 @@ export function ConferenceForm() {
         />
       </Field>
 
+      {submitError ? (
+        <p className="flex items-center gap-2 text-sm text-destructive">
+          <AlertTriangle className="size-4 shrink-0" /> {submitError}
+        </p>
+      ) : null}
+
       <button
         type="submit"
-        className="inline-flex items-center justify-center rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-[#0a0a0a] transition-colors hover:bg-[#b8943c]"
+        disabled={submitting}
+        className="inline-flex items-center justify-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-[#0a0a0a] transition-colors hover:bg-[#b8943c] disabled:opacity-60"
       >
-        Send Conference Enquiry
+        {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
+        {submitting ? "Sending…" : "Send Conference Enquiry"}
       </button>
       <p className="text-center text-xs text-muted-foreground">
         Our conference team will respond within 2 business hours.
