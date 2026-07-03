@@ -60,12 +60,29 @@ export async function getDepartmentFlag(bookingid: number): Promise<DepartmentFl
 }
 
 export async function upsertDepartmentFlag(input: DepartmentFlag): Promise<boolean> {
+  // Manual upsert (select → update/insert). We can't use Postgres ON CONFLICT here
+  // because the uniqueness is enforced by PARTIAL unique indexes (bookingid / ref
+  // where not null), which aren't valid ON CONFLICT targets.
   try {
     const sb = createSupabaseAdminClient()
-    const { error } = await sb
-      .from("booking_department")
-      .upsert({ ...input, updated_at: new Date().toISOString() }, { onConflict: "bookingid" })
-    if (error) { console.warn("[booking-extras] upsertDepartmentFlag:", error.message); return false }
+    const now = new Date().toISOString()
+
+    let existingId: number | null = null
+    if (input.bookingid != null) {
+      const { data } = await sb.from("booking_department").select("id").eq("bookingid", input.bookingid).maybeSingle()
+      existingId = (data as { id: number } | null)?.id ?? null
+    } else if (input.booking_ref) {
+      const { data } = await sb.from("booking_department").select("id").eq("booking_ref", input.booking_ref).maybeSingle()
+      existingId = (data as { id: number } | null)?.id ?? null
+    }
+
+    if (existingId != null) {
+      const { error } = await sb.from("booking_department").update({ ...input, updated_at: now }).eq("id", existingId)
+      if (error) { console.warn("[booking-extras] upsertDepartmentFlag update:", error.message); return false }
+    } else {
+      const { error } = await sb.from("booking_department").insert({ ...input })
+      if (error) { console.warn("[booking-extras] upsertDepartmentFlag insert:", error.message); return false }
+    }
     return true
   } catch (err) { console.warn("[booking-extras] upsertDepartmentFlag error:", err); return false }
 }
