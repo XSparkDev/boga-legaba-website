@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkRoomTypeAvailableLive } from "@/lib/nightsbridge-api"
+import { Resend } from "resend"
+import { buildGuestPendingEmail } from "@/lib/payment-utils"
 
 export const maxDuration = 90
 
@@ -79,8 +81,32 @@ export async function POST(request: NextRequest) {
 
     const data = (await res.json()) as Record<string, unknown>
 
-    // NightsBridge sends the guest its own booking email (with payment
-    // instructions) once the booking is registered, so we don't send our own.
+    // After a successful booking, send the guest a "pending payment" email so they
+    // have booking details in their inbox even if they close the browser before paying.
+    if (res.ok && data.ok) {
+      const resendKey = process.env.RESEND_API_KEY
+      if (resendKey && resendKey !== "re_REPLACE_ME") {
+        const guestEmail = String(body.email ?? "")
+        if (guestEmail) {
+          const resend = new Resend(resendKey)
+          const from   = process.env.RESEND_FROM_EMAIL ?? "Boga Legaba <onboarding@resend.dev>"
+          const conf   = (data.confirmation ?? {}) as Record<string, string>
+          resend.emails.send({
+            from,
+            to:      guestEmail,
+            subject: "Your Boga Legaba booking is reserved – complete payment",
+            html:    buildGuestPendingEmail({
+              guestName:      `${body.firstname ?? ""} ${body.surname ?? ""}`.trim(),
+              bookingRef:     String(data.bookingRef ?? conf.bookingId ?? ""),
+              checkin:        String(body.checkin ?? ""),
+              checkout:       String(body.checkout ?? ""),
+              roomTypeName:   String(body.roomTypeName ?? ""),
+              estimatedTotal: conf.total ?? "",
+            }),
+          }).catch((err: unknown) => console.error("[book] Pending email error:", err))
+        }
+      }
+    }
 
     return NextResponse.json(data, { status: res.ok ? 200 : res.status })
   } catch (err) {

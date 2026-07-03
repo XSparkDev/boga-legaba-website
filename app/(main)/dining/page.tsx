@@ -72,6 +72,7 @@ export default function DiningPage() {
                 withInterestArea
                 interestOptions={["Dining", "Private Events", "Outdoor Venue", "Bar"]}
                 gaEvent="dining_interest_submit"
+                source="Dining"
               />
             </div>
           </Reveal>

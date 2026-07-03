@@ -1,19 +1,21 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
-import { CheckCircle2 } from "lucide-react"
+import { CheckCircle2, Loader2, AlertTriangle } from "lucide-react"
 import { Field, inputClass } from "@/components/forms/form-ui"
 
 const SUBJECTS = ["General Enquiry", "Booking", "Conference", "Corporate / Government", "Accounts", "Other"]
 
 export function ContactForm() {
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" })
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }))
 
-  function onSubmit(ev: FormEvent) {
+  async function onSubmit(ev: FormEvent) {
     ev.preventDefault()
     const e: Record<string, string> = {}
     if (!form.name.trim()) e.name = "Please enter your name."
@@ -21,8 +23,33 @@ export function ContactForm() {
     if (!form.message.trim()) e.message = "Please enter a message."
     setErrors(e)
     if (Object.keys(e).length) return
-    // [→ Microsoft 365 / CRM integration point]
-    setSubmitted(true)
+
+    setSubmitting(true)
+    setSubmitError("")
+    try {
+      const res = await fetch("/api/enquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "contact",
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          message: form.message,
+          details: { subject: form.subject || "General Enquiry" },
+        }),
+      })
+      const data = (await res.json()) as { ok: boolean; error?: string }
+      if (data.ok) {
+        setSubmitted(true)
+      } else {
+        setSubmitError(data.error ?? "Could not send your message. Please try again.")
+      }
+    } catch {
+      setSubmitError("Network error. Please try again or contact us via WhatsApp.")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (submitted) {
@@ -63,11 +90,18 @@ export function ContactForm() {
       <Field label="Message" required error={errors.message}>
         <textarea rows={5} className={inputClass} value={form.message} onChange={(e) => set("message", e.target.value)} />
       </Field>
+      {submitError ? (
+        <p className="flex items-center gap-2 text-sm text-destructive">
+          <AlertTriangle className="size-4 shrink-0" /> {submitError}
+        </p>
+      ) : null}
       <button
         type="submit"
-        className="inline-flex items-center justify-center self-start rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-[#0a0a0a] transition-colors hover:bg-[#b8943c]"
+        disabled={submitting}
+        className="inline-flex items-center justify-center gap-2 self-start rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-[#0a0a0a] transition-colors hover:bg-[#b8943c] disabled:opacity-60"
       >
-        Send Message
+        {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
+        {submitting ? "Sending…" : "Send Message"}
       </button>
     </form>
   )

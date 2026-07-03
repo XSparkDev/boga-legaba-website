@@ -17,9 +17,12 @@ import {
   BedDouble,
   CalendarDays,
   Shield,
+  FileText,
+  Building2,
 } from "lucide-react"
 import Link from "next/link"
 import type { BookingRow } from "@/app/(main)/admin/bookings/page"
+import { BookingExtrasPanel } from "@/components/admin/booking-extras-panel"
 
 // ---------------------------------------------------------------------------
 // Status config
@@ -320,6 +323,7 @@ function ActionButton({
 export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
   const [tab, setTab] = useState<Tab>("all")
   const [showAdd, setShowAdd] = useState(false)
+  const [panelBooking, setPanelBooking] = useState<BookingRow | null>(null)
 
   const today = todayStr()
 
@@ -461,7 +465,14 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
                     return (
                       <tr key={b.bookingid} className={`transition-colors hover:bg-gray-50/60 ${isToday ? "bg-emerald-50/30" : ""}`}>
                         <td className="px-4 py-3">
-                          <p className="font-medium text-gray-900">{b.made_by ?? "—"}</p>
+                          <p className="flex items-center gap-1.5 font-medium text-gray-900">
+                            {b.made_by ?? "—"}
+                            {b.is_department && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase text-indigo-700">
+                                <Building2 className="size-2.5" /> Dept
+                              </span>
+                            )}
+                          </p>
                           {b.made_by_email && (
                             <p className="font-mono text-[10px] text-gray-400">{b.made_by_email}</p>
                           )}
@@ -537,6 +548,13 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
                                 NightsBridge
                               </a>
                             )}
+                            <button
+                              onClick={() => setPanelBooking(b)}
+                              className="flex items-center gap-1 rounded-lg border border-[#b8973a]/40 bg-[#b8973a]/10 px-2 py-1.5 font-mono text-[11px] text-[#b8973a] transition-colors hover:bg-[#b8973a]/20"
+                            >
+                              <FileText className="size-3" />
+                              Invoice / Dept
+                            </button>
                           </div>
                           {b.booking_ref && (
                             <p className="mt-1 font-mono text-[9px] text-gray-300">Ref #{b.booking_ref}</p>
@@ -568,6 +586,19 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
 
       {/* Add Booking modal */}
       {showAdd && <AddBookingModal onClose={() => setShowAdd(false)} />}
+
+      {/* Invoice & department panel */}
+      {panelBooking && (
+        <BookingExtrasPanel
+          booking={{
+            bookingid: panelBooking.bookingid,
+            booking_ref: panelBooking.booking_ref != null ? String(panelBooking.booking_ref) : null,
+            guest_name: panelBooking.made_by,
+            guest_email: panelBooking.made_by_email,
+          }}
+          onClose={() => setPanelBooking(null)}
+        />
+      )}
     </div>
   )
 }
