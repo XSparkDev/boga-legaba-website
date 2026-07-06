@@ -14,7 +14,7 @@ export function FloatingWhatsApp() {
       {/* WhatsApp property picker popup */}
       {open ? (
         <div className="fixed bottom-36 right-6 z-50 w-72 overflow-hidden rounded-2xl border border-black/10 bg-card shadow-2xl">
-          <div className="flex items-center justify-between bg-[#0a0a0a] px-4 py-3">
+          <div className="flex items-center justify-between bg-[#000000] px-4 py-3">
             <p className="font-display text-sm text-white">Chat with which property?</p>
             <button onClick={() => setOpen(false)} aria-label="Close" className="text-white/70 hover:text-white">
               <X className="size-4" />
@@ -63,7 +63,7 @@ export function FloatingWhatsApp() {
           href="/admin"
           aria-label="Admin login"
           title="Admin"
-          className="group w-10 h-10 bg-[#0a0a0a]/80 hover:bg-[#b8973a] rounded-full flex items-center justify-center shadow-md border border-white/10 backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:border-[#b8973a]"
+          className="group w-10 h-10 bg-[#000000]/80 hover:bg-[#996948] rounded-full flex items-center justify-center shadow-md border border-white/10 backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:border-[#996948]"
         >
           <Lock className="size-4 text-white/60 group-hover:text-white transition-colors" />
         </Link>

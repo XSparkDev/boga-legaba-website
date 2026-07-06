@@ -12,7 +12,7 @@ export function WhatsAppSection() {
   const desks = properties.filter((p) => p.id !== "transnet")
 
   return (
-    <section className="grain relative overflow-hidden bg-[#0A0A0A] py-20 text-white lg:py-28">
+    <section className="grain relative overflow-hidden bg-[#000000] py-20 text-white lg:py-28">
       <div className="relative z-[2] mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <Reveal>

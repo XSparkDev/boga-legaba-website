@@ -58,7 +58,7 @@ export function SiteNav() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-colors duration-300",
         scrolled
-          ? "border-b border-white/10 bg-[#0A0A0A]/95 supports-[backdrop-filter]:backdrop-blur-md"
+          ? "border-b border-white/10 bg-[#000000]/95 supports-[backdrop-filter]:backdrop-blur-md"
           : "bg-transparent",
       )}
     >
@@ -104,7 +104,7 @@ export function SiteNav() {
 
       {open ? (
         <div
-          className="fixed inset-0 top-[4.5rem] z-40 bg-[#0a0a0a] xl:hidden"
+          className="fixed inset-0 top-[4.5rem] z-40 bg-[#000000] xl:hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Site menu"

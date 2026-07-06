@@ -41,7 +41,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#000000] px-4">
       {/* Back to website */}
       <Link
         href="/stay"
@@ -54,8 +54,8 @@ function LoginForm() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="mb-8 text-center">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#b8973a]/20 ring-1 ring-[#b8973a]/30">
-            <Lock className="size-6 text-[#b8973a]" />
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#996948]/20 ring-1 ring-[#996948]/30">
+            <Lock className="size-6 text-[#996948]" />
           </div>
           <h1 className="mt-4 font-serif text-2xl font-bold text-white">Admin Access</h1>
           <p className="mt-1 font-mono text-[11px] uppercase tracking-widest text-white/40">
@@ -83,7 +83,7 @@ function LoginForm() {
                   autoFocus
                   autoComplete="current-password"
                   placeholder="Enter admin password"
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-11 font-mono text-sm text-white placeholder:text-white/20 focus:border-[#b8973a]/50 focus:outline-none focus:ring-1 focus:ring-[#b8973a]/30"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-11 font-mono text-sm text-white placeholder:text-white/20 focus:border-[#996948]/50 focus:outline-none focus:ring-1 focus:ring-[#996948]/30"
                 />
                 <button
                   type="button"
@@ -104,7 +104,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading || !password}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b8973a] px-6 py-3 font-mono text-sm font-semibold uppercase tracking-wider text-white shadow-md transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#996948] px-6 py-3 font-mono text-sm font-semibold uppercase tracking-wider text-white shadow-md transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (
                 <>

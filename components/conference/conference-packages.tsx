@@ -64,7 +64,7 @@ export function ConferencePackages() {
   }
 
   return (
-    <section className="border-y border-border bg-[#F2EDE4]/60 py-14 lg:py-20" aria-labelledby="conference-packages-heading">
+    <section className="border-y border-border bg-[#F7F7F6]/60 py-14 lg:py-20" aria-labelledby="conference-packages-heading">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal>
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gold">Packages</p>
@@ -86,7 +86,7 @@ export function ConferencePackages() {
                 className={cn(
                   "rounded-full border px-4 py-2 font-mono text-[10px] uppercase tracking-widest transition-all",
                   quickFilter === f.id
-                    ? "border-[#0A0A0A] bg-[#0A0A0A] text-white"
+                    ? "border-[#000000] bg-[#000000] text-white"
                     : "border-border bg-card text-muted-foreground hover:border-foreground/25",
                 )}
               >
@@ -123,7 +123,7 @@ export function ConferencePackages() {
                 <div
                   className={cn(
                     "flex h-full flex-col rounded-2xl border p-7",
-                    pkg.featured ? "border-gold bg-[#0a0a0a] text-white" : "border-border bg-card",
+                    pkg.featured ? "border-gold bg-[#000000] text-white" : "border-border bg-card",
                   )}
                 >
                   <h3 className={cn("font-serif text-2xl", pkg.featured ? "text-white" : "text-foreground")}>
@@ -164,8 +164,8 @@ export function ConferencePackages() {
                     className={cn(
                       "mt-6 inline-flex items-center justify-center rounded-full border px-5 py-2.5 text-sm font-medium transition-colors",
                       pkg.featured
-                        ? "border-gold text-gold hover:bg-gold hover:text-[#0A0A0A]"
-                        : "border-gold/50 text-foreground hover:bg-gold hover:text-[#0A0A0A]",
+                        ? "border-gold text-gold hover:bg-gold hover:text-[#000000]"
+                        : "border-gold/50 text-foreground hover:bg-gold hover:text-[#000000]",
                     )}
                   >
                     Request Quote

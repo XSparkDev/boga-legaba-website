@@ -265,7 +265,7 @@ function AvailabilityCalendar({ days }: { days: OccupancyDay[] }) {
               key={cell.iso}
               title={occ ? `${cell.iso}: ${avail} of ${total} rooms available` : cell.iso}
               className={`relative flex aspect-square flex-col items-center justify-center rounded-lg border ${tone.bg} ${
-                isToday ? "ring-2 ring-[#b8973a] ring-offset-1" : ""
+                isToday ? "ring-2 ring-[#996948] ring-offset-1" : ""
               }`}
             >
               <span className="absolute left-1.5 top-1 font-mono text-[10px] font-semibold text-gray-500">
@@ -389,11 +389,11 @@ export default async function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* ── Top bar ──────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 border-b border-white/10 bg-[#0a0a0a] px-4 py-3 sm:px-6">
+      <div className="sticky top-0 z-30 border-b border-white/10 bg-[#000000] px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#b8973a]/20">
-              <Shield className="size-4 text-[#b8973a]" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#996948]/20">
+              <Shield className="size-4 text-[#996948]" />
             </div>
             <div>
               <span className="font-serif text-base font-bold text-white">Admin Dashboard</span>
@@ -405,7 +405,7 @@ export default async function AdminDashboardPage() {
           <div className="flex items-center gap-2">
             <Link
               href="/admin/bookings"
-              className="flex items-center gap-1.5 rounded-lg border border-[#b8973a]/40 bg-[#b8973a]/10 px-3 py-1.5 font-mono text-[11px] text-[#b8973a] hover:bg-[#b8973a]/20 transition-colors"
+              className="flex items-center gap-1.5 rounded-lg border border-[#996948]/40 bg-[#996948]/10 px-3 py-1.5 font-mono text-[11px] text-[#996948] hover:bg-[#996948]/20 transition-colors"
             >
               <CalendarDays className="size-3.5" />
               Bookings
@@ -438,7 +438,7 @@ export default async function AdminDashboardPage() {
               value={estData?.roomTypes.size ?? "—"}
               sub="From NightsBridge"
               icon={BedDouble}
-              color="bg-[#b8973a]/10 text-[#b8973a]"
+              color="bg-[#996948]/10 text-[#996948]"
             />
             <StatCard
               label="Rooms available today"
@@ -460,7 +460,7 @@ export default async function AdminDashboardPage() {
         {/* ── Section 1b: Analytics ─────────────────────────── */}
         <div>
           <h2 className="mb-4 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
-            <BarChart3 className="size-3.5 text-[#b8973a]" />
+            <BarChart3 className="size-3.5 text-[#996948]" />
             Analytics
           </h2>
           <AnalyticsCharts
@@ -487,35 +487,35 @@ export default async function AdminDashboardPage() {
                 <div className="space-y-2.5">
                   {estData.checkintime ? (
                     <div className="flex items-center gap-2 text-sm">
-                      <Clock className="size-4 text-[#b8973a] shrink-0" />
+                      <Clock className="size-4 text-[#996948] shrink-0" />
                       <span className="text-gray-500">Check-in:</span>
                       <span className="font-medium text-gray-800">{estData.checkintime}</span>
                     </div>
                   ) : null}
                   {estData.checkouttime ? (
                     <div className="flex items-center gap-2 text-sm">
-                      <Clock className="size-4 text-[#b8973a] shrink-0" />
+                      <Clock className="size-4 text-[#996948] shrink-0" />
                       <span className="text-gray-500">Check-out:</span>
                       <span className="font-medium text-gray-800">{estData.checkouttime}</span>
                     </div>
                   ) : null}
                   {estData.wifi ? (
                     <div className="flex items-center gap-2 text-sm">
-                      <Wifi className="size-4 text-[#b8973a] shrink-0" />
+                      <Wifi className="size-4 text-[#996948] shrink-0" />
                       <span className="text-gray-500">Wi-Fi:</span>
                       <span className="font-medium text-gray-800">{estData.wificost ?? estData.wifi}</span>
                     </div>
                   ) : null}
                   {estData.parking ? (
                     <div className="flex items-center gap-2 text-sm">
-                      <Car className="size-4 text-[#b8973a] shrink-0" />
+                      <Car className="size-4 text-[#996948] shrink-0" />
                       <span className="text-gray-500">Parking:</span>
                       <span className="font-medium text-gray-800">{estData.parking}</span>
                     </div>
                   ) : null}
                   {estData.grading.length > 0 ? (
                     <div className="flex items-center gap-2 text-sm">
-                      <Star className="size-4 text-[#b8973a] shrink-0" />
+                      <Star className="size-4 text-[#996948] shrink-0" />
                       <span className="font-medium text-gray-800">
                         {estData.grading[0].grade} · {estData.grading[0].gradingauthority}
                       </span>
@@ -635,7 +635,7 @@ export default async function AdminDashboardPage() {
           <div>
             <div className="mb-4 flex items-center justify-between gap-4">
               <h2 className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
-                <CalendarDays className="size-3.5 text-[#b8973a]" />
+                <CalendarDays className="size-3.5 text-[#996948]" />
                 Availability calendar · {totalRooms} rooms
               </h2>
               <a
@@ -664,7 +664,7 @@ export default async function AdminDashboardPage() {
               {specials.map((s) => (
                 <div
                   key={s.specialid}
-                  className="rounded-xl border border-[#b8973a]/20 bg-white p-4 shadow-sm"
+                  className="rounded-xl border border-[#996948]/20 bg-white p-4 shadow-sm"
                 >
                   <p className="font-semibold text-gray-900">{s.title}</p>
                   {s.description ? (
@@ -676,7 +676,7 @@ export default async function AdminDashboardPage() {
                     </p>
                   ) : null}
                   {s.discount ? (
-                    <span className="mt-2 inline-block rounded-full bg-[#b8973a]/10 px-2.5 py-0.5 font-mono text-[11px] text-[#b8973a]">
+                    <span className="mt-2 inline-block rounded-full bg-[#996948]/10 px-2.5 py-0.5 font-mono text-[11px] text-[#996948]">
                       {s.discount}% off
                     </span>
                   ) : null}
@@ -752,10 +752,10 @@ export default async function AdminDashboardPage() {
                         (r: { rtname: string; rate_single: string | null; rate_double: string | null; arrive: string; depart: string }, i: number) => (
                           <tr key={i} className="hover:bg-gray-50/60">
                             <td className="px-4 py-2 font-medium text-gray-800">{r.rtname}</td>
-                            <td className="px-3 py-2 text-right text-[#b8973a]">
+                            <td className="px-3 py-2 text-right text-[#996948]">
                               {r.rate_single ? fmt(Number(r.rate_single)) : "—"}
                             </td>
-                            <td className="px-3 py-2 text-right text-[#b8973a]">
+                            <td className="px-3 py-2 text-right text-[#996948]">
                               {r.rate_double ? fmt(Number(r.rate_double)) : "—"}
                             </td>
                             <td className="px-3 py-2 font-mono text-[10px] text-gray-400">
@@ -805,7 +805,7 @@ export default async function AdminDashboardPage() {
                 desc: "Public booking page",
                 href: NB_BOOKING,
                 icon: Globe,
-                color: "bg-[#b8973a]",
+                color: "bg-[#996948]",
               },
             ].map((item) => (
               <a

@@ -22,7 +22,7 @@ export default function GalleryPage() {
           <div className="mt-14 flex justify-center">
             <Link
               href="/stay"
-              className="inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-[#0a0a0a] transition-colors hover:bg-[#b8943c]"
+              className="inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-[#000000] transition-colors hover:bg-[#b8943c]"
             >
               Book a Room You Love <ArrowRight className="size-4" />
             </Link>

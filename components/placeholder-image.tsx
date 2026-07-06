@@ -22,7 +22,6 @@ export function PlaceholderImage({ label, className, accent }: PlaceholderImageP
       role="img"
       aria-label={label}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.6),transparent_60%)]" />
       {accent ? <span className="absolute left-0 top-0 h-1 w-full" style={{ backgroundColor: accent }} /> : null}
       <div className="relative flex flex-col items-center gap-2 px-4 text-center">
         <ImageIcon className="size-6 opacity-50" aria-hidden="true" />

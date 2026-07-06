@@ -21,7 +21,7 @@ export default function ContactPage() {
         subtitle="Reach out for bookings, conference enquiries, or corporate arrangements. Our team responds quickly across phone, email, and WhatsApp."
       />
 
-      <section className="bg-[#FAFAF8] py-20 lg:py-28">
+      <section className="bg-[#FFFFFF] py-20 lg:py-28">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:px-8">
           {/* Left: contact details */}
           <Reveal className="flex flex-col gap-8">
@@ -34,9 +34,9 @@ export default function ContactPage() {
               <li>
                 <a
                   href={BUSINESS.phoneHref}
-                  className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                  className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-1 hover:border-[#996948]/40"
                 >
-                  <span className="inline-flex size-11 items-center justify-center rounded-full bg-[#0a0a0a] text-gold">
+                  <span className="inline-flex size-11 items-center justify-center rounded-full bg-[#000000] text-gold">
                     <Phone className="size-5" />
                   </span>
                   <span className="flex flex-col">
@@ -48,9 +48,9 @@ export default function ContactPage() {
               <li>
                 <a
                   href={`mailto:${BUSINESS.email}`}
-                  className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                  className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-1 hover:border-[#996948]/40"
                 >
-                  <span className="inline-flex size-11 items-center justify-center rounded-full bg-[#0a0a0a] text-gold">
+                  <span className="inline-flex size-11 items-center justify-center rounded-full bg-[#000000] text-gold">
                     <Mail className="size-5" />
                   </span>
                   <span className="flex flex-col">
@@ -66,7 +66,7 @@ export default function ContactPage() {
                   rel="noreferrer"
                   data-ga4-event="whatsapp_click"
                   data-ga4-label="Contact Page"
-                  className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                  className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-1 hover:border-[#996948]/40"
                 >
                   <span className="inline-flex size-11 items-center justify-center rounded-full bg-[#25D366] text-white">
                     <MessageCircle className="size-5" />
@@ -79,7 +79,7 @@ export default function ContactPage() {
               </li>
               <li>
                 <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-5">
-                  <span className="inline-flex size-11 items-center justify-center rounded-full bg-[#0a0a0a] text-gold">
+                  <span className="inline-flex size-11 items-center justify-center rounded-full bg-[#000000] text-gold">
                     <Globe className="size-5" />
                   </span>
                   <span className="flex flex-col">

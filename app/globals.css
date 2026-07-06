@@ -1,65 +1,77 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=League+Spartan:wght@700;800&family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;500;600&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Brand colors */
-  --color-black: #0A0A0A;
-  --color-white: #FAFAF8;
-  --color-sand: #F2EDE4;
-  --color-gold: #C9A84C;
-  --color-gold-hover: #B8973B;
-  --color-body-text: #3D3532;
-  --brand-text-muted: #8C7B6B;
+  /* Boga Legaba Brand Guidelines — primary palette (dominant) */
+  --color-black: #000000;
+  --color-white: #FFFFFF;
+  /* Very light neutral for subtle section separation — NOT the Soft Neutral
+     accent below. Primary must stay black/white-led per the brand guide, so
+     large backgrounds use this near-white tint rather than a saturated accent. */
+  --color-sand: #F7F7F6;
+  --color-body-text: #000000;
+  --brand-text-muted: #6B6B6B;
 
-  /* Property colors */
-  --color-chababa: #D4A017;
-  --color-interlaken: #E07B39;
-  --color-lantana: #4A90D9;
-  --color-transnet: #6B4FA0;
+  /* Boga Legaba Brand Guidelines — secondary/accent palette (sparing use only:
+     buttons, highlights, callouts, subtle backgrounds — never the main base) */
+  --color-soft-neutral: #C1C4C2;
+  --color-teal-accent: #73CAC3;
+  --color-olive-accent: #7A8850;
+  --color-heritage: #996948;
 
-  /* Fonts */
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-body: 'DM Sans', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  /* CTA/button colors — brand guide: favor Heritage Highlight or black */
+  --color-gold: #996948;
+  --color-gold-hover: #000000;
+
+  /* Property colors — remapped onto the approved accent palette */
+  --color-chababa: #C1C4C2;
+  --color-interlaken: #73CAC3;
+  --color-lantana: #7A8850;
+  --color-transnet: #996948;
+
+  /* Fonts — Boga Legaba Brand Guidelines */
+  --font-title: 'League Spartan', Arial, sans-serif;     /* Titles / hero headings */
+  --font-heading: 'Montserrat', Arial, sans-serif;        /* Headings, subheadings, section headers */
+  --font-body: 'Open Sans', Arial, sans-serif;            /* Body, captions, nav, supporting info */
 
   /* Spacing */
   --section-padding: 120px;
   --section-padding-mobile: 64px;
 
-  --background: oklch(0.98 0.005 85);
-  --foreground: oklch(0.16 0 0);
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0 0 0);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.16 0 0);
+  --card-foreground: oklch(0 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.16 0 0);
-  --primary: oklch(0.73 0.11 85);
-  --primary-foreground: oklch(0.16 0 0);
-  --secondary: oklch(0.95 0.012 85);
-  --secondary-foreground: oklch(0.2 0 0);
-  --muted: oklch(0.95 0.008 85);
-  --muted-foreground: oklch(0.48 0.02 70);
-  --accent: oklch(0.73 0.11 85);
-  --accent-foreground: oklch(0.16 0 0);
+  --popover-foreground: oklch(0 0 0);
+  --primary: #996948;
+  --primary-foreground: #FFFFFF;
+  --secondary: oklch(0.95 0 0);
+  --secondary-foreground: oklch(0.1 0 0);
+  --muted: oklch(0.95 0 0);
+  --muted-foreground: oklch(0.42 0 0);
+  --accent: #73CAC3;
+  --accent-foreground: oklch(0.1 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.88 0.01 80);
-  --input: oklch(0.88 0.01 80);
-  --ring: oklch(0.73 0.11 85);
+  --border: oklch(0.88 0 0);
+  --input: oklch(0.88 0 0);
+  --ring: #996948;
 
   /* Brand (legacy aliases) */
-  --gold: #c9a84c;
-  --charcoal: #1c1c1c;
-  --warm-white: #FAFAF8;
-  --taupe: #8c7b6b;
+  --gold: #996948;
+  --charcoal: #000000;
+  --warm-white: #FFFFFF;
+  --taupe: #6B6B6B;
 
   /* Property color coding */
-  --prop-chababa: #d4a017;
-  --prop-interlaken: #e07b39;
-  --prop-lantana: #4a90d9;
-  --prop-transnet: #6b4fa0;
+  --prop-chababa: #C1C4C2;
+  --prop-interlaken: #73CAC3;
+  --prop-lantana: #7A8850;
+  --prop-transnet: #996948;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -112,25 +124,36 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-playfair), ui-serif, Georgia, serif;
-  --font-mono: var(--font-ibm-plex-mono), 'IBM Plex Mono', ui-monospace, monospace;
+  /* Boga Legaba Brand Guidelines — three approved typefaces, loaded via next/font
+     in app/(main)/layout.tsx as --font-title (League Spartan), --font-heading
+     (Montserrat), --font-body (Open Sans). font-serif/font-display both map to
+     the Heading font (Montserrat) — the existing site-wide "big heading" utility
+     classes; true page-hero titles get League Spartan applied directly on the
+     handful of hero/page-header components instead (see components/page-header.tsx,
+     components/home/hero.tsx, components/stay/stay-page-header.tsx, book-now). */
+  --font-sans: var(--font-body), 'Open Sans', Arial, sans-serif;
+  --font-serif: var(--font-heading), 'Montserrat', Arial, sans-serif;
+  --font-mono: var(--font-body), 'Open Sans', Arial, sans-serif;
 
-  --font-display: var(--font-playfair), 'Playfair Display', Georgia, serif;
-  --font-body: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
+  --font-display: var(--font-heading), 'Montserrat', Arial, sans-serif;
+  --font-body: var(--font-body), 'Open Sans', Arial, sans-serif;
 
   --color-gold: var(--gold);
-  --color-gold-hover: #B8973B;
+  --color-gold-hover: #000000;
   --color-charcoal: var(--charcoal);
   --color-warm-white: var(--warm-white);
-  --color-sand: #F2EDE4;
-  --color-body-text: #3D3532;
+  --color-sand: #F7F7F6;
+  --color-body-text: #000000;
   --color-brand-muted: var(--brand-text-muted);
   --color-taupe: var(--taupe);
-  --color-chababa: #D4A017;
-  --color-interlaken-a: #E07B39;
-  --color-lantana: #4A90D9;
-  --color-transnet: #6B4FA0;
+  --color-soft-neutral: #C1C4C2;
+  --color-teal-accent: #73CAC3;
+  --color-olive-accent: #7A8850;
+  --color-heritage: #996948;
+  --color-chababa: #C1C4C2;
+  --color-interlaken-a: #73CAC3;
+  --color-lantana: #7A8850;
+  --color-transnet: #996948;
   --color-prop-chababa: var(--prop-chababa);
   --color-prop-interlaken: var(--prop-interlaken);
   --color-prop-lantana: var(--prop-lantana);
@@ -175,9 +198,11 @@
   --spacing-section: 120px;
   --spacing-section-sm: 64px;
 
-  --shadow-card: 0 2px 20px rgba(0,0,0,0.08);
-  --shadow-card-hover: 0 8px 40px rgba(0,0,0,0.15);
-  --shadow-gold-glow: 0 0 20px rgba(201, 168, 76, 0.3);
+  /* Brand guide: no drop shadows or glows — kept as no-op tokens so existing
+     shadow-card / shadow-gold-glow utility classes still resolve, just flat. */
+  --shadow-card: none;
+  --shadow-card-hover: none;
+  --shadow-gold-glow: none;
 }
 
 @layer base {
@@ -211,14 +236,11 @@
     }
   }
 
-  /* Legacy grain alias */
+  /* Legacy grain alias — brand guide wants clean/structured, no decorative
+     texture effects, so this is neutralized (kept as a no-op so the class
+     doesn't need removing from every component that still references it). */
   .grain-overlay::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 1;
+    content: none;
   }
 
   @keyframes scroll-line {
@@ -228,13 +250,15 @@
 }
 
 /* Typography utilities */
+.font-title { font-family: var(--font-title), 'League Spartan', Arial, sans-serif; }
 .font-display { font-family: var(--font-display); }
 .font-body { font-family: var(--font-body); }
 .font-mono { font-family: var(--font-mono); }
 
-/* Section label — always gold monospace small caps */
+/* Section label — small caps eyebrow, Montserrat (Section header role) */
 .section-label {
-  font-family: var(--font-mono);
+  font-family: var(--font-heading);
+  font-weight: 600;
   font-size: 11px;
   letter-spacing: 0.2em;
   color: var(--color-gold);
@@ -253,7 +277,8 @@
 }
 
 .heading-hero {
-  font-family: var(--font-display);
+  font-family: var(--font-title), 'League Spartan', Arial, sans-serif;
+  font-weight: 800;
   font-size: clamp(32px, 9vw, 96px);
   line-height: 0.95;
   letter-spacing: -0.02em;
@@ -277,27 +302,23 @@
   }
 }
 
-/* Grain texture overlay — add class="grain relative" to a section */
+/* Grain texture overlay — neutralized (see .grain-overlay note above);
+   brand guide wants clean/structured, no decorative texture effects. */
 .grain::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 1;
+  content: none;
 }
 
-/* Gold CTA button */
+/* Heritage CTA button — brand guide: buttons favor Heritage Highlight or black */
 .btn-gold {
   background-color: var(--color-gold);
-  color: var(--color-black);
+  color: #FFFFFF;
   font-family: var(--font-body);
   font-weight: 500;
   padding: 14px 28px;
-  border-radius: 50px;
+  border-radius: 4px;
   border: none;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.25s ease, transform 0.25s ease;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -306,40 +327,39 @@
 .btn-gold:hover {
   background-color: var(--color-gold-hover);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(201, 168, 76, 0.35);
 }
 
-/* Glass outline button — for use on dark/image backgrounds */
+/* Outline button — for use on dark/image backgrounds. Flat, no blur/glass
+   effect per brand guide (structured, not trendy/decorative). */
 .btn-glass {
-  background: rgba(255,255,255,0.08);
+  background: transparent;
   color: #ffffff;
   font-family: var(--font-body);
   font-weight: 400;
   padding: 14px 28px;
-  border-radius: 50px;
-  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.6);
   cursor: pointer;
-  backdrop-filter: blur(4px);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   text-decoration: none;
 }
 .btn-glass:hover {
-  background: rgba(255,255,255,0.15);
-  border-color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.12);
+  border-color: #ffffff;
   transform: translateY(-2px);
 }
 
-/* Card hover lift */
+/* Card hover — flat, border-based feedback instead of drop shadows */
 .card-lift {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+  transition: border-color 0.25s ease, transform 0.25s ease;
+  border: 1px solid transparent;
 }
 .card-lift:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+  border-color: var(--color-soft-neutral);
 }
 
 /* WhatsApp pulse animation */

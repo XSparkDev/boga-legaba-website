@@ -7,7 +7,7 @@ const STATS = [
 
 export function StatsBar() {
   return (
-    <section className="grain relative overflow-hidden bg-[#0A0A0A] text-white py-20">
+    <section className="grain relative overflow-hidden bg-[#000000] text-white py-20">
       <div className="relative z-[2] mx-auto flex max-w-7xl flex-col items-stretch px-4 sm:px-6 md:flex-row md:justify-center lg:px-8">
         {STATS.map((stat, i) => (
           <div key={stat.label} className="flex flex-1 items-center justify-center">

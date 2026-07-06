@@ -29,8 +29,8 @@ function ratesHeight(n: number) {
   return Math.max(180, n * 38 + 40)
 }
 
-const GOLD = "#b8973a"
-const INK = "#0a0a0a"
+const GOLD = "#996948"
+const INK = "#000000"
 const EMERALD = "#10b981"
 const RED = "#ef4444"
 

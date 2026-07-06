@@ -83,7 +83,7 @@ export function GalleryGrid() {
               className={cn(
                 "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
                 category === c
-                  ? "border-transparent bg-[#0a0a0a] text-white"
+                  ? "border-transparent bg-[#000000] text-white"
                   : "border-border bg-card text-muted-foreground hover:border-foreground/30",
               )}
             >

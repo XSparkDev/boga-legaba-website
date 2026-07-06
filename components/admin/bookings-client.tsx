@@ -83,7 +83,7 @@ function filterBookings(bookings: BookingRow[], tab: Tab): BookingRow[] {
 // Add Booking modal
 // ---------------------------------------------------------------------------
 
-const inputCls = "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 font-mono text-sm text-gray-900 placeholder:text-gray-300 focus:border-[#b8973a] focus:outline-none focus:ring-1 focus:ring-[#b8973a]/30"
+const inputCls = "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 font-mono text-sm text-gray-900 placeholder:text-gray-300 focus:border-[#996948] focus:outline-none focus:ring-1 focus:ring-[#996948]/30"
 
 type BookingFormState = {
   checkin: string; checkout: string; roomTypeName: string; mealPlanName: string
@@ -173,7 +173,7 @@ function AddBookingModal({ onClose }: { onClose: () => void }) {
               <button onClick={() => { setResult(null); setForm(EMPTY_FORM) }} className="flex-1 rounded-lg border border-gray-200 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 Add another
               </button>
-              <button onClick={onClose} className="flex-1 rounded-lg bg-[#b8973a] py-2 text-sm font-semibold text-white hover:brightness-110">
+              <button onClick={onClose} className="flex-1 rounded-lg bg-[#996948] py-2 text-sm font-semibold text-white hover:brightness-110">
                 Done
               </button>
             </div>
@@ -240,7 +240,7 @@ function AddBookingModal({ onClose }: { onClose: () => void }) {
             <button
               type="submit"
               disabled={submitting}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b8973a] py-3 font-mono text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#996948] py-3 font-mono text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
             >
               {submitting ? <><Loader2 className="size-4 animate-spin" /> Creating booking on NightsBridge…</> : <><Plus className="size-4" /> Create Booking</>}
             </button>
@@ -346,7 +346,7 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top bar */}
-      <div className="sticky top-0 z-30 border-b border-white/10 bg-[#0a0a0a] px-4 py-3 sm:px-6">
+      <div className="sticky top-0 z-30 border-b border-white/10 bg-[#000000] px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link href="/admin/dashboard" className="flex items-center gap-1.5 font-mono text-[11px] text-white/50 hover:text-white/80 transition-colors">
@@ -355,8 +355,8 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
             </Link>
             <span className="text-white/20">/</span>
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#b8973a]/20">
-                <CalendarDays className="size-3.5 text-[#b8973a]" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#996948]/20">
+                <CalendarDays className="size-3.5 text-[#996948]" />
               </div>
               <span className="font-serif text-sm font-bold text-white">Bookings</span>
             </div>
@@ -371,7 +371,7 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
             </Link>
             <button
               onClick={() => setShowAdd(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-[#b8973a] px-3 py-1.5 font-mono text-[11px] font-semibold text-white hover:brightness-110"
+              className="flex items-center gap-1.5 rounded-lg bg-[#996948] px-3 py-1.5 font-mono text-[11px] font-semibold text-white hover:brightness-110"
             >
               <Plus className="size-3.5" />
               Add Booking
@@ -393,7 +393,7 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
             <button
               key={label}
               onClick={() => setTab(t)}
-              className={`flex items-center gap-3 rounded-xl border bg-white p-4 shadow-sm text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${tab === t ? "border-[#b8973a]" : "border-gray-200"}`}
+              className={`flex items-center gap-3 rounded-xl border bg-white p-4 shadow-sm text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${tab === t ? "border-[#996948]" : "border-gray-200"}`}
             >
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${color}`}>
                 <Icon className="size-4" />
@@ -414,7 +414,7 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
               onClick={() => setTab(t.id)}
               className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 font-mono text-[11px] font-medium transition-colors ${
                 tab === t.id
-                  ? "bg-[#b8973a] text-white"
+                  ? "bg-[#996948] text-white"
                   : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
               }`}
             >
@@ -493,7 +493,7 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
                         <td className="px-4 py-3">
                           <p className="text-sm text-gray-700">{b.room_type ?? "—"}</p>
                           {b.avg_rate && (
-                            <p className="font-mono text-[10px] text-[#b8973a]">
+                            <p className="font-mono text-[10px] text-[#996948]">
                               R {Math.round(b.avg_rate).toLocaleString("en-ZA")}/night
                             </p>
                           )}
@@ -550,7 +550,7 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
                             )}
                             <button
                               onClick={() => setPanelBooking(b)}
-                              className="flex items-center gap-1 rounded-lg border border-[#b8973a]/40 bg-[#b8973a]/10 px-2 py-1.5 font-mono text-[11px] text-[#b8973a] transition-colors hover:bg-[#b8973a]/20"
+                              className="flex items-center gap-1 rounded-lg border border-[#996948]/40 bg-[#996948]/10 px-2 py-1.5 font-mono text-[11px] text-[#996948] transition-colors hover:bg-[#996948]/20"
                             >
                               <FileText className="size-3" />
                               Invoice / Dept
@@ -574,8 +574,8 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
 
         {/* No sync yet help text */}
         {bookings.length === 0 && (
-          <div className="rounded-xl border border-[#b8973a]/20 bg-[#fdf8ef] p-5">
-            <p className="font-mono text-[11px] text-[#b8973a]">
+          <div className="rounded-xl border border-[#996948]/20 bg-[#fdf8ef] p-5">
+            <p className="font-mono text-[11px] text-[#996948]">
               No bookings in Supabase yet. Go to the{" "}
               <Link href="/admin/dashboard" className="underline">Dashboard</Link>{" "}
               and run a sync to pull bookings from NightsBridge.

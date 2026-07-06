@@ -133,7 +133,7 @@ function waEnquiryUrl(
 
 const MEAL_PLAN_ORDER = [5, 1, 3] // Room Only first, then B&B, then DBB
 
-function AmenityIcon({ name, className = "size-3.5 shrink-0 text-[#b8973a]" }: { name: string; className?: string }) {
+function AmenityIcon({ name, className = "size-3.5 shrink-0 text-[#996948]" }: { name: string; className?: string }) {
   const n = name.toLowerCase()
   if (n.includes("air con") || n.includes("cooling"))  return <Thermometer className={className} />
   if (n.includes("wi-fi") || n.includes("wifi"))        return <Wifi className={className} />
@@ -166,7 +166,7 @@ function GroupIcon({ group, className = "size-3.5 shrink-0 text-gray-400" }: { g
   return <Star className={className} />
 }
 
-function MealPlanIcon({ id, className = "size-4 shrink-0 text-[#b8973a]" }: { id: number; className?: string }) {
+function MealPlanIcon({ id, className = "size-4 shrink-0 text-[#996948]" }: { id: number; className?: string }) {
   if (id === 1) return <Utensils className={className} />
   if (id === 3) return <UtensilsCrossed className={className} />
   return <BedDouble className={className} />  // Room Only (5)
@@ -200,16 +200,17 @@ function RoomHero({
           className="h-full w-full object-cover"
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a]">
+        <div className="flex h-full w-full items-center justify-center bg-[#000000]">
           <div className="text-center">
-            <BedDouble className="mx-auto mb-3 size-12 text-[#b8973a]/40" />
+            <BedDouble className="mx-auto mb-3 size-12 text-[#996948]/40" />
             <p className="font-body text-xs text-white/30">No image available</p>
           </div>
         </div>
       )}
 
-      {/* Dark gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+      {/* Flat semi-transparent overlay for text legibility — brand guide: flat
+          color blocks, no gradients. */}
+      <div className="absolute inset-0 bg-black/55" />
 
       {/* Info overlay */}
       <div className="absolute bottom-0 left-0 right-0 px-4 py-6 sm:px-8">
@@ -217,11 +218,11 @@ function RoomHero({
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               {detail?.quality ? (
-                <span className="mb-2 inline-block rounded-full border border-[#b8973a]/50 bg-[#b8973a]/20 px-2.5 py-0.5 font-body text-[11px] font-medium text-[#b8973a]">
+                <span className="mb-2 inline-block rounded-full border border-[#996948]/50 bg-[#996948]/20 px-2.5 py-0.5 font-body text-[11px] font-medium text-[#996948]">
                   {detail.quality}
                 </span>
               ) : null}
-              <h1 className="font-serif text-3xl font-bold text-white drop-shadow-lg sm:text-4xl">
+              <h1 className="font-title text-3xl font-extrabold text-white sm:text-4xl">
                 {roomTypeName}
               </h1>
               <div className="mt-2 flex flex-wrap items-center gap-3">
@@ -252,7 +253,7 @@ function RoomHero({
               <p className="mt-0.5 font-body text-sm font-medium text-white">
                 {fmtDate(arrive)} → {fmtDate(depart)}
               </p>
-              <p className="mt-0.5 font-body text-xs font-semibold text-[#b8973a]">
+              <p className="mt-0.5 font-body text-xs font-semibold text-[#996948]">
                 {nights} night{nights !== 1 ? "s" : ""}
               </p>
             </div>
@@ -276,7 +277,7 @@ function RoomFactsBlock({ detail, rateFallback }: { detail: NbRoomTypeDetail | n
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {d?.roomSizeM2 ? (
           <div className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2.5">
-            <Maximize2 className="size-4 shrink-0 text-[#b8973a]" />
+            <Maximize2 className="size-4 shrink-0 text-[#996948]" />
             <div>
               <p className="font-body text-[11px] text-gray-400">Size</p>
               <p className="text-sm font-semibold text-gray-800">{d.roomSizeM2} m²</p>
@@ -285,7 +286,7 @@ function RoomFactsBlock({ detail, rateFallback }: { detail: NbRoomTypeDetail | n
         ) : null}
         {d?.bedTypes?.[0] ? (
           <div className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2.5">
-            <BedDouble className="size-4 shrink-0 text-[#b8973a]" />
+            <BedDouble className="size-4 shrink-0 text-[#996948]" />
             <div>
               <p className="font-body text-[11px] text-gray-400">Bed</p>
               <p className="text-sm font-semibold text-gray-800">
@@ -296,7 +297,7 @@ function RoomFactsBlock({ detail, rateFallback }: { detail: NbRoomTypeDetail | n
         ) : null}
         {(d?.maxAdults ?? rateFallback?.maxAdults) ? (
           <div className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2.5">
-            <Users className="size-4 shrink-0 text-[#b8973a]" />
+            <Users className="size-4 shrink-0 text-[#996948]" />
             <div>
               <p className="font-body text-[11px] text-gray-400">Guests</p>
               <p className="text-sm font-semibold text-gray-800">Max {d?.maxAdults ?? rateFallback?.maxAdults} adults</p>
@@ -305,7 +306,7 @@ function RoomFactsBlock({ detail, rateFallback }: { detail: NbRoomTypeDetail | n
         ) : null}
         {d?.maxOccupancy && d.maxOccupancy !== d.maxAdults ? (
           <div className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2.5">
-            <Users className="size-4 shrink-0 text-[#b8973a]" />
+            <Users className="size-4 shrink-0 text-[#996948]" />
             <div>
               <p className="font-body text-[11px] text-gray-400">Occupancy</p>
               <p className="text-sm font-semibold text-gray-800">Up to {d.maxOccupancy} guests</p>
@@ -314,7 +315,7 @@ function RoomFactsBlock({ detail, rateFallback }: { detail: NbRoomTypeDetail | n
         ) : null}
         {d?.quality ? (
           <div className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2.5">
-            <Star className="size-4 shrink-0 text-[#b8973a]" />
+            <Star className="size-4 shrink-0 text-[#996948]" />
             <div>
               <p className="font-body text-[11px] text-gray-400">Tier</p>
               <p className="text-sm font-semibold text-gray-800">{d.quality}</p>
@@ -323,7 +324,7 @@ function RoomFactsBlock({ detail, rateFallback }: { detail: NbRoomTypeDetail | n
         ) : null}
         {d?.roomType ? (
           <div className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2.5">
-            <Building2 className="size-4 shrink-0 text-[#b8973a]" />
+            <Building2 className="size-4 shrink-0 text-[#996948]" />
             <div>
               <p className="font-body text-[11px] text-gray-400">Type</p>
               <p className="text-sm font-semibold text-gray-800">{d.roomType}</p>
@@ -332,7 +333,7 @@ function RoomFactsBlock({ detail, rateFallback }: { detail: NbRoomTypeDetail | n
         ) : null}
         {d !== null && !d.allowSmoking ? (
           <div className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2.5">
-            <XCircle className="size-4 shrink-0 text-[#b8973a]" />
+            <XCircle className="size-4 shrink-0 text-[#996948]" />
             <div>
               <p className="font-body text-[11px] text-gray-400">Smoking</p>
               <p className="text-sm font-semibold text-gray-800">Non-smoking</p>
@@ -486,10 +487,10 @@ function RoomDetailAndBooking({
             {/* Date summary */}
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-                <Clock className="size-3.5 text-[#b8973a]" />
+                <Clock className="size-3.5 text-[#996948]" />
                 <span>{fmtDate(arrive)} → {fmtDate(depart)}</span>
               </div>
-              <p className="mt-1 font-body text-sm font-semibold text-[#b8973a]">
+              <p className="mt-1 font-body text-sm font-semibold text-[#996948]">
                 {nights} night{nights !== 1 ? "s" : ""}
               </p>
             </div>
@@ -514,7 +515,7 @@ function RoomDetailAndBooking({
                       <div className="grid grid-cols-2 gap-2">
                         {plan.rateSingle != null ? (
                           <div>
-                            <p className="font-serif text-lg font-bold text-[#b8973a] leading-none">
+                            <p className="font-serif text-lg font-bold text-[#996948] leading-none">
                               {fmt(plan.rateSingle)}
                             </p>
                             <p className="mt-0.5 font-body text-[11px] text-gray-400">
@@ -524,7 +525,7 @@ function RoomDetailAndBooking({
                         ) : null}
                         {plan.rateDouble != null ? (
                           <div>
-                            <p className="font-serif text-lg font-bold text-[#b8973a] leading-none">
+                            <p className="font-serif text-lg font-bold text-[#996948] leading-none">
                               {fmt(plan.rateDouble)}
                             </p>
                             <p className="mt-0.5 font-body text-[11px] text-gray-400">
@@ -551,7 +552,7 @@ function RoomDetailAndBooking({
                 <div className="grid grid-cols-2 gap-3">
                   {rate.rateSingle != null ? (
                     <div>
-                      <p className="font-serif text-2xl font-bold text-[#b8973a]">
+                      <p className="font-serif text-2xl font-bold text-[#996948]">
                         {fmt(rate.rateSingle)}
                       </p>
                       <p className="font-body text-[11px] text-gray-400">1 adult</p>
@@ -559,7 +560,7 @@ function RoomDetailAndBooking({
                   ) : null}
                   {rate.rateDouble != null ? (
                     <div>
-                      <p className="font-serif text-2xl font-bold text-[#b8973a]">
+                      <p className="font-serif text-2xl font-bold text-[#996948]">
                         {fmt(rate.rateDouble)}
                       </p>
                       <p className="font-body text-[11px] text-gray-400">2 adults</p>
@@ -615,11 +616,11 @@ function AvailabilityTable({
       {/* Date banner */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <Calendar className="size-4 shrink-0 text-[#b8973a]" />
+          <Calendar className="size-4 shrink-0 text-[#996948]" />
           <span>
             {fmtDate(arrive)} → {fmtDate(depart)}
           </span>
-          <span className="rounded-full bg-[#b8973a]/10 px-2.5 py-0.5 font-body text-xs font-semibold text-[#b8973a]">
+          <span className="rounded-full bg-[#996948]/10 px-2.5 py-0.5 font-body text-xs font-semibold text-[#996948]">
             {nights} night{nights !== 1 ? "s" : ""}
           </span>
         </div>
@@ -662,19 +663,19 @@ function AvailabilityTable({
                 <tr
                   key={r.rtname}
                   className={`transition-colors hover:bg-gray-50/80 ${
-                    isSelected ? "border-l-4 border-l-[#b8973a] bg-amber-50/40" : ""
+                    isSelected ? "border-l-4 border-l-[#996948] bg-amber-50/40" : ""
                   } ${!r.available ? "opacity-60" : ""}`}
                 >
                   {/* Room name */}
                   <td className="py-4 pl-4 pr-2 sm:pl-6">
                     <div className="flex items-start gap-2">
                       {isSelected && (
-                        <span className="mt-0.5 shrink-0 text-[#b8973a]">★</span>
+                        <span className="mt-0.5 shrink-0 text-[#996948]">★</span>
                       )}
                       <div>
                         <a
                           href={detailUrl}
-                          className="font-medium text-gray-900 hover:text-[#b8973a] transition-colors"
+                          className="font-medium text-gray-900 hover:text-[#996948] transition-colors"
                         >
                           {r.rtname}
                         </a>
@@ -698,7 +699,7 @@ function AvailabilityTable({
                   {/* 1 adult/night */}
                   <td className="px-3 py-4 text-right">
                     {r.rateSingle != null ? (
-                      <span className="font-semibold text-[#b8973a]">
+                      <span className="font-semibold text-[#996948]">
                         {fmt(r.rateSingle)}
                       </span>
                     ) : r.available ? (
@@ -709,7 +710,7 @@ function AvailabilityTable({
                   {/* 2 adults/night */}
                   <td className="px-3 py-4 text-right">
                     {r.rateDouble != null ? (
-                      <span className="font-semibold text-[#b8973a]">
+                      <span className="font-semibold text-[#996948]">
                         {fmt(r.rateDouble)}
                       </span>
                     ) : r.available ? (
@@ -737,7 +738,7 @@ function AvailabilityTable({
                     {r.available ? (
                       <a
                         href={detailUrl}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#b8973a] px-4 py-2 font-body text-xs font-semibold text-white transition-all hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#996948] px-4 py-2 font-body text-xs font-semibold text-white transition-all hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
                       >
                         View & Book
                         <ChevronDown className="size-3" />
@@ -786,7 +787,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
         <div className="grid grid-cols-2 gap-0 divide-x divide-gray-100 sm:grid-cols-4 sm:divide-y-0">
           {est.checkintime ? (
             <div className="flex items-center gap-3 p-4">
-              <Clock className="size-5 shrink-0 text-[#b8973a]" />
+              <Clock className="size-5 shrink-0 text-[#996948]" />
               <div>
                 <p className="font-body text-[11px] text-gray-400">Check-in</p>
                 <p className="font-semibold text-gray-800">{est.checkintime}</p>
@@ -795,7 +796,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
           ) : null}
           {est.checkouttime ? (
             <div className="flex items-center gap-3 p-4">
-              <Clock className="size-5 shrink-0 text-[#b8973a]" />
+              <Clock className="size-5 shrink-0 text-[#996948]" />
               <div>
                 <p className="font-body text-[11px] text-gray-400">Check-out</p>
                 <p className="font-semibold text-gray-800">{est.checkouttime}</p>
@@ -804,7 +805,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
           ) : null}
           {est.wifi ? (
             <div className="flex items-center gap-3 p-4">
-              <Wifi className="size-5 shrink-0 text-[#b8973a]" />
+              <Wifi className="size-5 shrink-0 text-[#996948]" />
               <div>
                 <p className="font-body text-[11px] text-gray-400">Wi-Fi</p>
                 <p className="font-semibold text-gray-800">
@@ -815,7 +816,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
           ) : null}
           {est.parking ? (
             <div className="flex items-center gap-3 p-4">
-              <Car className="size-5 shrink-0 text-[#b8973a]" />
+              <Car className="size-5 shrink-0 text-[#996948]" />
               <div>
                 <p className="font-body text-[11px] text-gray-400">Parking</p>
                 <p className="font-semibold text-gray-800">{est.parking}</p>
@@ -827,7 +828,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
         {/* Grading + pets + smoking row */}
         <div className="flex flex-wrap gap-3 border-t border-gray-100 px-5 py-3 sm:px-6">
           {gradeMain ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#b8973a]/30 bg-[#b8973a]/5 px-3 py-1 font-body text-xs text-[#b8973a]">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#996948]/30 bg-[#996948]/5 px-3 py-1 font-body text-xs text-[#996948]">
               <Star className="size-3" />
               {gradeMain.grade} · {gradeMain.gradingauthority}
             </span>
@@ -859,7 +860,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
                 key={a.code}
                 className="inline-flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-700"
               >
-                <AmenityIcon name={a.description} className="size-3.5 shrink-0 text-[#b8973a]" />
+                <AmenityIcon name={a.description} className="size-3.5 shrink-0 text-[#996948]" />
                 {a.description}
               </span>
             ))}
@@ -888,7 +889,7 @@ function PropertyInfoSection({ est }: { est: EstablishmentData }) {
                   className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
                 />
                 {img.categoryname ? (
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-1.5">
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1.5">
                     <p className="font-body text-[10px] text-white/70">
                       {img.categoryname}
                     </p>
@@ -925,7 +926,7 @@ function AreaSection({ est }: { est: EstablishmentData }) {
       {est.areainfo ? (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
           <h3 className="mb-3 flex items-center gap-2 font-body text-[13px] font-semibold tracking-normal text-gray-500">
-            <TreePine className="size-4 text-[#b8973a]" /> About Mafikeng
+            <TreePine className="size-4 text-[#996948]" /> About Mafikeng
           </h3>
           <p className="text-sm leading-relaxed text-gray-600">{est.areainfo}</p>
         </div>
@@ -935,12 +936,12 @@ function AreaSection({ est }: { est: EstablishmentData }) {
       {attractionsList.length > 0 ? (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
           <h3 className="mb-3 flex items-center gap-2 font-body text-[13px] font-semibold tracking-normal text-gray-500">
-            <Star className="size-4 text-[#b8973a]" /> Local attractions
+            <Star className="size-4 text-[#996948]" /> Local attractions
           </h3>
           <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
             {attractionsList.map((a, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                <span className="mt-1 shrink-0 text-[#b8973a]">✦</span>
+                <span className="mt-1 shrink-0 text-[#996948]">✦</span>
                 {a}
               </li>
             ))}
@@ -957,7 +958,7 @@ function AreaSection({ est }: { est: EstablishmentData }) {
                 🗺️ Getting here
               </h3>
               {est.address ? (
-                <p className="mb-2 font-body text-xs text-[#b8973a]">{est.address.replace(/\n/g, " · ")}</p>
+                <p className="mb-2 font-body text-xs text-[#996948]">{est.address.replace(/\n/g, " · ")}</p>
               ) : null}
               <p className="text-sm leading-relaxed text-gray-600">{est.directions}</p>
             </div>
@@ -966,7 +967,7 @@ function AreaSection({ est }: { est: EstablishmentData }) {
                 href={`https://www.google.com/maps?q=${est.lat},${est.lng}`}
                 target="_blank"
                 rel="noreferrer"
-                className="shrink-0 rounded-xl border border-[#b8973a]/30 bg-[#b8973a]/5 px-4 py-2.5 font-body text-xs text-[#b8973a] hover:bg-[#b8973a]/10 transition-colors"
+                className="shrink-0 rounded-xl border border-[#996948]/30 bg-[#996948]/5 px-4 py-2.5 font-body text-xs text-[#996948] hover:bg-[#996948]/10 transition-colors"
               >
                 Open in Maps
                 <ArrowUpRight className="ml-1 inline size-3" />
@@ -982,7 +983,7 @@ function AreaSection({ est }: { est: EstablishmentData }) {
           href={`https://www.tripadvisor.com/Hotel_Review-g${est.tripadvisorLocationId}.html`}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-[#34e0a1]/40 hover:shadow-md"
+          className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 transition-all hover:border-[#34e0a1]/40"
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#34e0a1]/10">
             <span className="text-lg">🦉</span>
@@ -1160,7 +1161,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
     <>
       {/* ── Dark header with breadcrumb ──────────────────────── */}
       {/* pt clears the fixed nav (4.5rem on mobile, 6rem on xl) + breathing room */}
-      <div className="border-b border-white/10 bg-[#0a0a0a] px-4 pb-6 pt-[calc(4.5rem+1.5rem)] sm:px-6 lg:px-8 xl:pt-[calc(6rem+1.5rem)]">
+      <div className="border-b border-white/10 bg-[#000000] px-4 pb-6 pt-[calc(4.5rem+1.5rem)] sm:px-6 lg:px-8 xl:pt-[calc(6rem+1.5rem)]">
         <div className="mx-auto max-w-6xl">
           <nav className="mb-2 flex items-center gap-1 font-body text-xs text-white/40">
             <a href="/stay" className="hover:text-white/70 transition-colors">Stay</a>
@@ -1187,7 +1188,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
       </div>
 
       {/* ── Main content ────────────────────────────────────── */}
-      <div className="min-h-screen bg-[#fafaf8]">
+      <div className="min-h-screen bg-[#FFFFFF]">
 
         {fromDate && toDate ? (
           <>
@@ -1221,7 +1222,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
                             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                           />
                           {img.categoryname ? (
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1.5 opacity-0 transition-opacity group-hover:opacity-100">
                               <p className="font-body text-[10px] text-white/80">
                                 {img.categoryname}
                               </p>
@@ -1419,8 +1420,8 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
             ) : null}
 
             {/* Date CTA */}
-            <div className="rounded-2xl border-2 border-dashed border-[#b8973a]/30 bg-[#b8973a]/5 p-8 text-center">
-              <p className="font-body text-sm font-semibold text-[#b8973a]">
+            <div className="rounded-2xl border-2 border-dashed border-[#996948]/30 bg-[#996948]/5 p-8 text-center">
+              <p className="font-body text-sm font-semibold text-[#996948]">
                 Add your dates to see live pricing
               </p>
               <p className="mt-2 text-sm text-gray-600 max-w-sm mx-auto">
@@ -1430,7 +1431,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
               </p>
               <a
                 href={`/stay`}
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#b8973a] px-6 py-3 font-body text-sm font-semibold text-white shadow-sm transition hover:brightness-110"
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#996948] px-6 py-3 font-body text-sm font-semibold text-white shadow-sm transition hover:brightness-110"
               >
                 Choose dates →
               </a>
@@ -1456,7 +1457,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
       <section className="bg-white py-14 lg:py-20 border-t border-gray-100">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Reveal className="mx-auto max-w-2xl text-center">
-            <p className="font-body text-xs font-semibold text-[#b8973a]">
+            <p className="font-body text-xs font-semibold text-[#996948]">
               Prefer to talk?
             </p>
             <h2 className="mt-3 text-balance font-serif text-2xl font-bold text-gray-900 sm:text-3xl">
@@ -1477,7 +1478,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
                   href={p.whatsapp}
                   target="_blank"
                   rel="noreferrer"
-                    className="group flex h-full flex-col rounded-xl border border-gray-200 border-l-4 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    className="group flex h-full flex-col rounded-xl border border-gray-200 border-l-4 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-[#996948]/40"
                     style={{ borderLeftColor: p.colorHex }}
                   >
                     <span
@@ -1501,9 +1502,9 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
           <div className="mx-auto mt-6 flex max-w-4xl justify-center">
             <a
               href={BUSINESS.phoneHref}
-              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:shadow-md"
+              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-gray-700 transition hover:border-[#996948]/40"
             >
-              <Phone className="size-4 text-[#b8973a]" /> Call {BUSINESS.phone}
+              <Phone className="size-4 text-[#996948]" /> Call {BUSINESS.phone}
             </a>
           </div>
         </div>
