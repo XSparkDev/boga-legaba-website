@@ -19,10 +19,10 @@ export function SiteLogo({ size = "nav", className, variant = "light" }: SiteLog
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src="/logo.svg"
+      src="/logo.png"
       alt="Boga Legaba Guest House & Conference Centre"
-      width={2856}
-      height={1280}
+      width={900}
+      height={394}
       className={cn(
         SIZE_CLASSES[size],
         "max-w-full object-contain object-left",
