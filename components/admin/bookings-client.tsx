@@ -347,21 +347,21 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
     <div className="min-h-screen bg-gray-50">
       {/* Top bar */}
       <div className="sticky top-0 z-30 border-b border-white/10 bg-[#000000] px-4 py-3 sm:px-6">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link href="/admin/dashboard" className="flex items-center gap-1.5 font-mono text-[11px] text-white/50 hover:text-white/80 transition-colors">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href="/admin/dashboard" className="flex shrink-0 items-center gap-1.5 font-mono text-[11px] text-white/50 hover:text-white/80 transition-colors">
               <ArrowLeft className="size-3.5" />
               Dashboard
             </Link>
             <span className="text-white/20">/</span>
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#996948]/20">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#996948]/20">
                 <CalendarDays className="size-3.5 text-[#996948]" />
               </div>
               <span className="font-serif text-sm font-bold text-white">Bookings</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/admin/bookings"
               className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-[11px] text-white/60 hover:text-white transition-colors"

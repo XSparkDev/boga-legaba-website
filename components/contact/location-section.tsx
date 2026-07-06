@@ -138,7 +138,7 @@ export function LocationSection() {
               onClick={handleGetDirections}
               className={cn(
                 actionBtn,
-                "bg-gold text-[#000000] hover:bg-gold-hover hover:shadow-[0_6px_20px_rgba(201,168,76,0.3)]",
+                "bg-gold text-[#000000] hover:bg-gold-hover hover:text-white",
               )}
             >
               <Navigation className="size-3.5" />

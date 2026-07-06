@@ -390,9 +390,9 @@ export default async function AdminDashboardPage() {
     <div className="min-h-screen bg-gray-50">
       {/* ── Top bar ──────────────────────────────────────────── */}
       <div className="sticky top-0 z-30 border-b border-white/10 bg-[#000000] px-4 py-3 sm:px-6">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#996948]/20">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#996948]/20">
               <Shield className="size-4 text-[#996948]" />
             </div>
             <div>
@@ -402,7 +402,7 @@ export default async function AdminDashboardPage() {
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/admin/bookings"
               className="flex items-center gap-1.5 rounded-lg border border-[#996948]/40 bg-[#996948]/10 px-3 py-1.5 font-mono text-[11px] text-[#996948] hover:bg-[#996948]/20 transition-colors"

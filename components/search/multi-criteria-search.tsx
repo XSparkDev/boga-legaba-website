@@ -74,7 +74,7 @@ export function MultiCriteriaSearch({
         <button
           type="button"
           onClick={() => addCriterion(draft)}
-          className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-gold px-4 py-3 text-sm font-medium text-[#000000] transition-colors hover:bg-gold-hover sm:w-auto"
+          className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-gold px-4 py-3 text-sm font-medium text-[#000000] transition-colors hover:bg-gold-hover hover:text-white sm:w-auto"
         >
           <Search className="size-4" />
           <span>Search</span>
