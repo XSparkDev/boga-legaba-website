@@ -80,7 +80,7 @@ export function LocationSection() {
         <iframe
           title="Boga Legaba location map — Riviera Park, Mahikeng"
           src={LOCATION.mapEmbedUrl}
-          className="absolute inset-0 h-full w-full scale-[1.02] border-0 [filter:saturate(0.7)_brightness(0.55)_contrast(1.15)]"
+          className="absolute inset-0 h-full w-full border-0 [filter:saturate(0.85)]"
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
           tabIndex={-1}

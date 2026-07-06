@@ -219,7 +219,7 @@ export function BookingWidget({
             href={whatsappUrl}
             target="_blank"
             rel="noreferrer"
-            className="rounded-lg bg-[#25D366] px-4 py-2 text-sm font-medium text-white hover:brightness-105"
+            className="rounded-lg bg-[#996948] px-4 py-2 text-sm font-medium text-white hover:brightness-105"
           >
             WhatsApp
           </a>

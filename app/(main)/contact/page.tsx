@@ -68,7 +68,7 @@ export default function ContactPage() {
                   data-ga4-label="Contact Page"
                   className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-1 hover:border-[#996948]/40"
                 >
-                  <span className="inline-flex size-11 items-center justify-center rounded-full bg-[#25D366] text-white">
+                  <span className="inline-flex size-11 items-center justify-center rounded-full bg-[#996948] text-white">
                     <MessageCircle className="size-5" />
                   </span>
                   <span className="flex flex-col">

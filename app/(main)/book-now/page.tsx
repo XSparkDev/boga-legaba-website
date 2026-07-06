@@ -432,8 +432,8 @@ function RoomDetailAndBooking({
 
           {/* Children policy */}
           {rate.childrenPolicy ? (
-            <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/60 px-5 py-4">
-              <Baby className="mt-0.5 size-5 shrink-0 text-blue-500" />
+            <div className="flex items-start gap-3 rounded-xl border border-[#73CAC3]/30 bg-[#73CAC3]/10 px-5 py-4">
+              <Baby className="mt-0.5 size-5 shrink-0 text-[#7A8850]" />
               <div>
                 <p className="font-medium text-gray-800">Children policy</p>
                 <p className="mt-0.5 text-sm text-gray-600">{rate.childrenPolicy}</p>
@@ -1028,7 +1028,7 @@ function PoliciesSection({
       <div className="divide-y divide-gray-100">
         {hasChildren ? (
           <div className="flex gap-4 px-5 py-4 sm:px-6">
-            <Baby className="mt-0.5 size-5 shrink-0 text-blue-500" />
+            <Baby className="mt-0.5 size-5 shrink-0 text-[#7A8850]" />
             <div>
               <p className="font-medium text-gray-800">Children</p>
               <ul className="mt-1 space-y-0.5 text-sm text-gray-600">

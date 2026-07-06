@@ -99,7 +99,7 @@ export default function FaqsPage() {
               rel="noreferrer"
               data-ga4-event="whatsapp_click"
               data-ga4-label="FAQs"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#996948] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             >
               <MessageCircle className="size-4" /> Chat on WhatsApp
             </a>

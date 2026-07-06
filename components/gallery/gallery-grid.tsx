@@ -70,7 +70,7 @@ export function GalleryGrid() {
         <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
           Browse the portfolio
         </p>
-        <ArrowDown className="size-5 animate-bounce text-gold" aria-hidden />
+        <ArrowDown className="size-5 text-gold" aria-hidden />
       </Reveal>
 
       <Reveal delay={60} className="space-y-6">

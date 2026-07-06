@@ -16,7 +16,7 @@ export function WhatsAppSection() {
       <div className="relative z-[2] mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <Reveal>
-            <span className="inline-flex size-14 items-center justify-center rounded-full bg-[#25D366] whatsapp-pulse">
+            <span className="inline-flex size-14 items-center justify-center rounded-full bg-[#996948] whatsapp-pulse">
               <MessageCircle className="size-7 text-white" />
             </span>
             <h2 className="mt-6 text-balance font-display text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
@@ -49,7 +49,7 @@ export function WhatsAppSection() {
                     <span className="font-mono text-[10px] uppercase tracking-wider text-white/45">{p.code}</span>
                   </span>
                 </span>
-                <MessageCircle className="size-5 text-[#25D366]" />
+                <MessageCircle className="size-5 text-[#996948]" />
               </a>
             ))}
           </Reveal>

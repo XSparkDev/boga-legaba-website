@@ -13,7 +13,7 @@ export function FloatingWhatsApp() {
     <>
       {/* WhatsApp property picker popup */}
       {open ? (
-        <div className="fixed bottom-36 right-6 z-50 w-72 overflow-hidden rounded-2xl border border-black/10 bg-card shadow-2xl">
+        <div className="fixed bottom-36 right-6 z-50 w-72 overflow-hidden rounded-2xl border border-black/15 bg-card">
           <div className="flex items-center justify-between bg-[#000000] px-4 py-3">
             <p className="font-display text-sm text-white">Chat with which property?</p>
             <button onClick={() => setOpen(false)} aria-label="Close" className="text-white/70 hover:text-white">
@@ -53,7 +53,7 @@ export function FloatingWhatsApp() {
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-label="Open WhatsApp chat options"
-          className="w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg whatsapp-pulse hover:scale-110 transition-transform duration-200"
+          className="w-14 h-14 bg-[#996948] rounded-full flex items-center justify-center whatsapp-pulse hover:scale-110 transition-transform duration-200"
         >
           <MessageCircle className="size-7 text-white" />
         </button>
@@ -63,7 +63,7 @@ export function FloatingWhatsApp() {
           href="/admin"
           aria-label="Admin login"
           title="Admin"
-          className="group w-10 h-10 bg-[#000000]/80 hover:bg-[#996948] rounded-full flex items-center justify-center shadow-md border border-white/10 backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:border-[#996948]"
+          className="group w-10 h-10 bg-[#000000]/80 hover:bg-[#996948] rounded-full flex items-center justify-center border border-white/20 backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:border-[#996948]"
         >
           <Lock className="size-4 text-white/60 group-hover:text-white transition-colors" />
         </Link>
