@@ -6,31 +6,6 @@ import { Resend } from "resend"
 import { releaseHold } from "@/lib/booking-holds"
 import { emailShell, emailHero, emailInfoTable, emailButton, emailCallout, emailParagraph, EMAIL_COLORS, EMAIL_BRAND, type InfoRow } from "@/lib/email-theme"
 
-/**
- * Attempt an automatic full refund of a Paystack transaction. Returns true only
- * if Paystack accepts the refund request. Best-effort — never throws.
- */
-async function attemptPaystackRefund(reference: string): Promise<boolean> {
-  const secretKey = process.env.PAYSTACK_SECRET_KEY
-  if (!secretKey || !reference) return false
-  try {
-    const res = await fetch("https://api.paystack.co/refund", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ transaction: reference }),
-      signal: AbortSignal.timeout(20_000),
-    })
-    const data = (await res.json().catch(() => ({}))) as { status?: boolean }
-    return data.status === true
-  } catch (err) {
-    console.error("[payment] Automatic refund error:", err)
-    return false
-  }
-}
-
 // ── Formatters ────────────────────────────────────────────────────────────────
 
 export function fmtDate(iso: string) {
@@ -163,16 +138,12 @@ export async function processPayment(
   const ctxRef: PaymentContext = { ...ctx, bookingRef }
 
   // Release the soft hold: its job is done once we've attempted the booking
-  // (booked → room is now really booked; failed → we're about to refund).
+  // (booked → room is now really booked; failed → staff will finalise by hand).
   await releaseHold(ctx.reference)
 
-  // ── Step 1b: Booking failed after payment → try to REFUND automatically ──
-  // Only fall back to a manual "staff must refund by hand" alert if the
-  // automatic refund itself fails.
-  let refunded = false
-  if (!booked) {
-    refunded = await attemptPaystackRefund(ctx.reference)
-  }
+  // BUSINESS RULE: if the booking fails after a successful payment we DO NOT
+  // auto-refund. We keep the payment, ask the guest to contact us, and alert
+  // staff to finalise the booking manually. (Refund helper kept but unused.)
 
   // ── Step 2: Emails ───────────────────────────────────────────────────────
   if (useResend) {
@@ -192,17 +163,18 @@ export async function processPayment(
       }
     }
 
-    // Guest refund notice — booking failed but we auto-refunded them.
-    if (!booked && refunded && ctx.guestEmail) {
+    // Guest "payment received, we're finalising your booking" — booking failed,
+    // payment kept. Tells the guest to contact us if they don't hear back.
+    if (!booked && ctx.guestEmail) {
       try {
         await resend.emails.send({
           from,
           to:      ctx.guestEmail,
-          subject: "Refund processed – Boga Legaba",
-          html:    buildGuestRefundEmail(ctxRef),
+          subject: "We've received your payment – Boga Legaba",
+          html:    buildGuestPaidNotBookedEmail(ctxRef),
         })
       } catch (err) {
-        console.error("[payment] Guest refund email error:", err)
+        console.error("[payment] Guest paid-not-booked email error:", err)
       }
     }
 
@@ -219,66 +191,57 @@ export async function processPayment(
       console.error("[payment] Admin notification email error:", err)
     }
 
-    // Payment succeeded but booking FAILED.
+    // Payment succeeded but booking FAILED → staff must finalise manually
+    // (payment was kept, NOT refunded).
     if (!booked) {
-      if (refunded) {
-        // Auto-refund worked — just inform admin (no manual action needed).
-        try {
-          await resend.emails.send({
-            from,
-            to:      adminEmail,
-            subject: `Auto-refunded – booking failed after payment – ${guestFullName}`,
-            html:    buildNBFailureEmail(ctxRef, true),
-          })
-        } catch { /* best effort */ }
-      } else {
-        // Auto-refund also failed → urgent manual refund required.
-        try {
-          await resend.emails.send({
-            from,
-            to:      adminEmail,
-            subject: `ACTION REQUIRED – PAID, booking FAILED, AUTO-REFUND FAILED – ${guestFullName}`,
-            html:    buildNBFailureEmail(ctxRef, false),
-          })
-        } catch { /* best effort */ }
-      }
+      try {
+        await resend.emails.send({
+          from,
+          to:      adminEmail,
+          subject: `ACTION REQUIRED – PAID but booking FAILED (payment kept) – ${guestFullName}`,
+          html:    buildNBFailureEmail(ctxRef),
+        })
+      } catch { /* best effort */ }
     }
   }
 
-  return { booked, bookingRef, confirmation, refunded }
+  return { booked, bookingRef, confirmation, refunded: false }
 }
 
-// ── Email: guest auto-refund notice ───────────────────────────────────────────
+// ── Email: guest "payment received, finalising your booking" notice ──────────
+// Sent when payment succeeded but the NightsBridge booking could not be
+// created automatically. We keep the payment (no auto-refund) and ask the
+// guest to contact us if they don't hear from us shortly.
 
-export function buildGuestRefundEmail(ctx: PaymentContext) {
+export function buildGuestPaidNotBookedEmail(ctx: PaymentContext) {
   const amount = fmtAmount(ctx.amountPaid)
   const { firstname } = resolveGuestName(ctx)
 
   return emailShell({
-    title: "Payment Refunded – Boga Legaba",
-    preheader: `Your payment of ${amount} has been refunded.`,
-    eyebrow: "Refund Processed",
+    title: "Payment Received – Boga Legaba",
+    preheader: `Your payment of ${amount} was received — we're finalising your booking.`,
+    eyebrow: "Payment Received",
     accentBarColor: EMAIL_COLORS.gold,
     bodyHtml:
       emailHero({
-        eyebrow: "Refund Processed",
-        heading: `We're sorry, ${firstname}`,
-        subtext: "We were unable to confirm your room, so your payment has been refunded in full.",
+        eyebrow: "Payment Received",
+        heading: `Thank you, ${firstname}`,
+        subtext: "Your payment has been received. We hit a snag confirming your room automatically, so our team is finalising your booking by hand.",
       }) +
       emailInfoTable(
         [
           { label: "Room requested", value: ctx.roomTypeName || "—" },
           { label: "Check-in", value: fmtDate(ctx.checkin) },
           { label: "Check-out", value: fmtDate(ctx.checkout) },
-          { label: "Amount refunded", value: amount, emphasis: true },
+          { label: "Amount paid", value: amount, emphasis: true },
         ],
-        { title: "Refund details" },
+        { title: "Your payment" },
       ) +
       emailParagraph(
-        `We hit a snag confirming this room automatically, so no booking was made and your payment of <strong style="color:${EMAIL_COLORS.bodyText};">${amount}</strong> has been refunded to your original payment method. Depending on your bank, this can take a few business days to reflect.`,
+        `We have received your payment of <strong style="color:${EMAIL_COLORS.bodyText};">${amount}</strong> and our team has already been alerted to confirm your room manually — you do not need to pay again.`,
       ) +
       emailParagraph(
-        "Please feel free to try booking again, or contact us directly and we'll gladly help you find a room.",
+        "If you don't receive a confirmation email from us shortly, please contact us directly so we can sort this out for you right away.",
       ) +
       emailButton("WhatsApp Us", EMAIL_BRAND.whatsappHref),
   })
@@ -502,14 +465,15 @@ export function buildAdminPaymentEmail(ctx: PaymentContext, booked: boolean = tr
 
 // ── Email: NightsBridge confirm failure alert ──────────────────────────────────
 
-export function buildNBFailureEmail(ctx: PaymentContext, refunded: boolean = false) {
+/**
+ * Admin alert: payment succeeded but the NightsBridge booking could not be
+ * created automatically. Per business rule, the payment is KEPT (no
+ * auto-refund) — staff must finalise the booking manually and follow up with
+ * the guest, who has already been told to expect a confirmation shortly.
+ */
+export function buildNBFailureEmail(ctx: PaymentContext) {
   const amount = fmtAmount(ctx.amountPaid)
   const { full } = resolveGuestName(ctx)
-
-  const heading = refunded ? "Booking Failed — Guest Auto-Refunded" : "Booking Failed — Manual Refund Required"
-  const message = refunded
-    ? `Payment was received but we could not automatically create this booking on NightsBridge. The guest has already been <strong style="color:${EMAIL_COLORS.bodyText};">refunded in full</strong> via Paystack — no further action is needed unless you want to follow up with the guest directly.`
-    : `Payment was received but we could not automatically create this booking on NightsBridge, <strong style="color:${EMAIL_COLORS.danger};">and the automatic refund also failed</strong>. Please refund the guest manually via the Paystack dashboard and follow up with them directly.`
 
   const rows: InfoRow[] = [
     { label: "Guest", value: full },
@@ -519,7 +483,7 @@ export function buildNBFailureEmail(ctx: PaymentContext, refunded: boolean = fal
     { label: "Check-in", value: fmtDate(ctx.checkin) },
     { label: "Check-out", value: fmtDate(ctx.checkout) },
     { label: "Paystack Reference", value: ctx.reference || "—" },
-    { label: "Amount", value: amount, emphasis: true },
+    { label: "Amount (kept — not refunded)", value: amount, emphasis: true },
   ]
 
   return emailShell({
@@ -528,9 +492,9 @@ export function buildNBFailureEmail(ctx: PaymentContext, refunded: boolean = fal
     accentBarColor: EMAIL_COLORS.danger,
     bodyHtml:
       `<tr><td style="padding:32px 40px 20px;">
-        <p style="margin:0 0 8px;color:${EMAIL_COLORS.danger};font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;">&#9888; ${refunded ? "Refunded automatically" : "Action Required"}</p>
-        <p style="margin:0;color:${EMAIL_COLORS.black};font-size:20px;font-weight:400;font-family:'Playfair Display',Georgia,serif;">${heading}</p>
-        <p style="margin:8px 0 0;color:${EMAIL_COLORS.muted};font-size:13px;line-height:1.7;">${message}</p>
+        <p style="margin:0 0 8px;color:${EMAIL_COLORS.danger};font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;">&#9888; Action Required</p>
+        <p style="margin:0;color:${EMAIL_COLORS.black};font-size:20px;font-weight:400;font-family:'Playfair Display',Georgia,serif;">Booking Failed — Payment Kept, Please Finalise Manually</p>
+        <p style="margin:8px 0 0;color:${EMAIL_COLORS.muted};font-size:13px;line-height:1.7;">Payment was received but we could not automatically create this booking on NightsBridge. The payment has been <strong style="color:${EMAIL_COLORS.bodyText};">kept — it was NOT refunded</strong>. Please book the guest manually on NightsBridge and let them know it's confirmed. The guest has already been told to contact us if they don't hear back shortly.</p>
       </td></tr>` +
       emailInfoTable(rows),
     footerNote: "Admin alert · Boga Legaba booking system.",

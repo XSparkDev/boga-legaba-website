@@ -135,37 +135,39 @@ export function BookingWidget({
       return
     }
 
-    // PAY FIRST: send the guest to Paystack. The NightsBridge booking is only
-    // created after payment succeeds (see /api/payment/verify).
+    const bookingPayload = {
+      email,
+      amountRands,
+      bookingRef: `BL-${Date.now()}`,
+      guestName: `${firstname} ${surname}`.trim(),
+      guestPhone: phone,
+      checkin: arrive,
+      checkout: depart,
+      roomTypeName,
+      mealPlanName: selectedPlan.description,
+      adults,
+      children1,
+      children2,
+      firstname,
+      surname,
+      arrivalTime,
+      airline,
+      flightno,
+      notes,
+      bbid,
+      maxAdults,
+      maxOccupancy,
+    }
+
+    // ── PAY FIRST: send the guest to Paystack. The NightsBridge booking is only
+    // created after payment succeeds — the guest lands on /payment/processing
+    // which shows a loading screen while the booking is created. ─────────────
     setStep("paying")
     try {
       const res = await fetch("/api/payment/initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          amountRands,
-          bookingRef: `BL-${Date.now()}`,
-          guestName: `${firstname} ${surname}`.trim(),
-          guestPhone: phone,
-          checkin: arrive,
-          checkout: depart,
-          roomTypeName,
-          // Full booking payload carried through Paystack, used to book after payment
-          mealPlanName: selectedPlan.description,
-          adults,
-          children1,
-          children2,
-          firstname,
-          surname,
-          arrivalTime,
-          airline,
-          flightno,
-          notes,
-          bbid,
-          maxAdults,
-          maxOccupancy,
-        }),
+        body: JSON.stringify(bookingPayload),
       })
       const data = (await res.json()) as { ok: boolean; authorization_url?: string; error?: string }
       if (data.ok && data.authorization_url) {

@@ -117,6 +117,9 @@ function SuccessContent() {
               A confirmation email has been sent to you with all the details.<br />
               We look forward to welcoming you.
             </p>
+            <p style={{ margin: "8px 0 0", fontSize: "11px", color: "#8C7B6B", lineHeight: 1.6, textAlign: "center" }}>
+              If you don&apos;t receive it shortly, please contact us at Boga Legaba.
+            </p>
           </div>
 
           {/* Registration CTA */}
