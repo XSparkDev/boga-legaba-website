@@ -120,7 +120,7 @@ function ProcessingContent() {
             </p>
             <p style={{ color: "#8C7B6B", fontSize: "13px", lineHeight: 1.7 }}>
               Please don&apos;t close or refresh this page.
-              {slow ? " This can take up to a minute — hang tight." : ""}
+              {slow ? " This can take a minute or two — hang tight." : ""}
             </p>
           </div>
 

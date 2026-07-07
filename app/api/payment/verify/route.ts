@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { processPayment, type PaymentContext } from "@/lib/payment-utils"
 
 export const dynamic = "force-dynamic"
+// Booking can take up to ~4 min when the worker is slow — allow the handler to
+// run that long on hosts that enforce a max duration (e.g. Vercel).
+export const maxDuration = 300
 
 /**
  * Legacy redirect-based verify+book route. The live callback_url is now

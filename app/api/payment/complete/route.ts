@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { processPayment, type PaymentContext } from "@/lib/payment-utils"
 
 export const dynamic = "force-dynamic"
+// Creating the NightsBridge booking can take up to ~4 min when the worker is
+// slow. Allow the handler to run that long on hosts that enforce a max
+// duration (e.g. Vercel), otherwise a paid booking gets cut off server-side.
+export const maxDuration = 300
 
 type BookingMeta = {
   bookingRef?: string

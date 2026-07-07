@@ -120,7 +120,12 @@ export async function processPayment(
           maxAdults:     ctx.maxAdults,
           maxOccupancy:  ctx.maxOccupancy,
         }),
-        signal: AbortSignal.timeout(120_000),
+        // Booking takes ~50s normally, but can be slower when the worker is
+        // cold or busy. Give generous headroom (must exceed the worker's own
+        // 170s booking timeout + its ~70s wait-for-sync) so a slow-but-valid
+        // booking is never aborted mid-flight — an abort means a paid guest
+        // who didn't get booked.
+        signal: AbortSignal.timeout(245_000),
       })
       const result = (await res.json().catch(() => ({}))) as {
         ok?: boolean
