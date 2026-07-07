@@ -279,12 +279,23 @@ def _run_booking_to_db(params: dict, book_script: "Path", reference: str) -> Non
                 result = json.loads(stdout)
             except json.JSONDecodeError:
                 result = {}
-        if result.get("ok"):
-            conf = result.get("confirmation") or {}
+        conf = result.get("confirmation") or {}
+        booking_id = (result.get("bookingRef") or conf.get("bookingId") or "").strip()
+        # A REAL NightsBridge booking always has a booking number on its
+        # confirmation page. If the script reported ok but we couldn't capture a
+        # booking number, the booking did NOT genuinely complete (a false
+        # positive from a stray "thank you"/"confirmed" on the page) — treat it
+        # as failed so we never tell a guest they're booked when they aren't.
+        if result.get("ok") and booking_id:
             _write_booking_job(reference, {
                 "status": "booked",
-                "booking_id": result.get("bookingRef") or conf.get("bookingId") or "",
+                "booking_id": booking_id,
                 "error": None,
+            })
+        elif result.get("ok") and not booking_id:
+            _write_booking_job(reference, {
+                "status": "failed",
+                "error": "Booking could not be confirmed — NightsBridge returned no booking number. Please try again or contact us.",
             })
         else:
             err = result.get("error") or (proc.stderr or "").strip() or "Booking failed"
