@@ -222,6 +222,83 @@ def _check_room_availability(params: dict) -> dict:
         return {"ok": True}
 
 
+def _supabase_client():
+    """Build a Supabase service-role client, or None if unavailable."""
+    try:
+        from supabase import create_client
+    except ImportError:
+        return None
+    try:
+        env = _build_env()
+        url = (env.get("SUPABASE_URL") or "").strip()
+        key = (env.get("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
+        if not url or not key:
+            return None
+        return create_client(url, key)
+    except Exception as exc:
+        print(f"[worker] Supabase client error: {exc}", file=sys.stderr)
+        return None
+
+
+def _write_booking_job(reference: str, fields: dict) -> None:
+    """Upsert the booking_job row for this reference (async booking status).
+    Best-effort — a DB failure here must never crash the booking thread."""
+    if not reference:
+        return
+    try:
+        sb = _supabase_client()
+        if sb is None:
+            print("[worker] booking_job: no Supabase client — cannot record status", file=sys.stderr)
+            return
+        sb.table("booking_job").upsert({"reference": reference, **fields}, on_conflict="reference").execute()
+        print(f"[worker] booking_job[{reference}] -> {fields.get('status')}")
+    except Exception as exc:
+        print(f"[worker] booking_job write error ({reference}): {exc}", file=sys.stderr)
+
+
+def _run_booking_to_db(params: dict, book_script: "Path", reference: str) -> None:
+    """Run the booking script (blocking, ~50s) and record the outcome in
+    booking_job. Runs in a background thread so the HTTP request can return
+    immediately — nothing waits on the ~50s Playwright job."""
+    global _running
+    got_lock = _lock.acquire(timeout=70)
+    if got_lock:
+        _running = True
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(book_script), "--params", json.dumps(params)],
+            capture_output=True,
+            text=True,
+            timeout=200,
+            env=_build_env(),
+        )
+        result = {}
+        stdout = (proc.stdout or "").strip()
+        if stdout:
+            try:
+                result = json.loads(stdout)
+            except json.JSONDecodeError:
+                result = {}
+        if result.get("ok"):
+            conf = result.get("confirmation") or {}
+            _write_booking_job(reference, {
+                "status": "booked",
+                "booking_id": result.get("bookingRef") or conf.get("bookingId") or "",
+                "error": None,
+            })
+        else:
+            err = result.get("error") or (proc.stderr or "").strip() or "Booking failed"
+            _write_booking_job(reference, {"status": "failed", "error": err[:800]})
+    except subprocess.TimeoutExpired:
+        _write_booking_job(reference, {"status": "failed", "error": "Booking timed out"})
+    except Exception as exc:
+        _write_booking_job(reference, {"status": "failed", "error": str(exc)[:800]})
+    finally:
+        if got_lock:
+            _running = False
+            _lock.release()
+
+
 def _run_sync() -> tuple[int, str]:
     missing = _check_env()
     if missing:
@@ -334,14 +411,37 @@ class Handler(BaseHTTPRequestHandler):
         # Availability pre-check — fast Supabase query before spinning up Playwright
         avail = _check_room_availability(params)
         if not avail["ok"]:
+            # In async mode, record the failure so the website's poll sees it.
+            if params.get("async") and params.get("reference"):
+                _write_booking_job(params["reference"], {"status": "failed", "error": avail["error"]})
             self._json(409, {"ok": False, "error": avail["error"]})
             return
 
         book_script = SCRAPER_DIR / "book_nightsbridge.py"
         if not book_script.exists():
+            if params.get("async") and params.get("reference"):
+                _write_booking_job(params["reference"], {"status": "failed", "error": "Booking script not found"})
             self._json(503, {"ok": False, "error": "Booking script not found"})
             return
 
+        # ── ASYNC MODE ──────────────────────────────────────────────────────
+        # The website passes async=true + a payment reference. We start the
+        # ~50s booking in a BACKGROUND thread, write the outcome to booking_job,
+        # and return 202 immediately so no HTTP request ever waits on it. The
+        # website polls booking_job for the result.
+        if params.get("async") and params.get("reference"):
+            reference = params["reference"]
+            _write_booking_job(reference, {"status": "pending", "error": None})
+            t = threading.Thread(
+                target=_run_booking_to_db,
+                args=(params, book_script, reference),
+                daemon=True,
+            )
+            t.start()
+            self._json(202, {"ok": True, "accepted": True, "reference": reference})
+            return
+
+        # ── SYNC MODE (legacy / admin) ──────────────────────────────────────
         # Serialise with the 5-minutely sync: two Playwright/Chromium processes
         # running at once on the free tier starve each other for memory and make
         # a booking crawl past its timeout. Wait (bounded) for any in-progress
