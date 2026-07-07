@@ -209,39 +209,40 @@ def book_room(params: dict) -> dict:
                 "sold out", "no availability", "booking failed",
                 "we were unable", "cannot be booked",
             ]
-            booking_ref = _extract_booking_ref(page_text)
-            if not booking_ref and any(p in text_lower for p in error_phrases):
+            if any(p in text_lower for p in error_phrases):
                 return {
                     "ok": False,
                     "error": "NightsBridge indicated no availability for these dates. " + page_text[:300],
                 }
 
-            # Require clear confirmation signals — "reference" excluded as it appears on the form page
-            confirmation_keywords = ["confirmed", "thank you", "booking number", "booking id"]
-            has_confirmation = booking_ref or any(kw in text_lower for kw in confirmation_keywords)
-            if not has_confirmation:
+            # A GENUINE booking always ends on a confirmation page with a booking
+            # NUMBER. Require one — a stray "thank you"/"confirmed" keyword is NOT
+            # enough (that produced false "booked" results with a blank number).
+            confirmation = _parse_confirmation(page)
+            booking_ref = _extract_booking_ref(page_text) or (confirmation.get("bookingId") or "").strip()
+
+            if booking_ref:
                 try:
-                    page.screenshot(path="/tmp/booking_no_confirm.png")
+                    page.screenshot(path="/tmp/booking_confirmed.png")
                 except Exception:
                     pass
                 return {
-                    "ok": False,
-                    "error": (
-                        "The booking form was not accepted by NightsBridge — "
-                        "terms & conditions may not have been checked or the payment method was not selected. "
-                        "Please try again. If this repeats, contact the property directly."
-                    ),
+                    "ok": True,
+                    "bookingRef": booking_ref,
+                    "confirmation": confirmation,
                 }
 
-            confirmation = _parse_confirmation(page)
+            # No booking number → the booking did NOT complete. Capture what
+            # NightsBridge actually showed so the real reason is recorded (e.g. a
+            # last-minute booking cut-off, or a rule blocking the date).
             try:
-                page.screenshot(path="/tmp/booking_confirmed.png")
+                page.screenshot(path="/tmp/booking_no_confirm.png")
             except Exception:
                 pass
+            snippet = " ".join(page_text.split())[:450]
             return {
-                "ok": True,
-                "bookingRef": booking_ref,
-                "confirmation": confirmation,
+                "ok": False,
+                "error": f"NightsBridge did not return a booking number. The page showed: {snippet}",
             }
 
         except Exception as exc:
