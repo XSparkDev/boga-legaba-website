@@ -10,16 +10,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        gold: '#C9A84C',
-        'gold-hover': '#B8973B',
-        sand: '#F2EDE4',
-        'warm-white': '#FAFAF8',
-        'body-text': '#3D3532',
-        muted: '#8C7B6B',
-        chababa: '#D4A017',
-        'interlaken-a': '#E07B39',
-        lantana: '#4A90D9',
-        transnet: '#6B4FA0',
+        // Boga Legaba Brand Guidelines. NOTE: main-site pages get these
+        // tokens from app/globals.css (CSS-based @theme, which takes
+        // precedence over this JS config where names overlap — verified).
+        // This file is kept in sync anyway so it never shows stale values.
+        // cream/deep-earth/terracotta*/warm-sand/body-brown/muted-brown/
+        // amber-pale are intentionally left untouched — they belong to the
+        // separate /v2 alternate site, out of scope for this restyle.
+        gold: '#996948',
+        'gold-hover': '#000000',
+        sand: '#F7F7F6',
+        'warm-white': '#FFFFFF',
+        'body-text': '#000000',
+        muted: '#6B6B6B',
+        chababa: '#C1C4C2',
+        'interlaken-a': '#73CAC3',
+        lantana: '#7A8850',
+        transnet: '#996948',
         cream: '#fafafa',
         'deep-earth': '#0a0a0a',
         terracotta: '#0a0a0a',
@@ -30,10 +37,12 @@ const config: Config = {
         'amber-pale': '#e5e5e5',
       },
       fontFamily: {
-        display: ['Playfair Display', 'Georgia', 'serif'],
-        body: ['DM Sans', 'system-ui', 'sans-serif'],
-        sans: ['DM Sans', 'system-ui', 'sans-serif'],
-        mono: ['IBM Plex Mono', 'Courier New', 'monospace'],
+        // Main-site pages get fonts from app/globals.css (CSS @theme takes
+        // precedence, verified) — kept in sync here for consistency.
+        display: ['Montserrat', 'Arial', 'sans-serif'],
+        body: ['Open Sans', 'Arial', 'sans-serif'],
+        sans: ['Open Sans', 'Arial', 'sans-serif'],
+        mono: ['Open Sans', 'Arial', 'sans-serif'],
       },
       fontSize: {
         'display-sm': ['clamp(36px, 5vw, 64px)', { lineHeight: '0.95', letterSpacing: '-0.02em' }],
@@ -45,9 +54,11 @@ const config: Config = {
         'section-sm': '64px',
       },
       boxShadow: {
-        'card': '0 2px 20px rgba(0,0,0,0.08)',
-        'card-hover': '0 8px 40px rgba(0,0,0,0.15)',
-        'gold-glow': '0 0 20px rgba(201, 168, 76, 0.3)',
+        // Brand guide: no drop shadows/glows. Kept as no-op tokens (also
+        // neutralized in app/globals.css, which takes precedence).
+        'card': 'none',
+        'card-hover': 'none',
+        'gold-glow': 'none',
       },
     },
   },

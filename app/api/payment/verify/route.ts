@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from "next/server"
 import { processPayment, type PaymentContext } from "@/lib/payment-utils"
 
 export const dynamic = "force-dynamic"
+// Booking can take up to ~4 min when the worker is slow — allow the handler to
+// run that long on hosts that enforce a max duration (e.g. Vercel).
+export const maxDuration = 300
+
+/**
+ * Legacy redirect-based verify+book route. The live callback_url is now
+ * /payment/processing (a loading page that calls /api/payment/complete, the
+ * JSON sibling of this route) so the guest sees progress instead of a blank
+ * wait. This GET route is kept working as a fallback in case anything still
+ * links here directly.
+ */
 
 type BookingMeta = {
   bookingRef?: string
@@ -87,13 +98,13 @@ export async function GET(request: NextRequest) {
     maxOccupancy: meta.maxOccupancy ?? undefined,
   }
 
-  const { booked, bookingRef, refunded } = await processPayment(ctx)
+  const { booked, bookingRef } = await processPayment(ctx)
 
-  // Payment succeeded but the booking could not be created. If we managed to
-  // auto-refund, tell the guest they've been refunded; otherwise tell them we
-  // have their payment and will sort it out (admin already alerted).
+  // Payment succeeded but the booking could not be created. Per business rule
+  // the payment is kept (no auto-refund) — the guest is told to expect a
+  // manual confirmation, and staff have already been alerted.
   if (!booked) {
-    return fail(bookingRef, refunded ? "refunded" : "paid-not-booked")
+    return fail(bookingRef, "paid-not-booked")
   }
 
   const successUrl = new URL(

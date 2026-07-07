@@ -45,7 +45,7 @@ export default function DiningPage() {
             {SECTIONS.map(({ Icon, title, body }, i) => (
               <Reveal as="article" key={title} delay={i * 80}>
                 <div className="flex h-full flex-col rounded-xl border border-border bg-card p-6">
-                  <span className="inline-flex size-12 items-center justify-center rounded-full bg-[#0a0a0a] text-gold">
+                  <span className="inline-flex size-12 items-center justify-center rounded-full bg-[#000000] text-gold">
                     <Icon className="size-5" />
                   </span>
                   <h3 className="mt-5 font-serif text-xl text-foreground">{title}</h3>

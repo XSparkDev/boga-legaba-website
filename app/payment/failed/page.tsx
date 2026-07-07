@@ -7,21 +7,14 @@ function FailedContent() {
   const params     = useSearchParams()
   const bookingRef = params.get("bookingRef") ?? ""
   const reason = params.get("reason") ?? ""
-  // "refunded"        = paid, booking failed, and we auto-refunded the guest.
-  // "paid-not-booked" = paid, booking failed, auto-refund also failed (manual).
-  const refunded = reason === "refunded"
-  const paidNotBooked = reason === "paid-not-booked" || refunded
+  // "paid-not-booked" = payment succeeded but the NightsBridge booking failed.
+  // The payment is KEPT (no auto-refund) — staff finalise the booking by hand.
+  const paidNotBooked = reason === "paid-not-booked"
 
-  const heading = refunded
-    ? "Payment refunded"
-    : paidNotBooked
-      ? "We're finalising your booking"
-      : "Payment Unsuccessful"
-  const message = refunded
-    ? "Your payment went through, but we couldn't confirm the room automatically — so we've refunded you in full. Depending on your bank it may take a few business days to reflect. Please feel free to try again or contact us on WhatsApp and we'll help you book."
-    : paidNotBooked
-      ? "Your payment went through, but we hit a snag confirming the room automatically. Our team has already been alerted and will contact you shortly to confirm your booking or arrange a refund. You do not need to do anything."
-      : "Your payment could not be processed, so no booking was made and you have not been charged. Please try again below, or contact us on WhatsApp."
+  const heading = paidNotBooked ? "We're finalising your booking" : "Payment Unsuccessful"
+  const message = paidNotBooked
+    ? "Your payment went through and has been received — we hit a snag confirming the room automatically, so our team is finalising your booking by hand. You do not need to pay again. If you don't receive a confirmation email from us shortly, please contact us so we can sort it out right away."
+    : "Your payment could not be processed, so no booking was made and you have not been charged. Please try again below, or contact us on WhatsApp."
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-5" style={{ background: "#F2EDE4" }}>

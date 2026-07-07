@@ -70,7 +70,7 @@ export function GalleryGrid() {
         <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
           Browse the portfolio
         </p>
-        <ArrowDown className="size-5 animate-bounce text-gold" aria-hidden />
+        <ArrowDown className="size-5 text-gold" aria-hidden />
       </Reveal>
 
       <Reveal delay={60} className="space-y-6">
@@ -83,7 +83,7 @@ export function GalleryGrid() {
               className={cn(
                 "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
                 category === c
-                  ? "border-transparent bg-[#0a0a0a] text-white"
+                  ? "border-transparent bg-[#000000] text-white"
                   : "border-border bg-card text-muted-foreground hover:border-foreground/30",
               )}
             >

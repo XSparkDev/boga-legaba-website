@@ -26,10 +26,10 @@ type Step = "idle" | "form" | "paying" | "error"
 const MEAL_PLAN_ORDER = [5, 1, 3] // Room Only, B&B, DBB
 
 function MealIcon({ id }: { id: number }) {
-  if (id === 5) return <BedDouble className="size-4 shrink-0 text-[#b8973a]" />
-  if (id === 1) return <Utensils className="size-4 shrink-0 text-[#b8973a]" />
-  if (id === 3) return <UtensilsCrossed className="size-4 shrink-0 text-[#b8973a]" />
-  return <BedDouble className="size-4 shrink-0 text-[#b8973a]" />
+  if (id === 5) return <BedDouble className="size-4 shrink-0 text-[#996948]" />
+  if (id === 1) return <Utensils className="size-4 shrink-0 text-[#996948]" />
+  if (id === 3) return <UtensilsCrossed className="size-4 shrink-0 text-[#996948]" />
+  return <BedDouble className="size-4 shrink-0 text-[#996948]" />
 }
 
 function fmt(n: number) {
@@ -135,37 +135,39 @@ export function BookingWidget({
       return
     }
 
-    // PAY FIRST: send the guest to Paystack. The NightsBridge booking is only
-    // created after payment succeeds (see /api/payment/verify).
+    const bookingPayload = {
+      email,
+      amountRands,
+      bookingRef: `BL-${Date.now()}`,
+      guestName: `${firstname} ${surname}`.trim(),
+      guestPhone: phone,
+      checkin: arrive,
+      checkout: depart,
+      roomTypeName,
+      mealPlanName: selectedPlan.description,
+      adults,
+      children1,
+      children2,
+      firstname,
+      surname,
+      arrivalTime,
+      airline,
+      flightno,
+      notes,
+      bbid,
+      maxAdults,
+      maxOccupancy,
+    }
+
+    // ── PAY FIRST: send the guest to Paystack. The NightsBridge booking is only
+    // created after payment succeeds — the guest lands on /payment/processing
+    // which shows a loading screen while the booking is created. ─────────────
     setStep("paying")
     try {
       const res = await fetch("/api/payment/initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          amountRands,
-          bookingRef: `BL-${Date.now()}`,
-          guestName: `${firstname} ${surname}`.trim(),
-          guestPhone: phone,
-          checkin: arrive,
-          checkout: depart,
-          roomTypeName,
-          // Full booking payload carried through Paystack, used to book after payment
-          mealPlanName: selectedPlan.description,
-          adults,
-          children1,
-          children2,
-          firstname,
-          surname,
-          arrivalTime,
-          airline,
-          flightno,
-          notes,
-          bbid,
-          maxAdults,
-          maxOccupancy,
-        }),
+        body: JSON.stringify(bookingPayload),
       })
       const data = (await res.json()) as { ok: boolean; authorization_url?: string; error?: string }
       if (data.ok && data.authorization_url) {
@@ -188,11 +190,11 @@ export function BookingWidget({
     return (
       <div
         className="flex flex-col items-center justify-center gap-3 rounded-xl py-10"
-        style={{ background: "#F2EDE4", border: "1px solid #E8E0D4" }}
+        style={{ background: "#F7F7F6", border: "1px solid #D6D6D5" }}
       >
-        <Loader2 className="size-8 animate-spin" style={{ color: "#C9A84C" }} />
-        <p className="text-sm font-medium" style={{ color: "#3D3532" }}>Redirecting to secure payment</p>
-        <p className="text-xs" style={{ color: "#8C7B6B" }}>You will be taken to Paystack</p>
+        <Loader2 className="size-8 animate-spin" style={{ color: "#996948" }} />
+        <p className="text-sm font-medium" style={{ color: "#000000" }}>Redirecting to secure payment</p>
+        <p className="text-xs" style={{ color: "#6B6B6B" }}>You will be taken to Paystack</p>
       </div>
     )
   }
@@ -219,7 +221,7 @@ export function BookingWidget({
             href={whatsappUrl}
             target="_blank"
             rel="noreferrer"
-            className="rounded-lg bg-[#25D366] px-4 py-2 text-sm font-medium text-white hover:brightness-105"
+            className="rounded-lg bg-[#996948] px-4 py-2 text-sm font-medium text-white hover:brightness-105"
           >
             WhatsApp
           </a>
@@ -233,7 +235,7 @@ export function BookingWidget({
     return (
       <button
         onClick={() => setStep("form")}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b8973a] px-6 py-3.5 font-body text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:translate-y-0"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#996948] px-6 py-3.5 font-body text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:translate-y-0"
       >
         Book This Room
         <ArrowRight className="size-4" />
@@ -272,7 +274,7 @@ export function BookingWidget({
                   key={plan.mealplanid}
                   className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors ${
                     selectedPlan?.mealplanid === plan.mealplanid
-                      ? "border-[#b8973a] bg-[#fdf8ef]"
+                      ? "border-[#996948] bg-[#fdf8ef]"
                       : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
@@ -282,12 +284,12 @@ export function BookingWidget({
                       name="mealPlan"
                       checked={selectedPlan?.mealplanid === plan.mealplanid}
                       onChange={() => setSelectedPlan(plan)}
-                      className="accent-[#b8973a]"
+                      className="accent-[#996948]"
                     />
                     <MealIcon id={plan.mealplanid} />
                     <span className="font-body text-sm text-gray-800">{plan.description}</span>
                   </div>
-                  <span className="font-body text-sm font-semibold text-[#b8973a]">
+                  <span className="font-body text-sm font-semibold text-[#996948]">
                     {plan.rateSingle != null ? `from ${fmt(plan.rateSingle)}` : ""}
                   </span>
                 </label>
@@ -497,7 +499,7 @@ export function BookingWidget({
           <p className="mb-2 font-body text-xs font-semibold uppercase tracking-wide text-gray-500">
             Payment method
           </p>
-          <div className="rounded-lg border border-[#b8973a] bg-[#fdf8ef] p-3">
+          <div className="rounded-lg border border-[#996948] bg-[#fdf8ef] p-3">
             <span className="font-body text-sm text-gray-800">Card or EFT via Paystack</span>
             <p className="mt-0.5 font-body text-[11px] text-gray-400">
               You will be redirected to Paystack to complete payment securely after we confirm your booking.
@@ -509,7 +511,7 @@ export function BookingWidget({
               href={nbUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#b8973a] underline underline-offset-2 hover:brightness-75"
+              className="text-[#996948] underline underline-offset-2 hover:brightness-75"
             >
               Continue on NightsBridge
             </a>
@@ -518,12 +520,12 @@ export function BookingWidget({
 
         {/* T&Cs */}
         <label className="flex items-start gap-2 text-xs text-gray-500">
-          <input type="checkbox" required className="mt-0.5 accent-[#b8973a]" />
+          <input type="checkbox" required className="mt-0.5 accent-[#996948]" />
           <span>
             I have read and accepted the{" "}
             <a
               href="#"
-              className="text-[#b8973a] underline"
+              className="text-[#996948] underline"
               onClick={(e) => e.preventDefault()}
             >
               terms and conditions
@@ -533,16 +535,16 @@ export function BookingWidget({
         </label>
 
         {/* Cancellation note */}
-        <div className="rounded-lg px-4 py-3" style={{ background: "#F2EDE4", border: "1px solid #E8E0D4" }}>
-          <p className="font-body text-[11px] leading-relaxed" style={{ color: "#8C7B6B" }}>
-            <strong style={{ color: "#3D3532" }}>Need to cancel?</strong>{" "}
+        <div className="rounded-lg px-4 py-3" style={{ background: "#F7F7F6", border: "1px solid #D6D6D5" }}>
+          <p className="font-body text-[11px] leading-relaxed" style={{ color: "#6B6B6B" }}>
+            <strong style={{ color: "#000000" }}>Need to cancel?</strong>{" "}
             Contact us via{" "}
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noreferrer"
               className="underline underline-offset-2"
-              style={{ color: "#b8973a" }}
+              style={{ color: "#996948" }}
             >
               WhatsApp
             </a>{" "}
@@ -554,7 +556,7 @@ export function BookingWidget({
         <button
           type="submit"
           disabled={!selectedPlan}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b8973a] px-6 py-3.5 font-body text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#996948] px-6 py-3.5 font-body text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Confirm Booking
           <ArrowRight className="size-4" />
@@ -569,7 +571,7 @@ export function BookingWidget({
 // ---------------------------------------------------------------------------
 
 const inputCls =
-  "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 font-body text-sm text-gray-900 placeholder:text-gray-300 focus:border-[#b8973a] focus:outline-none focus:ring-1 focus:ring-[#b8973a]/30"
+  "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 font-body text-sm text-gray-900 placeholder:text-gray-300 focus:border-[#996948] focus:outline-none focus:ring-1 focus:ring-[#996948]/30"
 
 function FormField({
   label,

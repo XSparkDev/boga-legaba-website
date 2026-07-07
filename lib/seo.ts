@@ -38,7 +38,7 @@ export function lodgingBusinessJsonLd() {
     telephone: BUSINESS.phone,
     email: BUSINESS.email,
     image: `${SITE_URL}/hero-exterior.png`,
-    logo: `${SITE_URL}/bogalogo.png`,
+    logo: `${SITE_URL}/logo.png`,
     priceRange: "$$",
     currenciesAccepted: "ZAR",
     address: {

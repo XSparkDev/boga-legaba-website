@@ -74,27 +74,21 @@ async function handleShareWebsite() {
 
 export function LocationSection() {
   return (
-    <section className="relative overflow-hidden bg-[#0A0A0A]" aria-labelledby="location-heading">
+    <section className="relative overflow-hidden bg-[#000000]" aria-labelledby="location-heading">
       {/* Full-width map */}
       <div className="relative h-[400px] w-full min-h-[350px] max-h-[450px] overflow-hidden sm:h-[420px]">
         <iframe
           title="Boga Legaba location map — Riviera Park, Mahikeng"
           src={LOCATION.mapEmbedUrl}
-          className="absolute inset-0 h-full w-full scale-[1.02] border-0 [filter:saturate(0.7)_brightness(0.55)_contrast(1.15)]"
+          className="absolute inset-0 h-full w-full border-0 [filter:saturate(0.85)]"
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
           tabIndex={-1}
         />
 
-        <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0A0A0A]/55 via-[#0A0A0A]/30 to-[#0A0A0A]/90"
-          aria-hidden
-        />
-        <div className="pointer-events-none absolute inset-0 bg-[#0A0A0A]/20" aria-hidden />
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0A0A0A] to-transparent"
-          aria-hidden
-        />
+        {/* Flat semi-transparent overlay for text legibility — brand guide: flat
+            color blocks, no gradients. */}
+        <div className="pointer-events-none absolute inset-0 bg-[#000000]/55" aria-hidden />
       </div>
 
       {/* Compact overlapping card */}
@@ -102,18 +96,18 @@ export function LocationSection() {
         <div
           className={cn(
             "rounded-2xl border border-black/8 px-5 py-4 sm:px-6 sm:py-5",
-            "bg-[#FAFAF8] shadow-[0_16px_48px_rgba(0,0,0,0.28)] ring-1 ring-black/5",
+            "bg-[#FFFFFF] shadow-[0_16px_48px_rgba(0,0,0,0.28)] ring-1 ring-black/5",
           )}
         >
           <h2
             id="location-heading"
-            className="font-serif text-xl font-semibold leading-snug text-[#0A0A0A] sm:text-2xl"
+            className="font-serif text-xl font-semibold leading-snug text-[#000000] sm:text-2xl"
           >
             {BUSINESS.name}
           </h2>
           <p className="mt-1.5 break-words text-sm font-medium leading-relaxed text-[#262626]">{FULL_ADDRESS}</p>
 
-          <span className="mt-3 inline-flex max-w-full items-center gap-1.5 rounded-full border border-gold/35 bg-white px-3 py-1.5 text-xs font-medium text-[#0A0A0A]">
+          <span className="mt-3 inline-flex max-w-full items-center gap-1.5 rounded-full border border-gold/35 bg-white px-3 py-1.5 text-xs font-medium text-[#000000]">
             <Clock className="size-3.5 shrink-0 text-gold" aria-hidden />
             {LOCATION.travelNote}
           </span>
@@ -144,7 +138,7 @@ export function LocationSection() {
               onClick={handleGetDirections}
               className={cn(
                 actionBtn,
-                "bg-gold text-[#0A0A0A] hover:bg-gold-hover hover:shadow-[0_6px_20px_rgba(201,168,76,0.3)]",
+                "bg-gold text-[#000000] hover:bg-gold-hover hover:text-white",
               )}
             >
               <Navigation className="size-3.5" />

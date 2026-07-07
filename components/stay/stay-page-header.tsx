@@ -15,19 +15,14 @@ export function StayPageHeader() {
         decoding="async"
         className="absolute inset-0 h-full w-full object-cover object-center"
       />
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.45) 100%)",
-        }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
+      {/* Flat semi-transparent overlay for text legibility — brand guide: flat
+          color blocks, no gradients. */}
+      <div className="absolute inset-0 bg-black/60" />
 
       <div className="grain-overlay relative z-[1] mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal>
-          <p className="font-mono text-xs uppercase tracking-[0.25em] text-gold">Stay & Rooms</p>
-          <h1 className="mt-3 max-w-3xl break-words text-balance font-serif text-3xl font-bold leading-[1.05] sm:text-4xl lg:text-5xl xl:text-6xl">
+          <p className="font-body text-xs uppercase tracking-[0.25em] text-gold">Stay & Rooms</p>
+          <h1 className="mt-3 max-w-3xl break-words text-balance font-title text-3xl font-extrabold leading-[1.05] sm:text-4xl lg:text-5xl xl:text-6xl">
             Find Your Perfect Room
           </h1>
           <p className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-white/70 lg:text-lg">

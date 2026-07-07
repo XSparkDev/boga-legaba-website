@@ -14,7 +14,7 @@ export function AttractionsBookingCta() {
         <Link
           href="/book-now"
           data-ga4-event="book_now_click"
-          className="inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-[#0a0a0a] transition-colors hover:bg-[#b8943c]"
+          className="inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-[#000000] transition-colors hover:bg-[#b8943c]"
         >
           Book Now <ArrowRight className="size-4" />
         </Link>

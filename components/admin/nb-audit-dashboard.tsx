@@ -33,7 +33,7 @@ function Section({
 
 function JsonBlock({ value }: { value: unknown }) {
   return (
-    <pre className="max-h-96 overflow-auto rounded-lg bg-[#0a0a0a] p-4 font-mono text-[11px] leading-relaxed text-emerald-200/90">
+    <pre className="max-h-96 overflow-auto rounded-lg bg-[#000000] p-4 font-mono text-[11px] leading-relaxed text-emerald-200/90">
       {JSON.stringify(value, null, 2)}
     </pre>
   )

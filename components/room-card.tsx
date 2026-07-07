@@ -124,7 +124,7 @@ export function RoomCard({
           </span>
         </div>
 
-        <h3 className="font-display text-2xl text-[#0A0A0A] mb-2 leading-tight">{room.name}</h3>
+        <h3 className="font-display text-2xl text-[#000000] mb-2 leading-tight">{room.name}</h3>
 
         {synced.roomTypeName ? (
           <p className="mb-1 font-mono text-[11px] uppercase tracking-wide text-taupe">{synced.roomTypeName}</p>

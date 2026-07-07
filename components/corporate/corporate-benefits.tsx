@@ -39,7 +39,7 @@ export function CorporateBenefits() {
       <div className="mt-6 flex flex-col gap-4">
         {BENEFITS.map(({ Icon, title, body, sbdAction }) => (
           <div key={title} className="flex gap-4 rounded-xl border border-border bg-card p-5">
-            <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[#0a0a0a] text-gold">
+            <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[#000000] text-gold">
               <Icon className="size-5" />
             </span>
             <div className="min-w-0 flex-1">

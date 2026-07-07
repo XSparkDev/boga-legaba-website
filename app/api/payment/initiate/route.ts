@@ -90,7 +90,12 @@ export async function POST(request: NextRequest) {
   // Place the hold now (keyed by this payment reference) so a second guest is
   // blocked while this one pays. Auto-expires (~15 min); released on booking.
   await createHold({ reference, bbid: gateBbid, roomTypeName, checkin, checkout })
-  const callbackUrl = `${siteUrl}/api/payment/verify`
+  // Paystack redirects the browser here after payment. This is a CLIENT page
+  // that shows a "securing your booking" loading screen while the NightsBridge
+  // booking is created (~up to a minute), then advances to success/failed — so
+  // the guest sees progress instead of a blank wait and is less likely to close
+  // the tab. The page calls /api/payment/complete to do the actual booking.
+  const callbackUrl = `${siteUrl}/payment/processing`
 
   try {
     const res = await fetch("https://api.paystack.co/transaction/initialize", {

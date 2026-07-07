@@ -213,7 +213,7 @@ export function ConferenceForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="inline-flex items-center justify-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-[#0a0a0a] transition-colors hover:bg-[#b8943c] disabled:opacity-60"
+        className="inline-flex items-center justify-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-[#000000] transition-colors hover:bg-[#b8943c] disabled:opacity-60"
       >
         {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
         {submitting ? "Sending…" : "Send Conference Enquiry"}

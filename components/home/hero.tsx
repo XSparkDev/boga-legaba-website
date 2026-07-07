@@ -22,19 +22,14 @@ export function HomeHero() {
         sizes="100vw"
         className="object-cover"
       />
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.4) 55%, rgba(0,0,0,0.15) 100%)",
-        }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+      {/* Flat semi-transparent overlay for text legibility — brand guide: flat
+          color blocks, no gradients. */}
+      <div className="absolute inset-0 bg-black/55" />
 
       <div className="relative z-[2] mx-auto flex w-full max-w-7xl flex-1 flex-col justify-start px-4 pb-8 pt-[calc(4.5rem+1rem)] sm:justify-center sm:px-6 sm:pb-10 sm:pt-[calc(4.5rem+1.75rem)] xl:px-8 xl:pt-[calc(6rem+2rem)]">
         <div className="max-w-3xl">
           <SiteLogo size="hero" className="mb-3 hidden sm:mb-8 sm:block" />
-          <p className="font-mono text-[11px] tracking-[0.2em] text-gold uppercase">
+          <p className="font-body text-[11px] tracking-[0.2em] text-gold uppercase">
             Mahikeng · North West Province
           </p>
           <div className="my-3 h-[2px] w-[60px] bg-gold sm:my-4" />

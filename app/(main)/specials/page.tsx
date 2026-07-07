@@ -57,11 +57,11 @@ export default async function SpecialsPage() {
 
       {/* Live NightsBridge specials (shown only when present) */}
       {liveSpecials.length > 0 ? (
-        <section className="bg-[#0a0a0a] py-12 lg:py-16">
+        <section className="bg-[#000000] py-12 lg:py-16">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mb-8 flex items-center gap-3">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#b8973a]/20">
-                <Zap className="size-3.5 text-[#b8973a]" />
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#996948]/20">
+                <Zap className="size-3.5 text-[#996948]" />
               </span>
               <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-white/50">
                 Live from NightsBridge · {new Date().toLocaleDateString("en-ZA")}
@@ -71,7 +71,7 @@ export default async function SpecialsPage() {
               {liveSpecials.map((s) => (
                 <div
                   key={s.specialid}
-                  className="rounded-xl border border-[#b8973a]/20 bg-white/5 p-5 text-white backdrop-blur-sm"
+                  className="rounded-xl border border-[#996948]/20 bg-white/5 p-5 text-white backdrop-blur-sm"
                 >
                   {s.imageurl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -86,7 +86,7 @@ export default async function SpecialsPage() {
                     <p className="mt-2 text-sm leading-relaxed text-white/70">{s.description}</p>
                   ) : null}
                   {s.discount ? (
-                    <span className="mt-3 inline-block rounded-full bg-[#b8973a]/20 px-3 py-1 font-mono text-[11px] text-[#b8973a]">
+                    <span className="mt-3 inline-block rounded-full bg-[#996948]/20 px-3 py-1 font-mono text-[11px] text-[#996948]">
                       {s.discount}
                       {s.discounttype === "percent" ? "%" : ""} off
                     </span>
@@ -98,7 +98,7 @@ export default async function SpecialsPage() {
                   ) : null}
                   <Link
                     href={`/book-now?bbid=21091`}
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#b8973a] px-4 py-2.5 font-mono text-xs font-semibold uppercase tracking-wider text-white transition hover:brightness-110"
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#996948] px-4 py-2.5 font-mono text-xs font-semibold uppercase tracking-wider text-white transition hover:brightness-110"
                   >
                     Book Now <ArrowRight className="size-3.5" />
                   </Link>
@@ -116,7 +116,7 @@ export default async function SpecialsPage() {
               const img = getSiteImage(s.imageKey)
               return (
                 <Reveal as="article" key={s.name} delay={i * 90}>
-                  <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                  <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-[#996948]/40">
                     <div className="relative aspect-[16/10] overflow-hidden">
                       <SiteImage
                         src={img.url}
@@ -133,7 +133,7 @@ export default async function SpecialsPage() {
                       <Link
                         href="/book-now"
                         data-ga4-event="specials_click"
-                        className="mt-5 inline-flex items-center justify-center gap-1.5 rounded-full bg-[#0a0a0a] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a]"
+                        className="mt-5 inline-flex items-center justify-center gap-1.5 rounded-full bg-[#000000] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a]"
                       >
                         Book This Special <ArrowRight className="size-3.5" />
                       </Link>

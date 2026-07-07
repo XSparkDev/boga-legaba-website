@@ -2,11 +2,11 @@
  * Paystack webhook handler — server-to-server event fired by Paystack regardless
  * of whether the guest's browser completes the redirect.
  *
- * IMPORTANT (pay-first flow): the actual NightsBridge booking is created by the
- * redirect callback in /api/payment/verify once payment succeeds. This webhook
- * therefore only VERIFIES and LOGS — it does NOT create a booking. If it did,
- * the happy path (callback + webhook both fire) would create the SAME booking
- * twice.
+ * IMPORTANT (pay-first flow): the actual NightsBridge booking is created when
+ * the guest's browser lands on /payment/processing after paying, which calls
+ * /api/payment/complete. This webhook therefore only VERIFIES and LOGS — it
+ * does NOT create a booking. If it did, the happy path (browser return +
+ * webhook both fire) would create the SAME booking twice.
  *
  * If you later want the webhook to also create the booking as a safety net for
  * "guest closed the tab before the redirect", it must share an idempotency key
