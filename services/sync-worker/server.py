@@ -176,7 +176,11 @@ def _check_room_availability(params: dict) -> dict:
 
         room_ids = [r["bbroomid"] for r in rooms_resp.data]
 
-        # Check if ANY physical room is available for ALL requested nights
+        # Check if ANY physical room is available for ALL requested nights.
+        # Also track how many cache rows exist for these dates at all: the sync
+        # only caches a limited forward window, so a stay beyond that window has
+        # ZERO rows — which must be treated as "unknown", NOT "unavailable".
+        cache_rows_seen = 0
         for bbroomid in room_ids:
             cache_resp = (
                 sb.table("availability_cache")
@@ -185,11 +189,23 @@ def _check_room_availability(params: dict) -> dict:
                 .in_("check_date", night_dates)
                 .execute()
             )
-            available_nights = {r["check_date"] for r in cache_resp.data if r["is_available"]}
+            rows = cache_resp.data or []
+            cache_rows_seen += len(rows)
+            available_nights = {r["check_date"] for r in rows if r["is_available"]}
             if all(night in available_nights for night in night_dates):
                 # Found a room that's free the whole stay
                 print(f"[worker] Availability OK: bbroomid={bbroomid} free {checkin}–{checkout}")
                 return {"ok": True}
+
+        # No cached data for these nights at all → the stay is beyond the synced
+        # window. Don't falsely reject it — let NightsBridge be the gatekeeper
+        # (same philosophy as the staleness guard above).
+        if cache_rows_seen == 0:
+            print(
+                f"[worker] No availability_cache rows for {checkin}–{checkout} "
+                "(beyond synced window) — passing through to NightsBridge"
+            )
+            return {"ok": True}
 
         print(f"[worker] Availability FAIL: no '{room_type_name}' free {checkin}–{checkout}")
         return {
