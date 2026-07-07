@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { processPayment, type PaymentContext } from "@/lib/payment-utils"
+import { processPayment, triggerAsyncBooking, type PaymentContext } from "@/lib/payment-utils"
+import { ensurePendingBookingJob } from "@/lib/booking-job"
 
 export const dynamic = "force-dynamic"
-// Creating the NightsBridge booking can take up to ~4 min when the worker is
-// slow. Allow the handler to run that long on hosts that enforce a max
-// duration (e.g. Vercel), otherwise a paid booking gets cut off server-side.
+// Kicking off the async booking returns in <1s. The synchronous fallback (used
+// only when the booking_job table isn't applied yet) can take minutes, so allow
+// a long duration on hosts that enforce one (e.g. Vercel).
 export const maxDuration = 300
 
 type BookingMeta = {
@@ -107,10 +108,29 @@ export async function POST(request: NextRequest) {
     maxOccupancy: meta.maxOccupancy ?? undefined,
   }
 
-  const { booked, bookingRef } = await processPayment(ctx)
+  // ── ASYNC PATH (preferred): record a pending job, kick off the worker's
+  // background booking, and return immediately. The page then polls
+  // /api/payment/status. Nothing waits on the ~50s booking → no timeouts. ──
+  const jobState = await ensurePendingBookingJob(ctx)
+  if (jobState !== "unavailable") {
+    // "created" → we own it, start the worker. "exists" → already in flight
+    // (double-submit / retry), do NOT trigger again — avoids double-booking.
+    if (jobState === "created") {
+      const accepted = await triggerAsyncBooking(ctx)
+      if (!accepted) {
+        // Couldn't hand off to the worker — surface as pending; staff alerted
+        // via the failed path once the guest's poll times out.
+        console.error("[payment/complete] worker did not accept async booking", reference)
+      }
+    }
+    return NextResponse.json({ ok: true, mode: "async", status: "pending", reference })
+  }
 
+  // ── FALLBACK (booking_job table not applied yet): old synchronous flow. ──
+  const { booked, bookingRef } = await processPayment(ctx)
   return NextResponse.json({
     ok: true,
+    mode: "sync",
     booked,
     bookingRef,
     guestName: ctx.guestName,

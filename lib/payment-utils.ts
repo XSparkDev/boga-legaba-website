@@ -64,6 +64,61 @@ export interface PaymentContext {
   maxOccupancy?: number
 }
 
+/** The exact payload the NightsBridge worker's /book endpoint expects. */
+function buildWorkerBookingPayload(ctx: PaymentContext, extra: Record<string, unknown> = {}) {
+  const [firstname, ...rest] = (ctx.guestName || "").trim().split(/\s+/)
+  return {
+    checkin:       ctx.checkin,
+    checkout:      ctx.checkout,
+    roomTypeName:  ctx.roomTypeName,
+    mealPlanName:  ctx.mealPlanName ?? "Room Only",
+    adults:        ctx.adults ?? 2,
+    children1:     ctx.children1 ?? 0,
+    children2:     ctx.children2 ?? 0,
+    firstname:     ctx.firstname ?? firstname ?? "",
+    surname:       ctx.surname ?? rest.join(" ") ?? "",
+    phone:         ctx.guestPhone,
+    email:         ctx.guestEmail,
+    arrivalTime:   ctx.arrivalTime ?? "",
+    airline:       ctx.airline ?? "",
+    flightno:      ctx.flightno ?? "",
+    notes:         ctx.notes ?? "",
+    paymentMethod: "bank_transfer",
+    maxAdults:     ctx.maxAdults,
+    maxOccupancy:  ctx.maxOccupancy,
+    ...extra,
+  }
+}
+
+/**
+ * Fire the worker's ASYNC booking: the worker starts the ~50s booking in the
+ * background, records the outcome in booking_job (keyed by the payment
+ * reference), and returns 202 immediately. This call therefore returns fast —
+ * nothing waits on the booking. Returns true if the worker accepted the job.
+ */
+export async function triggerAsyncBooking(ctx: PaymentContext): Promise<boolean> {
+  const workerUrl  = (process.env.SYNC_WORKER_URL ?? "").replace(/\/run$/, "")
+  const cronSecret = process.env.CRON_SECRET
+  if (!workerUrl || !cronSecret) {
+    console.error("[payment] triggerAsyncBooking: SYNC_WORKER_URL / CRON_SECRET not set")
+    return false
+  }
+  try {
+    const res = await fetch(`${workerUrl}/book`, {
+      method:  "POST",
+      headers: { Authorization: `Bearer ${cronSecret}`, "Content-Type": "application/json" },
+      body: JSON.stringify(buildWorkerBookingPayload(ctx, { async: true, reference: ctx.reference })),
+      // Only kicking off the job — the worker returns 202 in well under a second.
+      signal: AbortSignal.timeout(30_000),
+    })
+    const data = (await res.json().catch(() => ({}))) as { ok?: boolean; accepted?: boolean }
+    return res.status === 202 || data.accepted === true || data.ok === true
+  } catch (err) {
+    console.error("[payment] triggerAsyncBooking error:", err)
+    return false
+  }
+}
+
 /**
  * Called after Paystack confirms a successful payment (from both the redirect
  * callback and the server-side webhook).
@@ -79,11 +134,6 @@ export interface PaymentContext {
 export async function processPayment(
   ctx: PaymentContext,
 ): Promise<{ booked: boolean; bookingRef: string; confirmation?: Record<string, string>; refunded?: boolean }> {
-  const resendKey  = process.env.RESEND_API_KEY
-  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL ?? "bogalegaba@gmail.com"
-  const from       = process.env.RESEND_FROM_EMAIL ?? "Boga Legaba <onboarding@resend.dev>"
-  const useResend  = Boolean(resendKey && resendKey !== "re_REPLACE_ME")
-
   // ── Step 1: CREATE the NightsBridge booking (payment already succeeded) ──
   let booked = false
   let bookingRef = ctx.bookingRef
@@ -92,7 +142,6 @@ export async function processPayment(
   const cronSecret = process.env.CRON_SECRET
 
   if (workerUrl && cronSecret) {
-    const [firstname, ...rest] = (ctx.guestName || "").trim().split(/\s+/)
     try {
       const res = await fetch(`${workerUrl}/book`, {
         method:  "POST",
@@ -100,26 +149,7 @@ export async function processPayment(
           Authorization:  `Bearer ${cronSecret}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          checkin:       ctx.checkin,
-          checkout:      ctx.checkout,
-          roomTypeName:  ctx.roomTypeName,
-          mealPlanName:  ctx.mealPlanName ?? "Room Only",
-          adults:        ctx.adults ?? 2,
-          children1:     ctx.children1 ?? 0,
-          children2:     ctx.children2 ?? 0,
-          firstname:     ctx.firstname ?? firstname ?? "",
-          surname:       ctx.surname ?? rest.join(" ") ?? "",
-          phone:         ctx.guestPhone,
-          email:         ctx.guestEmail,
-          arrivalTime:   ctx.arrivalTime ?? "",
-          airline:       ctx.airline ?? "",
-          flightno:      ctx.flightno ?? "",
-          notes:         ctx.notes ?? "",
-          paymentMethod: "bank_transfer",
-          maxAdults:     ctx.maxAdults,
-          maxOccupancy:  ctx.maxOccupancy,
-        }),
+        body: JSON.stringify(buildWorkerBookingPayload(ctx)),
         // Booking takes ~50s normally, but can be slower when the worker is
         // cold or busy. Give generous headroom (must exceed the worker's own
         // 170s booking timeout + its ~70s wait-for-sync) so a slow-but-valid
@@ -150,67 +180,79 @@ export async function processPayment(
   // auto-refund. We keep the payment, ask the guest to contact us, and alert
   // staff to finalise the booking manually. (Refund helper kept but unused.)
 
-  // ── Step 2: Emails ───────────────────────────────────────────────────────
-  if (useResend) {
-    const resend = new Resend(resendKey!)
+  await sendBookingOutcomeEmails(ctxRef, booked)
 
-    // Guest branded confirmation — only when the booking actually went through.
-    if (booked && ctx.guestEmail) {
-      try {
-        await resend.emails.send({
-          from,
-          to:      ctx.guestEmail,
-          subject: "Payment Confirmed – Boga Legaba",
-          html:    buildGuestConfirmEmail(ctxRef),
-        })
-      } catch (err) {
-        console.error("[payment] Guest confirmation email error:", err)
-      }
+  return { booked, bookingRef, confirmation, refunded: false }
+}
+
+/**
+ * Send the guest + admin emails for a completed payment, based on whether the
+ * NightsBridge booking succeeded. Extracted so both the synchronous flow
+ * (processPayment) and the async flow (worker books → /api/payment/status
+ * detects the outcome) send identical emails. Best-effort; never throws.
+ */
+export async function sendBookingOutcomeEmails(ctx: PaymentContext, booked: boolean): Promise<void> {
+  const resendKey  = process.env.RESEND_API_KEY
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL ?? "bogalegaba@gmail.com"
+  const from       = process.env.RESEND_FROM_EMAIL ?? "Boga Legaba <onboarding@resend.dev>"
+  if (!resendKey || resendKey === "re_REPLACE_ME") return
+
+  const resend = new Resend(resendKey)
+  const guestFullName = resolveGuestName(ctx).full
+
+  // Guest branded confirmation — only when the booking actually went through.
+  if (booked && ctx.guestEmail) {
+    try {
+      await resend.emails.send({
+        from,
+        to:      ctx.guestEmail,
+        subject: "Payment Confirmed – Boga Legaba",
+        html:    buildGuestConfirmEmail(ctx),
+      })
+    } catch (err) {
+      console.error("[payment] Guest confirmation email error:", err)
     }
+  }
 
-    // Guest "payment received, we're finalising your booking" — booking failed,
-    // payment kept. Tells the guest to contact us if they don't hear back.
-    if (!booked && ctx.guestEmail) {
-      try {
-        await resend.emails.send({
-          from,
-          to:      ctx.guestEmail,
-          subject: "We've received your payment – Boga Legaba",
-          html:    buildGuestPaidNotBookedEmail(ctxRef),
-        })
-      } catch (err) {
-        console.error("[payment] Guest paid-not-booked email error:", err)
-      }
+  // Guest "payment received, we're finalising your booking" — booking failed,
+  // payment kept. Tells the guest to contact us if they don't hear back.
+  if (!booked && ctx.guestEmail) {
+    try {
+      await resend.emails.send({
+        from,
+        to:      ctx.guestEmail,
+        subject: "We've received your payment – Boga Legaba",
+        html:    buildGuestPaidNotBookedEmail(ctx),
+      })
+    } catch (err) {
+      console.error("[payment] Guest paid-not-booked email error:", err)
     }
+  }
 
-    // Admin payment notification (always) — explicit first/surname, accurate status.
-    const guestFullName = resolveGuestName(ctxRef).full
+  // Admin payment notification (always) — explicit first/surname, accurate status.
+  try {
+    await resend.emails.send({
+      from,
+      to:      adminEmail,
+      subject: `New Payment – ${guestFullName} · ${ctx.bookingRef || "no ref"}`,
+      html:    buildAdminPaymentEmail(ctx, booked),
+    })
+  } catch (err) {
+    console.error("[payment] Admin notification email error:", err)
+  }
+
+  // Payment succeeded but booking FAILED → staff must finalise manually
+  // (payment was kept, NOT refunded).
+  if (!booked) {
     try {
       await resend.emails.send({
         from,
         to:      adminEmail,
-        subject: `New Payment – ${guestFullName} · ${bookingRef || "no ref"}`,
-        html:    buildAdminPaymentEmail(ctxRef, booked),
+        subject: `ACTION REQUIRED – PAID but booking FAILED (payment kept) – ${guestFullName}`,
+        html:    buildNBFailureEmail(ctx),
       })
-    } catch (err) {
-      console.error("[payment] Admin notification email error:", err)
-    }
-
-    // Payment succeeded but booking FAILED → staff must finalise manually
-    // (payment was kept, NOT refunded).
-    if (!booked) {
-      try {
-        await resend.emails.send({
-          from,
-          to:      adminEmail,
-          subject: `ACTION REQUIRED – PAID but booking FAILED (payment kept) – ${guestFullName}`,
-          html:    buildNBFailureEmail(ctxRef),
-        })
-      } catch { /* best effort */ }
-    }
+    } catch { /* best effort */ }
   }
-
-  return { booked, bookingRef, confirmation, refunded: false }
 }
 
 // ── Email: guest "payment received, finalising your booking" notice ──────────

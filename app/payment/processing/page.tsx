@@ -25,6 +25,56 @@ function ProcessingContent() {
     // After ~12s, reassure the guest that the wait is normal.
     const slowTimer = setTimeout(() => setSlow(true), 12_000)
 
+    let cancelled = false
+    const timers: ReturnType<typeof setTimeout>[] = []
+
+    const toSuccess = (d: { bookingRef?: string; guestName?: string; checkin?: string; checkout?: string; roomTypeName?: string; amount?: number | string }) => {
+      const q = new URLSearchParams({
+        bookingRef: d.bookingRef ?? "",
+        guestName: d.guestName ?? "",
+        checkin: d.checkin ?? "",
+        checkout: d.checkout ?? "",
+        roomTypeName: d.roomTypeName ?? "",
+        amount: String(d.amount ?? ""),
+      })
+      router.replace(`/payment/success?${q.toString()}`)
+    }
+    const toFailed = (bookingRef = "", reason = "paid-not-booked") =>
+      router.replace(`/payment/failed?${new URLSearchParams({ bookingRef, reason }).toString()}`)
+
+    // Poll the async booking status until it resolves. The booking runs in the
+    // worker's background — nothing here waits on a long request, so there's no
+    // timeout to hit. We give it a generous ceiling, then hand off gracefully.
+    const POLL_MS = 3_000
+    const MAX_POLLS = 90 // ~4.5 min
+    async function poll(attempt: number): Promise<void> {
+      if (cancelled) return
+      try {
+        const res = await fetch(`/api/payment/status?reference=${encodeURIComponent(reference)}`, { cache: "no-store" })
+        const d = (await res.json().catch(() => ({}))) as {
+          status?: string
+          bookingRef?: string
+          guestName?: string
+          checkin?: string
+          checkout?: string
+          roomTypeName?: string
+          amount?: number | string
+        }
+        if (cancelled) return
+        if (d.status === "booked") return toSuccess(d)
+        if (d.status === "failed") return toFailed(d.bookingRef ?? "", "paid-not-booked")
+      } catch {
+        /* transient — keep polling */
+      }
+      if (attempt >= MAX_POLLS) {
+        // Still not done after the ceiling — the booking may yet complete in the
+        // background; send the guest to the "we're finalising, contact us if no
+        // email" screen rather than spinning forever.
+        return toFailed("", "paid-not-booked")
+      }
+      timers.push(setTimeout(() => poll(attempt + 1), POLL_MS))
+    }
+
     ;(async () => {
       try {
         const res = await fetch("/api/payment/complete", {
@@ -34,6 +84,8 @@ function ProcessingContent() {
         })
         const data = (await res.json().catch(() => ({}))) as {
           ok?: boolean
+          mode?: string
+          status?: string
           booked?: boolean
           bookingRef?: string
           guestName?: string
@@ -43,38 +95,33 @@ function ProcessingContent() {
           amount?: number
         }
 
-        if (data.ok && data.booked) {
-          const q = new URLSearchParams({
-            bookingRef: data.bookingRef ?? "",
-            guestName: data.guestName ?? "",
-            checkin: data.checkin ?? "",
-            checkout: data.checkout ?? "",
-            roomTypeName: data.roomTypeName ?? "",
-            amount: String(data.amount ?? ""),
-          })
-          router.replace(`/payment/success?${q.toString()}`)
-        } else if (data.ok && !data.booked) {
-          // Payment succeeded but the NightsBridge booking could not be created.
-          // We keep the payment and ask the guest to contact us (staff alerted).
-          const q = new URLSearchParams({
-            bookingRef: data.bookingRef ?? "",
-            reason: "paid-not-booked",
-          })
-          router.replace(`/payment/failed?${q.toString()}`)
-        } else {
+        if (!data.ok) {
           // Payment could not be verified.
           router.replace("/payment/failed")
+          return
         }
+
+        if (data.mode === "async") {
+          // Booking kicked off in the background → poll for the outcome.
+          poll(0)
+          return
+        }
+
+        // Fallback (sync) mode — booking already ran inline.
+        if (data.booked) toSuccess(data)
+        else toFailed(data.bookingRef ?? "", "paid-not-booked")
       } catch {
         // Network/unknown error — treat as paid-not-booked so the guest is told
         // to contact us rather than seeing a blank error (staff are alerted).
-        router.replace(`/payment/failed?reason=paid-not-booked`)
-      } finally {
-        clearTimeout(slowTimer)
+        toFailed("", "paid-not-booked")
       }
     })()
 
-    return () => clearTimeout(slowTimer)
+    return () => {
+      cancelled = true
+      clearTimeout(slowTimer)
+      timers.forEach(clearTimeout)
+    }
   }, [reference, router])
 
   return (
