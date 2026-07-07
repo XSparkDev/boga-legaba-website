@@ -342,12 +342,22 @@ class Handler(BaseHTTPRequestHandler):
             self._json(503, {"ok": False, "error": "Booking script not found"})
             return
 
+        # Serialise with the 5-minutely sync: two Playwright/Chromium processes
+        # running at once on the free tier starve each other for memory and make
+        # a booking crawl past its timeout. Wait (bounded) for any in-progress
+        # sync to finish so the booking gets the box to itself and runs fast.
+        # If we can't get the lock in time we proceed anyway — never fail a paid
+        # booking just because a sync is busy.
+        global _running
+        got_lock = _lock.acquire(timeout=70)
+        if got_lock:
+            _running = True
         try:
             proc = subprocess.run(
                 [sys.executable, str(book_script), "--params", json.dumps(params)],
                 capture_output=True,
                 text=True,
-                timeout=120,
+                timeout=170,
                 env=_build_env(),
             )
             stdout = proc.stdout.strip()
@@ -360,9 +370,13 @@ class Handler(BaseHTTPRequestHandler):
                     pass
             self._json(500, {"ok": False, "error": proc.stderr or "Booking failed"})
         except subprocess.TimeoutExpired:
-            self._json(504, {"ok": False, "error": "Booking timed out after 120 s"})
+            self._json(504, {"ok": False, "error": "Booking timed out after 170 s"})
         except Exception as exc:
             self._json(500, {"ok": False, "error": str(exc)})
+        finally:
+            if got_lock:
+                _running = False
+                _lock.release()
 
 
     def _handle_manage_booking(self) -> None:
