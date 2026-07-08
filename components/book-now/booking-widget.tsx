@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Loader2, AlertTriangle, ArrowRight, X, BedDouble, UtensilsCrossed, Utensils } from "lucide-react"
 import type { MealPlanRate } from "@/lib/nightsbridge-rates"
 
@@ -65,6 +65,14 @@ export function BookingWidget({
   const [step, setStep] = useState<Step>("idle")
   const [selectedPlan, setSelectedPlan] = useState<MealPlanRate | null>(sorted[0] ?? null)
   const [errorMsg, setErrorMsg] = useState("")
+
+  // Guards the in-place booking poll below against firing after unmount.
+  const cancelledRef = useRef(false)
+  useEffect(() => {
+    return () => {
+      cancelledRef.current = true
+    }
+  }, [])
 
   // Form fields — every field NightsBridge collects
   const [adults, setAdults] = useState(2)
@@ -158,9 +166,10 @@ export function BookingWidget({
       maxOccupancy,
     }
 
-    // ── BOOK FIRST: create the real NightsBridge booking now. The guest lands
-    // on /booking/processing (loading screen) while it's created, and is only
-    // sent to Paystack to pay once the room is genuinely reserved. ───────────
+    // ── BOOK FIRST: create the real NightsBridge booking now. The guest stays
+    // right here (no page navigation) while it's created, and is only sent to
+    // Paystack once the booking has genuinely reached a "completed" state —
+    // never on "processing", and never just because the job was accepted. ────
     setStep("paying")
     try {
       const res = await fetch("/api/booking/start", {
@@ -170,8 +179,7 @@ export function BookingWidget({
       })
       const data = (await res.json()) as { ok: boolean; reference?: string; error?: string }
       if (data.ok && data.reference) {
-        const q = new URLSearchParams({ reference: data.reference, amount: String(amountRands) })
-        window.location.href = `/booking/processing?${q.toString()}`
+        pollBookingStatus(data.reference, amountRands)
       } else {
         setErrorMsg(data.error ?? "Could not start your booking. Please try WhatsApp or contact us.")
         setStep("error")
@@ -182,10 +190,85 @@ export function BookingWidget({
     }
   }
 
+  type StatusResponse = {
+    status?: string
+    error?: string
+    bookingRef?: string
+    guestName?: string
+    guestEmail?: string
+    checkin?: string
+    checkout?: string
+    roomTypeName?: string
+  }
+
+  async function goToPayment(reference: string, amountRands: number, d: StatusResponse) {
+    try {
+      const res = await fetch("/api/payment/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: d.guestEmail ?? email,
+          amountRands,
+          bookingRef: d.bookingRef ?? "",
+          guestName: d.guestName ?? `${firstname} ${surname}`.trim(),
+          checkin: d.checkin ?? arrive,
+          checkout: d.checkout ?? depart,
+          roomTypeName: d.roomTypeName ?? roomTypeName,
+        }),
+      })
+      const payment = (await res.json().catch(() => ({}))) as { ok?: boolean; authorization_url?: string; error?: string }
+      if (payment.ok && payment.authorization_url) {
+        window.location.href = payment.authorization_url
+      } else {
+        setErrorMsg(payment.error ?? "Your room is booked, but we couldn't start payment. Please contact us on WhatsApp.")
+        setStep("error")
+      }
+    } catch {
+      setErrorMsg("Your room is booked, but we couldn't start payment. Please contact us on WhatsApp.")
+      setStep("error")
+    }
+  }
+
+  function pollBookingStatus(reference: string, amountRands: number, attempt = 0) {
+    const POLL_MS = 3_000
+    const MAX_POLLS = 130 // ~6.5 min — the worker retries internally on ambiguous failures
+
+    fetch(`/api/booking/status?reference=${encodeURIComponent(reference)}`, { cache: "no-store" })
+      .then((res) => res.json().catch(() => ({})) as Promise<StatusResponse>)
+      .then((d) => {
+        if (cancelledRef.current) return
+        if (d.status === "completed") {
+          return void goToPayment(reference, amountRands, d)
+        }
+        if (d.status === "failed") {
+          setErrorMsg(d.error || "We couldn't book this room. Please try again or contact us on WhatsApp.")
+          setStep("error")
+          return
+        }
+        // status is "processing" (or missing/unrecognised) — keep polling.
+        if (cancelledRef.current) return
+        if (attempt >= MAX_POLLS) {
+          setErrorMsg("This is taking longer than expected. Please contact us on WhatsApp with your details.")
+          setStep("error")
+          return
+        }
+        setTimeout(() => pollBookingStatus(reference, amountRands, attempt + 1), POLL_MS)
+      })
+      .catch(() => {
+        if (cancelledRef.current) return
+        if (attempt >= MAX_POLLS) {
+          setErrorMsg("This is taking longer than expected. Please contact us on WhatsApp with your details.")
+          setStep("error")
+          return
+        }
+        setTimeout(() => pollBookingStatus(reference, amountRands, attempt + 1), POLL_MS)
+      })
+  }
+
   if (!available) return null
 
 
-  // ── Paying (starting the booking — see /booking/processing next) ────────
+  // ── Paying (creating + polling the NightsBridge booking, in place) ──────
   if (step === "paying") {
     return (
       <div
@@ -193,8 +276,10 @@ export function BookingWidget({
         style={{ background: "#F7F7F6", border: "1px solid #D6D6D5" }}
       >
         <Loader2 className="size-8 animate-spin" style={{ color: "#996948" }} />
-        <p className="text-sm font-medium" style={{ color: "#000000" }}>Starting your booking…</p>
-        <p className="text-xs" style={{ color: "#6B6B6B" }}>You'll pay once your room is reserved</p>
+        <p className="text-sm font-medium" style={{ color: "#000000" }}>Reserving your room…</p>
+        <p className="text-xs" style={{ color: "#6B6B6B" }}>
+          This can take a minute or two. You&apos;ll only pay once your room is confirmed.
+        </p>
       </div>
     )
   }

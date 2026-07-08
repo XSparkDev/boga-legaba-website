@@ -68,6 +68,7 @@ _RETRYABLE_ERROR_MARKERS = (
     "did not return a booking number",
     "Could not set the stay dates",
     "Could not find the submit/confirm button",
+    "Guest booking form did not open",
 )
 
 
@@ -190,6 +191,24 @@ def _book_room_once(params: dict) -> dict:
                 }
             time.sleep(5)
 
+            # ── Step 3b: Confirm the guest form actually opened ────────────
+            # If room/meal-plan selection landed on the wrong (or no) section,
+            # the firstname field never appears — fail fast here with a clear
+            # reason instead of silently filling nothing and surfacing a
+            # confusing "no booking number" error from an unrelated page state.
+            try:
+                page.wait_for_selector('input[name="firstname"]', timeout=8_000)
+            except Exception:
+                return {
+                    "ok": False,
+                    "error": (
+                        f"Guest booking form did not open for room '{room_type}' / "
+                        f"meal plan '{meal_plan}'. The room or meal-plan selection "
+                        "likely landed on the wrong section, or that combination "
+                        "isn't bookable for these dates."
+                    ),
+                }
+
             # ── Step 4: Fill guest form ────────────────────────────────────
             _fill_guest_form(
                 page,
@@ -277,7 +296,39 @@ def _book_room_once(params: dict) -> dict:
                 page.screenshot(path="/tmp/booking_no_confirm.png")
             except Exception:
                 pass
-            snippet = " ".join(page_text.split())[:450]
+
+            # CRITICAL — the page we land back on after a failed submit is the
+            # multi-room availability grid, which lists ALL room types. A blind
+            # page_text[:450] snippet shows whichever room happens to sort first
+            # in that grid, NOT the room the guest actually requested — a stray
+            # "Twin Room (Bath & Shower) ... SOLD" snippet was previously
+            # misread as "the wrong room was booked" when it was really just an
+            # unrelated room that happened to be first on the page. Anchor the
+            # snippet on the REQUESTED room's own text instead, and check
+            # specifically whether NightsBridge shows SOLD right next to it.
+            flat_text = " ".join(page_text.split())
+            room_idx = flat_text.lower().find(room_type.lower())
+            if room_idx != -1:
+                window_start = max(0, room_idx - 40)
+                window_end = min(len(flat_text), room_idx + 500)
+                room_snippet = flat_text[window_start:window_end]
+                if "sold" in room_snippet.lower():
+                    return {
+                        "ok": False,
+                        "error": (
+                            f"Sorry — {room_type} shows as SOLD on NightsBridge's calendar for "
+                            f"part of your stay ({checkin} to {checkout}), even though it looked "
+                            "available a moment ago. Please choose different dates or another "
+                            "room type."
+                        ),
+                    }
+                snippet = room_snippet
+            else:
+                # The requested room's name never even appears in the resulting
+                # page — genuinely ambiguous (timing/rendering issue), not a
+                # confirmed sellout. Keep the original generic, retryable error.
+                snippet = flat_text[:450]
+
             return {
                 "ok": False,
                 "error": f"NightsBridge did not return a booking number. The page showed: {snippet}",
@@ -509,13 +560,26 @@ def _click_view_rates(page, room_type_name: str) -> bool:
 
 
 def _click_book_now(page, meal_plan_name: str) -> bool:
-    """Find the meal plan section and click its BOOK NOW button."""
+    """Find the meal plan section and click its BOOK NOW button.
+
+    CRITICAL — same shared-ancestor trap as `_click_view_rates`: every room's
+    rates panel lives in the DOM at once, so walking up from a BOOK NOW button
+    can bleed into a parent that also contains OTHER rooms' text, and
+    `.includes(mealPlanName)` can then match a meal plan belonging to a
+    different (collapsed) room card. Only the just-selected room's panel is
+    actually expanded/visible, so we restrict the search to VISIBLE buttons
+    first, and only fall back to hidden ones if nothing visible matches.
+    """
     return page.evaluate(
         """(mealPlanName) => {
             const mpLower = mealPlanName.toLowerCase();
-            const bookBtns = Array.from(document.querySelectorAll('button')).filter(
+            function isVisible(el) { return !!(el && el.offsetParent !== null); }
+            const allBookBtns = Array.from(document.querySelectorAll('button')).filter(
                 b => b.innerText?.trim().toUpperCase() === 'BOOK NOW'
             );
+            const bookBtns = allBookBtns.filter(isVisible).length
+                ? allBookBtns.filter(isVisible)
+                : allBookBtns;
             for (const btn of bookBtns) {
                 let el = btn;
                 for (let i = 0; i < 7; i++) {

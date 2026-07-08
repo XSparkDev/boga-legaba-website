@@ -9,7 +9,11 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import type { PaymentContext } from "@/lib/payment-utils"
 
-export type BookingJobStatus = "pending" | "booked" | "failed"
+// "processing": worker thread accepted the job, Playwright run may still be in
+// flight. "completed": the NightsBridge booking genuinely succeeded — a real
+// booking_id was scraped from the confirmation page and written here. Only
+// "completed" means it's safe to send the guest to payment.
+export type BookingJobStatus = "processing" | "completed" | "failed"
 
 export type BookingJob = {
   reference: string
@@ -26,26 +30,40 @@ export type BookingJob = {
   emails_sent: boolean
 }
 
-/** Read the booking job for a reference, or null if none / table missing. */
-export async function getBookingJob(reference: string): Promise<BookingJob | null> {
-  if (!reference) return null
+/**
+ * Read the booking job for a reference.
+ *
+ * IMPORTANT (fix for the "stuck on Reserving your room" bug): this used to
+ * return `null` for BOTH "no row exists yet" AND "the DB read itself failed"
+ * (bad credentials, RLS denial, network error, table missing). The caller
+ * (/api/booking/status) treated any null as "processing" — so a PERSISTENT read
+ * failure looked identical to "still booking" and polling would never
+ * progress, silently, forever. Now a real error is distinguishable via the
+ * `dbError` field so it can be logged/surfaced instead of masked.
+ */
+export async function getBookingJob(
+  reference: string,
+): Promise<{ job: BookingJob | null; dbError: string | null }> {
+  if (!reference) return { job: null, dbError: null }
   try {
     const sb = createSupabaseAdminClient()
     const { data, error } = await sb.from("booking_job").select("*").eq("reference", reference).maybeSingle()
     if (error) {
-      console.warn("[booking-job] read failed:", error.message)
-      return null
+      console.error(`[booking-job] read FAILED for reference=${reference}:`, error.message)
+      return { job: null, dbError: error.message }
     }
-    return (data as BookingJob) ?? null
+    console.log(`[booking-job] read reference=${reference} -> status=${(data as BookingJob | null)?.status ?? "NOT_FOUND"}`)
+    return { job: (data as BookingJob) ?? null, dbError: null }
   } catch (err) {
-    console.warn("[booking-job] read error:", err)
-    return null
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error(`[booking-job] read THREW for reference=${reference}:`, msg)
+    return { job: null, dbError: msg }
   }
 }
 
 /**
- * Create the pending job for a reference if it doesn't already exist. Returns
- * "created" (we made a fresh pending row → caller should trigger the worker),
+ * Create the processing job for a reference if it doesn't already exist.
+ * Returns "created" (we made a fresh row → caller should trigger the worker),
  * "exists" (a job is already tracked → do NOT re-trigger, avoids double-booking),
  * or "unavailable" (table missing / DB error → caller should fall back).
  */
@@ -58,14 +76,17 @@ export async function ensurePendingBookingJob(
 
     const existing = await sb.from("booking_job").select("reference").eq("reference", ctx.reference).maybeSingle()
     if (existing.error) {
-      console.warn("[booking-job] ensurePending read failed:", existing.error.message)
+      console.error(`[booking-job] ensurePending READ FAILED reference=${ctx.reference}:`, existing.error.message)
       return "unavailable"
     }
-    if (existing.data) return "exists"
+    if (existing.data) {
+      console.log(`[booking-job] ensurePending reference=${ctx.reference} -> exists (not re-triggering)`)
+      return "exists"
+    }
 
     const { error } = await sb.from("booking_job").insert({
       reference: ctx.reference,
-      status: "pending",
+      status: "processing",
       guest_name: ctx.guestName || null,
       guest_email: ctx.guestEmail || null,
       checkin: ctx.checkin || null,
@@ -77,13 +98,17 @@ export async function ensurePendingBookingJob(
     if (error) {
       // Unique-violation → someone inserted between our read and insert. Treat
       // as "exists" so we don't double-trigger.
-      if (error.code === "23505") return "exists"
-      console.warn("[booking-job] ensurePending insert failed:", error.message)
+      if (error.code === "23505") {
+        console.log(`[booking-job] ensurePending reference=${ctx.reference} -> race, treating as exists`)
+        return "exists"
+      }
+      console.error(`[booking-job] ensurePending INSERT FAILED reference=${ctx.reference}:`, error.message)
       return "unavailable"
     }
+    console.log(`[booking-job] ensurePending reference=${ctx.reference} -> created (status=processing)`)
     return "created"
   } catch (err) {
-    console.warn("[booking-job] ensurePending error:", err)
+    console.error(`[booking-job] ensurePending THREW reference=${ctx.reference}:`, err)
     return "unavailable"
   }
 }

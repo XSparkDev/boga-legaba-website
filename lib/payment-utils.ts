@@ -101,21 +101,34 @@ export async function triggerAsyncBooking(ctx: PaymentContext): Promise<boolean>
   const workerUrl  = (process.env.SYNC_WORKER_URL ?? "").replace(/\/run$/, "")
   const cronSecret = process.env.CRON_SECRET
   if (!workerUrl || !cronSecret) {
-    console.error("[payment] triggerAsyncBooking: SYNC_WORKER_URL / CRON_SECRET not set")
+    console.error(`[payment] triggerAsyncBooking reference=${ctx.reference}: SYNC_WORKER_URL / CRON_SECRET not set`)
     return false
   }
+  const payload = buildWorkerBookingPayload(ctx, { async: true, reference: ctx.reference })
+  // Guard against the worker's own required-field validation rejecting the
+  // request server-side (e.g. an empty surname when guestName is a single
+  // word) — that would make triggerAsyncBooking return false, but by then
+  // ensurePendingBookingJob has ALREADY written a "pending" row, so log the
+  // exact payload shape sent so a rejection reason is traceable, not guessed.
+  console.log(`[payment] triggerAsyncBooking reference=${ctx.reference} POST ${workerUrl}/book firstname="${payload.firstname}" surname="${payload.surname}" room="${payload.roomTypeName}"`)
   try {
     const res = await fetch(`${workerUrl}/book`, {
       method:  "POST",
       headers: { Authorization: `Bearer ${cronSecret}`, "Content-Type": "application/json" },
-      body: JSON.stringify(buildWorkerBookingPayload(ctx, { async: true, reference: ctx.reference })),
+      body: JSON.stringify(payload),
       // Only kicking off the job — the worker returns 202 in well under a second.
       signal: AbortSignal.timeout(30_000),
     })
-    const data = (await res.json().catch(() => ({}))) as { ok?: boolean; accepted?: boolean }
-    return res.status === 202 || data.accepted === true || data.ok === true
+    const data = (await res.json().catch(() => ({}))) as { ok?: boolean; accepted?: boolean; error?: string }
+    const accepted = res.status === 202 || data.accepted === true || data.ok === true
+    if (!accepted) {
+      console.error(`[payment] triggerAsyncBooking reference=${ctx.reference} REJECTED by worker: HTTP ${res.status} — ${data.error ?? "(no error message)"}`)
+    } else {
+      console.log(`[payment] triggerAsyncBooking reference=${ctx.reference} ACCEPTED (HTTP ${res.status})`)
+    }
+    return accepted
   } catch (err) {
-    console.error("[payment] triggerAsyncBooking error:", err)
+    console.error(`[payment] triggerAsyncBooking reference=${ctx.reference} EXCEPTION:`, err instanceof Error ? err.message : err)
     return false
   }
 }

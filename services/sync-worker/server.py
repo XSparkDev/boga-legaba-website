@@ -260,8 +260,10 @@ def _run_booking_to_db(params: dict, book_script: "Path", reference: str) -> Non
     """Run the booking script (blocking, ~50s) and record the outcome in
     booking_job. Runs in a background thread so the HTTP request can return
     immediately — nothing waits on the ~50s Playwright job."""
+    print(f"[worker] booking_job[{reference}] background thread STARTED (room={params.get('roomTypeName')})")
     global _running
     got_lock = _lock.acquire(timeout=70)
+    print(f"[worker] booking_job[{reference}] lock acquired={got_lock} — running subprocess now")
     if got_lock:
         _running = True
     try:
@@ -290,7 +292,7 @@ def _run_booking_to_db(params: dict, book_script: "Path", reference: str) -> Non
         # as failed so we never tell a guest they're booked when they aren't.
         if result.get("ok") and booking_id:
             _write_booking_job(reference, {
-                "status": "booked",
+                "status": "completed",
                 "booking_id": booking_id,
                 "error": None,
             })
@@ -444,7 +446,7 @@ class Handler(BaseHTTPRequestHandler):
         # website polls booking_job for the result.
         if params.get("async") and params.get("reference"):
             reference = params["reference"]
-            _write_booking_job(reference, {"status": "pending", "error": None})
+            _write_booking_job(reference, {"status": "processing", "error": None})
             t = threading.Thread(
                 target=_run_booking_to_db,
                 args=(params, book_script, reference),

@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
   }
 
   const reference = `BLJOB-${Date.now()}`
+  console.log(`[booking/start] reference=${reference} creating hold room=${roomTypeName} ${checkin}->${checkout}`)
   await createHold({ reference, bbid, roomTypeName, checkin, checkout })
 
   const ctx: PaymentContext = {
@@ -100,7 +101,9 @@ export async function POST(request: NextRequest) {
   }
 
   const jobState = await ensurePendingBookingJob(ctx)
+  console.log(`[booking/start] reference=${reference} ensurePendingBookingJob -> ${jobState}`)
   if (jobState === "unavailable") {
+    console.error(`[booking/start] reference=${reference} ABORTING: booking_job unavailable (DB/table issue)`)
     return NextResponse.json(
       { ok: false, error: "Booking service is temporarily unavailable. Please try again shortly." },
       { status: 503 },
@@ -109,7 +112,14 @@ export async function POST(request: NextRequest) {
 
   if (jobState === "created") {
     const accepted = await triggerAsyncBooking(ctx)
+    console.log(`[booking/start] reference=${reference} triggerAsyncBooking accepted=${accepted}`)
     if (!accepted) {
+      // NOTE: booking_job already has a "processing" row for this reference (from
+      // ensurePendingBookingJob above) that will now never be updated, since the
+      // worker never started the job. Harmless (the widget won't navigate to the
+      // polling page on this ok:false response, and `reference` is unique per
+      // attempt so it's never reused), but flagged here for visibility.
+      console.error(`[booking/start] reference=${reference} worker REJECTED/UNREACHABLE — leaving orphaned processing row, guest will see an error and can retry`)
       return NextResponse.json(
         { ok: false, error: "Could not start the booking. Please try again or contact us on WhatsApp." },
         { status: 502 },
@@ -119,5 +129,6 @@ export async function POST(request: NextRequest) {
   // "exists" → a job for this reference is already in flight (shouldn't normally
   // happen since we just generated a fresh reference) — do NOT re-trigger.
 
+  console.log(`[booking/start] reference=${reference} SUCCESS — returning to widget for redirect to /booking/processing`)
   return NextResponse.json({ ok: true, reference })
 }

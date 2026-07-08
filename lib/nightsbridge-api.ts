@@ -298,9 +298,13 @@ export async function checkRoomTypeAvailableLive(
 
     const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase()
     const target = norm(roomTypeName)
-    const rt = json.data.roomtypes.find(
-      (r) => norm(r.rtname) === target || norm(r.rtname).includes(target) || target.includes(norm(r.rtname)),
-    )
+    // Exact match first — this property has multiple room types whose names
+    // share a prefix (e.g. "Double Room (Shower)" vs "Double Room (Bath &
+    // Shower)"); falling back to substring matching before checking for an
+    // exact match risks reporting availability for the WRONG room type.
+    const rt =
+      json.data.roomtypes.find((r) => norm(r.rtname) === target) ??
+      json.data.roomtypes.find((r) => norm(r.rtname).includes(target) || target.includes(norm(r.rtname)))
 
     // NB doesn't list this type for these dates — can't make a confident call.
     if (!rt) return { status: "unknown" }

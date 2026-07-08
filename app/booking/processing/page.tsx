@@ -1,22 +1,28 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
+
+type StatusResponse = {
+  status?: string
+  error?: string
+  bookingRef?: string
+  guestName?: string
+  guestEmail?: string
+  checkin?: string
+  checkout?: string
+  roomTypeName?: string
+}
 
 function ProcessingContent() {
-  const router = useRouter()
   const params = useSearchParams()
   const reference = params.get("reference") ?? ""
   const amount = params.get("amount") ?? ""
-  const started = useRef(false)
   const [slow, setSlow] = useState(false)
   const [failed, setFailed] = useState<string>("")
 
   useEffect(() => {
-    if (started.current) return
-    started.current = true
-
     if (!reference) {
       setFailed("Missing booking reference. Please start again.")
       return
@@ -69,25 +75,20 @@ function ProcessingContent() {
       if (cancelled) return
       try {
         const res = await fetch(`/api/booking/status?reference=${encodeURIComponent(reference)}`, { cache: "no-store" })
-        const d = (await res.json().catch(() => ({}))) as {
-          status?: string
-          error?: string
-          bookingRef?: string
-          guestName?: string
-          guestEmail?: string
-          checkin?: string
-          checkout?: string
-          roomTypeName?: string
-        }
+        const d = (await res.json().catch(() => ({}))) as StatusResponse
         if (cancelled) return
-        if (d.status === "booked") return void goToPayment(d)
+        if (d.status === "completed") {
+          return void goToPayment(d)
+        }
         if (d.status === "failed") {
           setFailed(d.error || "We couldn't book this room. Please try again or contact us on WhatsApp.")
           return
         }
+        // status is "processing" (or missing/unrecognised) — keep polling.
       } catch {
-        /* transient — keep polling */
+        /* transient network error — keep polling */
       }
+      if (cancelled) return
       if (attempt >= MAX_POLLS) {
         setFailed("This is taking longer than expected. Please contact us on WhatsApp with your details.")
         return
@@ -102,7 +103,7 @@ function ProcessingContent() {
       clearTimeout(slowTimer)
       timers.forEach(clearTimeout)
     }
-  }, [reference, amount, router])
+  }, [reference, amount])
 
   if (failed) {
     return (

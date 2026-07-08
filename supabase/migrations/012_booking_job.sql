@@ -14,7 +14,7 @@
 
 CREATE TABLE IF NOT EXISTS booking_job (
   reference       TEXT        PRIMARY KEY,           -- Paystack payment reference
-  status          TEXT        NOT NULL DEFAULT 'pending',  -- pending | booked | failed
+  status          TEXT        NOT NULL DEFAULT 'processing',  -- processing | completed | failed
   booking_id      TEXT,                              -- NightsBridge booking id on success
   error           TEXT,                              -- failure reason (for staff)
   -- Snapshot of the details the success page needs (so it doesn't depend on
