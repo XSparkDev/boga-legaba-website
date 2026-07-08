@@ -138,7 +138,6 @@ export function BookingWidget({
     const bookingPayload = {
       email,
       amountRands,
-      bookingRef: `BL-${Date.now()}`,
       guestName: `${firstname} ${surname}`.trim(),
       guestPhone: phone,
       checkin: arrive,
@@ -159,21 +158,22 @@ export function BookingWidget({
       maxOccupancy,
     }
 
-    // ── PAY FIRST: send the guest to Paystack. The NightsBridge booking is only
-    // created after payment succeeds — the guest lands on /payment/processing
-    // which shows a loading screen while the booking is created. ─────────────
+    // ── BOOK FIRST: create the real NightsBridge booking now. The guest lands
+    // on /booking/processing (loading screen) while it's created, and is only
+    // sent to Paystack to pay once the room is genuinely reserved. ───────────
     setStep("paying")
     try {
-      const res = await fetch("/api/payment/initiate", {
+      const res = await fetch("/api/booking/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bookingPayload),
       })
-      const data = (await res.json()) as { ok: boolean; authorization_url?: string; error?: string }
-      if (data.ok && data.authorization_url) {
-        window.location.href = data.authorization_url
+      const data = (await res.json()) as { ok: boolean; reference?: string; error?: string }
+      if (data.ok && data.reference) {
+        const q = new URLSearchParams({ reference: data.reference, amount: String(amountRands) })
+        window.location.href = `/booking/processing?${q.toString()}`
       } else {
-        setErrorMsg(data.error ?? "Payment could not be started. Please try WhatsApp or contact us.")
+        setErrorMsg(data.error ?? "Could not start your booking. Please try WhatsApp or contact us.")
         setStep("error")
       }
     } catch {
@@ -185,7 +185,7 @@ export function BookingWidget({
   if (!available) return null
 
 
-  // ── Paying (redirecting to Paystack) ─────────────────────────────────────
+  // ── Paying (starting the booking — see /booking/processing next) ────────
   if (step === "paying") {
     return (
       <div
@@ -193,8 +193,8 @@ export function BookingWidget({
         style={{ background: "#F7F7F6", border: "1px solid #D6D6D5" }}
       >
         <Loader2 className="size-8 animate-spin" style={{ color: "#996948" }} />
-        <p className="text-sm font-medium" style={{ color: "#000000" }}>Redirecting to secure payment</p>
-        <p className="text-xs" style={{ color: "#6B6B6B" }}>You will be taken to Paystack</p>
+        <p className="text-sm font-medium" style={{ color: "#000000" }}>Starting your booking…</p>
+        <p className="text-xs" style={{ color: "#6B6B6B" }}>You'll pay once your room is reserved</p>
       </div>
     )
   }
