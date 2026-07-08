@@ -965,7 +965,7 @@ def _parse_confirmation(page) -> dict:
             const payM = text.match(/(The property will[^\n.]+\.)/i);
 
             return {
-                bookingId:   G(['bookingid', 'booking id', 'booking number'], /Booking\s*ID\s*(\d+)/i),
+                bookingId:   G(['bookingid', 'booking id', 'booking number'], /Booking\s*ID[:\s]*([A-Za-z0-9\-]+)/i),
                 propertyName,
                 arrival:     G(['arrival'], /Arrival\s*([A-Za-z][^\n]{3,40})/i),
                 leaving:     G(['leaving', 'depart'], /Leaving[:\s]*([A-Za-z][^\n]{3,40})/i),
@@ -991,6 +991,13 @@ def _extract_booking_ref(text: str) -> str | None:
     patterns = [
         # NightsBridge bbid-prefixed refs e.g. "21091-12345"
         r'\b(21091-\d+)\b',
+        # "Booking ID:" — confirmed real format seen in NightsBridge's own
+        # confirmation emails, e.g. "Booking ID: NB-120562673". Distinct from
+        # "Booking Number"/"Booking Reference" below: NONE of those patterns
+        # match the word "ID", so a genuine success on this exact label was
+        # previously undetected — reported as a failure (stuck polling on the
+        # site) even though NightsBridge had already confirmed the booking.
+        r'[Bb]ooking\s+[Ii][Dd][:\s#]+([A-Z0-9\-]{4,20})',
         # Explicit booking reference label
         r'[Bb]ooking\s+[Rr]ef(?:erence)?[:\s#]+([A-Z0-9\-]{4,20})',
         r'[Cc]onfirmation\s+[Nn](?:umber|o\.?)[:\s#]+([A-Z0-9\-]{4,20})',
