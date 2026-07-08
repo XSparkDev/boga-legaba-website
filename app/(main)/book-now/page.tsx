@@ -441,6 +441,38 @@ function RoomDetailAndBooking({
             </div>
           ) : null}
 
+          {/* Room-category notice — sets expectations before the guest books:
+              named rooms map to a shared NightsBridge category, so the exact
+              physical room isn't guaranteed. UI-only; does not affect booking
+              logic, APIs, or NightsBridge integration. */}
+          <div className="flex items-start gap-3 rounded-xl border border-[#996948]/25 bg-[#996948]/5 px-5 py-4">
+            <Info className="mt-0.5 size-5 shrink-0 text-[#996948]" />
+            <div className="space-y-1.5">
+              <p className="font-body text-sm font-semibold text-gray-900">
+                About room allocation
+              </p>
+              <p className="font-body text-xs leading-relaxed text-gray-600">
+                The room name shown here (for example Modjadji, Queens, or similar) describes a{" "}
+                <strong className="font-semibold text-gray-800">room category</strong>, not a
+                guaranteed physical room. Several rooms share the same configuration and are
+                booked as one category on NightsBridge — the property will allocate whichever
+                room in that category is available for your dates.
+              </p>
+              <p className="font-body text-xs leading-relaxed text-gray-600">
+                Want a specific room?{" "}
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-[#996948] underline underline-offset-2 hover:brightness-75"
+                >
+                  Contact Boga Legaba directly
+                </a>{" "}
+                and we&apos;ll do our best to accommodate your request.
+              </p>
+            </div>
+          </div>
+
           {/* Booking widget — expands here when guest clicks "Book This Room" */}
           <BookingWidget
             roomTypeName={rate.rtname}
