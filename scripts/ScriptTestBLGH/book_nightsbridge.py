@@ -300,33 +300,28 @@ def _book_room_once(params: dict) -> dict:
             # CRITICAL — the page we land back on after a failed submit is the
             # multi-room availability grid, which lists ALL room types. A blind
             # page_text[:450] snippet shows whichever room happens to sort first
-            # in that grid, NOT the room the guest actually requested — a stray
-            # "Twin Room (Bath & Shower) ... SOLD" snippet was previously
-            # misread as "the wrong room was booked" when it was really just an
-            # unrelated room that happened to be first on the page. Anchor the
-            # snippet on the REQUESTED room's own text instead, and check
-            # specifically whether NightsBridge shows SOLD right next to it.
+            # in that grid, NOT the room the guest actually requested. Anchor the
+            # diagnostic snippet on the REQUESTED room's own text instead.
+            #
+            # We deliberately do NOT try to infer "SOLD" from this page text.
+            # A genuine sellout (every physical room of this type taken for the
+            # requested nights) is authoritatively caught EARLIER by the worker's
+            # availability pre-check (_check_room_availability), which fails
+            # before Playwright ever runs. By the time we reach this point the
+            # room WAS available per that check, so a missing booking number here
+            # is a transient automation/timing failure, not a sellout — it must
+            # stay RETRYABLE. A previous attempt to read "SOLD" from a wide text
+            # window around the room name produced false positives (it caught the
+            # word "SOLD" belonging to an adjacent room, or to a day OUTSIDE the
+            # guest's stay), turning a retryable transient failure into a hard,
+            # non-retryable rejection of a room that was genuinely bookable.
             flat_text = " ".join(page_text.split())
             room_idx = flat_text.lower().find(room_type.lower())
             if room_idx != -1:
                 window_start = max(0, room_idx - 40)
                 window_end = min(len(flat_text), room_idx + 500)
-                room_snippet = flat_text[window_start:window_end]
-                if "sold" in room_snippet.lower():
-                    return {
-                        "ok": False,
-                        "error": (
-                            f"Sorry — {room_type} shows as SOLD on NightsBridge's calendar for "
-                            f"part of your stay ({checkin} to {checkout}), even though it looked "
-                            "available a moment ago. Please choose different dates or another "
-                            "room type."
-                        ),
-                    }
-                snippet = room_snippet
+                snippet = flat_text[window_start:window_end]
             else:
-                # The requested room's name never even appears in the resulting
-                # page — genuinely ambiguous (timing/rendering issue), not a
-                # confirmed sellout. Keep the original generic, retryable error.
                 snippet = flat_text[:450]
 
             return {
