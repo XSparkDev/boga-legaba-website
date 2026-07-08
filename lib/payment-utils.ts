@@ -1,9 +1,10 @@
 /**
- * Shared utilities for payment processing — used by both the verify callback
- * route and the Paystack webhook handler so logic is never duplicated.
+ * Shared utilities for the booking + payment flow: BOOK-FIRST — the guest's
+ * room is created on NightsBridge before payment is ever requested (see
+ * /api/booking/start + /api/booking/status), then Paystack only confirms
+ * payment for an already-real booking.
  */
 import { Resend } from "resend"
-import { releaseHold } from "@/lib/booking-holds"
 import { emailShell, emailHero, emailInfoTable, emailButton, emailCallout, emailParagraph, EMAIL_COLORS, EMAIL_BRAND, type InfoRow } from "@/lib/email-theme"
 
 // ── Formatters ────────────────────────────────────────────────────────────────
@@ -47,8 +48,8 @@ export interface PaymentContext {
   checkout:     string
   roomTypeName: string
   amountPaid:   number
-  // Full booking payload — needed to CREATE the booking AFTER payment succeeds
-  // (pay-first flow: nothing is booked on NightsBridge until the guest has paid).
+  // Full booking payload — used to CREATE the booking (book-first flow: this
+  // happens BEFORE payment is requested, via /api/booking/start).
   mealPlanName?: string
   adults?:       number
   children1?:    number
@@ -120,78 +121,17 @@ export async function triggerAsyncBooking(ctx: PaymentContext): Promise<boolean>
 }
 
 /**
- * Called after Paystack confirms a successful payment (from both the redirect
- * callback and the server-side webhook).
+ * BOOK-FIRST FLOW: the NightsBridge booking is now created BEFORE payment is
+ * ever requested (see /api/booking/start + /api/booking/status). By the time
+ * Paystack confirms a successful payment, the room is already reserved — so
+ * this just sends the final "Payment Confirmed" email to the guest and a
+ * notification to admin. It never creates or retries a booking.
  *
- * PAY-FIRST FLOW: the guest has already paid, and NOTHING is booked yet. So this
- * now CREATES the real NightsBridge booking (via the worker), and only on success
- * sends the confirmation emails. NightsBridge itself emails the guest once the
- * booking is registered. If the booking fails after a successful payment, we fire
- * an urgent "refund required" alert to the admin.
- *
- * Returns whether the booking was created, plus the real booking reference.
+ * If the guest's payment fails or they abandon checkout, the booking is left
+ * as-is (the guest already received NightsBridge's own reservation email) —
+ * per business decision, nothing is auto-cancelled or refunded.
  */
-export async function processPayment(
-  ctx: PaymentContext,
-): Promise<{ booked: boolean; bookingRef: string; confirmation?: Record<string, string>; refunded?: boolean }> {
-  // ── Step 1: CREATE the NightsBridge booking (payment already succeeded) ──
-  let booked = false
-  let bookingRef = ctx.bookingRef
-  let confirmation: Record<string, string> | undefined
-  const workerUrl  = (process.env.SYNC_WORKER_URL ?? "").replace(/\/run$/, "")
-  const cronSecret = process.env.CRON_SECRET
-
-  if (workerUrl && cronSecret) {
-    try {
-      const res = await fetch(`${workerUrl}/book`, {
-        method:  "POST",
-        headers: {
-          Authorization:  `Bearer ${cronSecret}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(buildWorkerBookingPayload(ctx)),
-        // Booking takes ~50s normally, but can be slower when the worker is
-        // cold or busy. Give generous headroom (must exceed the worker's own
-        // 170s booking timeout + its ~70s wait-for-sync) so a slow-but-valid
-        // booking is never aborted mid-flight — an abort means a paid guest
-        // who didn't get booked.
-        signal: AbortSignal.timeout(245_000),
-      })
-      const result = (await res.json().catch(() => ({}))) as {
-        ok?: boolean
-        bookingRef?: string
-        confirmation?: Record<string, string>
-      }
-      booked = result.ok === true
-      if (result.bookingRef) bookingRef = result.bookingRef
-      confirmation = result.confirmation
-    } catch (err) {
-      console.error("[payment] NightsBridge booking error:", err)
-    }
-  }
-
-  const ctxRef: PaymentContext = { ...ctx, bookingRef }
-
-  // Release the soft hold: its job is done once we've attempted the booking
-  // (booked → room is now really booked; failed → staff will finalise by hand).
-  await releaseHold(ctx.reference)
-
-  // BUSINESS RULE: if the booking fails after a successful payment we DO NOT
-  // auto-refund. We keep the payment, ask the guest to contact us, and alert
-  // staff to finalise the booking manually. (Refund helper kept but unused.)
-
-  await sendBookingOutcomeEmails(ctxRef, booked)
-
-  return { booked, bookingRef, confirmation, refunded: false }
-}
-
-/**
- * Send the guest + admin emails for a completed payment, based on whether the
- * NightsBridge booking succeeded. Extracted so both the synchronous flow
- * (processPayment) and the async flow (worker books → /api/payment/status
- * detects the outcome) send identical emails. Best-effort; never throws.
- */
-export async function sendBookingOutcomeEmails(ctx: PaymentContext, booked: boolean): Promise<void> {
+export async function sendPaymentConfirmedEmails(ctx: PaymentContext): Promise<void> {
   const resendKey  = process.env.RESEND_API_KEY
   const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL ?? "bogalegaba@gmail.com"
   const from       = process.env.RESEND_FROM_EMAIL ?? "Boga Legaba <onboarding@resend.dev>"
@@ -200,8 +140,7 @@ export async function sendBookingOutcomeEmails(ctx: PaymentContext, booked: bool
   const resend = new Resend(resendKey)
   const guestFullName = resolveGuestName(ctx).full
 
-  // Guest branded confirmation — only when the booking actually went through.
-  if (booked && ctx.guestEmail) {
+  if (ctx.guestEmail) {
     try {
       await resend.emails.send({
         from,
@@ -214,84 +153,16 @@ export async function sendBookingOutcomeEmails(ctx: PaymentContext, booked: bool
     }
   }
 
-  // Guest "payment received, we're finalising your booking" — booking failed,
-  // payment kept. Tells the guest to contact us if they don't hear back.
-  if (!booked && ctx.guestEmail) {
-    try {
-      await resend.emails.send({
-        from,
-        to:      ctx.guestEmail,
-        subject: "We've received your payment – Boga Legaba",
-        html:    buildGuestPaidNotBookedEmail(ctx),
-      })
-    } catch (err) {
-      console.error("[payment] Guest paid-not-booked email error:", err)
-    }
-  }
-
-  // Admin payment notification (always) — explicit first/surname, accurate status.
   try {
     await resend.emails.send({
       from,
       to:      adminEmail,
       subject: `New Payment – ${guestFullName} · ${ctx.bookingRef || "no ref"}`,
-      html:    buildAdminPaymentEmail(ctx, booked),
+      html:    buildAdminPaymentEmail(ctx, true),
     })
   } catch (err) {
     console.error("[payment] Admin notification email error:", err)
   }
-
-  // Payment succeeded but booking FAILED → staff must finalise manually
-  // (payment was kept, NOT refunded).
-  if (!booked) {
-    try {
-      await resend.emails.send({
-        from,
-        to:      adminEmail,
-        subject: `ACTION REQUIRED – PAID but booking FAILED (payment kept) – ${guestFullName}`,
-        html:    buildNBFailureEmail(ctx),
-      })
-    } catch { /* best effort */ }
-  }
-}
-
-// ── Email: guest "payment received, finalising your booking" notice ──────────
-// Sent when payment succeeded but the NightsBridge booking could not be
-// created automatically. We keep the payment (no auto-refund) and ask the
-// guest to contact us if they don't hear from us shortly.
-
-export function buildGuestPaidNotBookedEmail(ctx: PaymentContext) {
-  const amount = fmtAmount(ctx.amountPaid)
-  const { firstname } = resolveGuestName(ctx)
-
-  return emailShell({
-    title: "Payment Received – Boga Legaba",
-    preheader: `Your payment of ${amount} was received — we're finalising your booking.`,
-    eyebrow: "Payment Received",
-    accentBarColor: EMAIL_COLORS.gold,
-    bodyHtml:
-      emailHero({
-        eyebrow: "Payment Received",
-        heading: `Thank you, ${firstname}`,
-        subtext: "Your payment has been received. We hit a snag confirming your room automatically, so our team is finalising your booking by hand.",
-      }) +
-      emailInfoTable(
-        [
-          { label: "Room requested", value: ctx.roomTypeName || "—" },
-          { label: "Check-in", value: fmtDate(ctx.checkin) },
-          { label: "Check-out", value: fmtDate(ctx.checkout) },
-          { label: "Amount paid", value: amount, emphasis: true },
-        ],
-        { title: "Your payment" },
-      ) +
-      emailParagraph(
-        `We have received your payment of <strong style="color:${EMAIL_COLORS.bodyText};">${amount}</strong> and our team has already been alerted to confirm your room manually — you do not need to pay again.`,
-      ) +
-      emailParagraph(
-        "If you don't receive a confirmation email from us shortly, please contact us directly so we can sort this out for you right away.",
-      ) +
-      emailButton("WhatsApp Us", EMAIL_BRAND.whatsappHref),
-  })
 }
 
 // ── Email: guest payment confirmation ─────────────────────────────────────────
@@ -510,40 +381,3 @@ export function buildAdminPaymentEmail(ctx: PaymentContext, booked: boolean = tr
   })
 }
 
-// ── Email: NightsBridge confirm failure alert ──────────────────────────────────
-
-/**
- * Admin alert: payment succeeded but the NightsBridge booking could not be
- * created automatically. Per business rule, the payment is KEPT (no
- * auto-refund) — staff must finalise the booking manually and follow up with
- * the guest, who has already been told to expect a confirmation shortly.
- */
-export function buildNBFailureEmail(ctx: PaymentContext) {
-  const amount = fmtAmount(ctx.amountPaid)
-  const { full } = resolveGuestName(ctx)
-
-  const rows: InfoRow[] = [
-    { label: "Guest", value: full },
-    { label: "Email", value: ctx.guestEmail || "—" },
-    { label: "Phone", value: ctx.guestPhone || "—" },
-    { label: "Room requested", value: ctx.roomTypeName || "—" },
-    { label: "Check-in", value: fmtDate(ctx.checkin) },
-    { label: "Check-out", value: fmtDate(ctx.checkout) },
-    { label: "Paystack Reference", value: ctx.reference || "—" },
-    { label: "Amount (kept — not refunded)", value: amount, emphasis: true },
-  ]
-
-  return emailShell({
-    title: "Action Required – Boga Legaba",
-    eyebrow: "Admin Alert",
-    accentBarColor: EMAIL_COLORS.danger,
-    bodyHtml:
-      `<tr><td style="padding:32px 40px 20px;">
-        <p style="margin:0 0 8px;color:${EMAIL_COLORS.danger};font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;">&#9888; Action Required</p>
-        <p style="margin:0;color:${EMAIL_COLORS.black};font-size:20px;font-weight:400;font-family:'Playfair Display',Georgia,serif;">Booking Failed — Payment Kept, Please Finalise Manually</p>
-        <p style="margin:8px 0 0;color:${EMAIL_COLORS.muted};font-size:13px;line-height:1.7;">Payment was received but we could not automatically create this booking on NightsBridge. The payment has been <strong style="color:${EMAIL_COLORS.bodyText};">kept — it was NOT refunded</strong>. Please book the guest manually on NightsBridge and let them know it's confirmed. The guest has already been told to contact us if they don't hear back shortly.</p>
-      </td></tr>` +
-      emailInfoTable(rows),
-    footerNote: "Admin alert · Boga Legaba booking system.",
-  })
-}

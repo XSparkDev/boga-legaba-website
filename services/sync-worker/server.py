@@ -269,7 +269,9 @@ def _run_booking_to_db(params: dict, book_script: "Path", reference: str) -> Non
             [sys.executable, str(book_script), "--params", json.dumps(params)],
             capture_output=True,
             text=True,
-            timeout=200,
+            # book_nightsbridge.py now retries internally (up to 3 attempts) on
+            # ambiguous/transient failures — give it room for that.
+            timeout=340,
             env=_build_env(),
         )
         result = {}
@@ -468,7 +470,9 @@ class Handler(BaseHTTPRequestHandler):
                 [sys.executable, str(book_script), "--params", json.dumps(params)],
                 capture_output=True,
                 text=True,
-                timeout=170,
+                # book_nightsbridge.py now retries internally (up to 3 attempts)
+                # on ambiguous/transient failures — give it room for that.
+                timeout=340,
                 env=_build_env(),
             )
             stdout = proc.stdout.strip()
@@ -481,7 +485,7 @@ class Handler(BaseHTTPRequestHandler):
                     pass
             self._json(500, {"ok": False, "error": proc.stderr or "Booking failed"})
         except subprocess.TimeoutExpired:
-            self._json(504, {"ok": False, "error": "Booking timed out after 170 s"})
+            self._json(504, {"ok": False, "error": "Booking timed out after 340 s"})
         except Exception as exc:
             self._json(500, {"ok": False, "error": str(exc)})
         finally:

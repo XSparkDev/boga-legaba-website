@@ -6,15 +6,11 @@ import { Suspense } from "react"
 function FailedContent() {
   const params     = useSearchParams()
   const bookingRef = params.get("bookingRef") ?? ""
-  const reason = params.get("reason") ?? ""
-  // "paid-not-booked" = payment succeeded but the NightsBridge booking failed.
-  // The payment is KEPT (no auto-refund) — staff finalise the booking by hand.
-  const paidNotBooked = reason === "paid-not-booked"
 
-  const heading = paidNotBooked ? "We're finalising your booking" : "Payment Unsuccessful"
-  const message = paidNotBooked
-    ? "Your payment went through and has been received — we hit a snag confirming the room automatically, so our team is finalising your booking by hand. You do not need to pay again. If you don't receive a confirmation email from us shortly, please contact us so we can sort it out right away."
-    : "Your payment could not be processed, so no booking was made and you have not been charged. Please try again below, or contact us on WhatsApp."
+  // BOOK-FIRST FLOW: by the time the guest reaches this page, their room is
+  // already really booked on NightsBridge — this only means the PAYMENT step
+  // didn't complete. Per business decision, the booking is left as-is (no
+  // auto-cancel) — the guest already has NightsBridge's own reservation email.
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-5" style={{ background: "#F2EDE4" }}>
@@ -31,12 +27,12 @@ function FailedContent() {
               BOGA LEGABA
             </p>
             <p className="tracking-[0.18em] mt-1" style={{ color: "#8C7B6B", fontSize: "10px" }}>
-              PRIVATE GAME LODGE
+              GUEST HOUSE &amp; CONFERENCE CENTRE
             </p>
             <div className="mx-auto mt-4" style={{ height: "1px", width: "48px", background: "#C9A84C", opacity: 0.6 }} />
           </div>
 
-          {/* Failed content */}
+          {/* Content */}
           <div className="px-8 pt-8 pb-4 text-center">
             <div
               className="mx-auto mb-4 flex items-center justify-center rounded-full"
@@ -52,10 +48,11 @@ function FailedContent() {
               className="font-normal mb-2"
               style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: "#0A0A0A", fontSize: "26px" }}
             >
-              {heading}
+              Payment didn&apos;t go through
             </h1>
             <p style={{ color: "#8C7B6B", fontSize: "13px", lineHeight: 1.7 }}>
-              {message}
+              Your room is still reserved with us — this only affected payment. Please contact us to arrange
+              payment, or try again below.
             </p>
           </div>
 
@@ -74,23 +71,21 @@ function FailedContent() {
 
           <div className="mx-6 mt-4 mb-5 px-4 py-3 rounded-xl" style={{ background: "#F2EDE4", border: "1px solid #E8E0D4" }}>
             <p style={{ margin: 0, fontSize: "12px", color: "#8C7B6B", lineHeight: 1.6, textAlign: "center" }}>
-              {paidNotBooked
-                ? "Please keep your payment reference handy. If you have any questions, contact us on WhatsApp."
-                : "Please try again below, or contact us via WhatsApp if the problem persists."}
+              Please keep your booking reference handy when you contact us.
             </p>
           </div>
 
           {/* Actions */}
           <div className="px-6 pb-7 space-y-3">
-            {!paidNotBooked && (
-              <button
-                onClick={() => window.history.back()}
-                className="flex w-full items-center justify-center rounded-xl py-3.5 text-sm font-semibold transition-all hover:brightness-110"
-                style={{ background: "#C9A84C", color: "#0A0A0A", letterSpacing: "0.04em" }}
-              >
-                Try Payment Again
-              </button>
-            )}
+            <a
+              href="https://wa.me/27828757018"
+              target="_blank"
+              rel="noreferrer"
+              className="flex w-full items-center justify-center rounded-xl py-3.5 text-sm font-semibold transition-all hover:brightness-110"
+              style={{ background: "#C9A84C", color: "#0A0A0A", letterSpacing: "0.04em" }}
+            >
+              Contact Us on WhatsApp
+            </a>
             <a
               href="/"
               className="flex w-full items-center justify-center rounded-xl py-3.5 text-sm transition-all"

@@ -57,7 +57,45 @@ def _day_of(iso: str) -> int:
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def book_room(params: dict) -> dict:
+# Error substrings that mean the attempt was AMBIGUOUS/TRANSIENT — the Angular
+# SPA didn't confirm, but nothing told us the room is genuinely unavailable.
+# Proven empirically: retrying the IDENTICAL request with no code changes has
+# turned this exact failure into a real booking (e.g. request #1 failed, #2 on
+# the same room/dates booked fine seconds later) — this is a UI-automation
+# timing race (a click landing before Angular finished rendering the next
+# step), not a real NightsBridge rejection. Retrying is the correct fix.
+_RETRYABLE_ERROR_MARKERS = (
+    "did not return a booking number",
+    "Could not set the stay dates",
+    "Could not find the submit/confirm button",
+)
+
+
+def book_room(params: dict, max_attempts: int = 3) -> dict:
+    """Retry wrapper around _book_room_once — see _RETRYABLE_ERROR_MARKERS for
+    which failures are worth retrying (transient automation timing) vs which
+    are real, stable outcomes (sold out, room/meal-plan name mismatch) that
+    retrying identical params would never change."""
+    last_result: dict = {"ok": False, "error": "Booking did not run"}
+    for attempt in range(1, max_attempts + 1):
+        result = _book_room_once(params)
+        if result.get("ok"):
+            return result
+        last_result = result
+        error_text = str(result.get("error", ""))
+        is_retryable = any(marker in error_text for marker in _RETRYABLE_ERROR_MARKERS)
+        if not is_retryable or attempt == max_attempts:
+            break
+        print(
+            f"[book_nightsbridge] Attempt {attempt}/{max_attempts} was ambiguous "
+            f"(transient automation timing, not a real rejection) — retrying: {error_text[:150]}",
+            file=sys.stderr,
+        )
+        time.sleep(3)
+    return last_result
+
+
+def _book_room_once(params: dict) -> dict:
     checkin      = params["checkin"]
     checkout     = params["checkout"]
     room_type    = params["roomTypeName"]
