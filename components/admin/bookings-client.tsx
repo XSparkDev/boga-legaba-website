@@ -21,7 +21,7 @@ import {
   Building2,
 } from "lucide-react"
 import Link from "next/link"
-import type { BookingRow } from "@/app/(main)/admin/bookings/page"
+import type { BookingRow, WebsiteBooking } from "@/app/(main)/admin/bookings/page"
 import { BookingExtrasPanel } from "@/components/admin/booking-extras-panel"
 
 // ---------------------------------------------------------------------------
@@ -317,10 +317,143 @@ function ActionButton({
 }
 
 // ---------------------------------------------------------------------------
+// Website bookings (pay-first pipeline) — payment badge + NightsBridge retry
+// ---------------------------------------------------------------------------
+
+const PAYMENT_STATUS: Record<string, { label: string; cls: string }> = {
+  PENDING:           { label: "Pending",      cls: "bg-gray-100 text-gray-500 border-gray-200"    },
+  AWAITING_PAYMENT:  { label: "Awaiting pay", cls: "bg-amber-50 text-amber-700 border-amber-200"  },
+  PAYMENT_CONFIRMED: { label: "Paid",         cls: "bg-blue-50 text-blue-700 border-blue-200"     },
+  BOGA_NOTIFIED:     { label: "Paid",         cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  FAILED:            { label: "Failed",       cls: "bg-red-50 text-red-700 border-red-200"        },
+}
+
+function PaymentBadge({ status }: { status: string | null }) {
+  const s = PAYMENT_STATUS[status ?? ""] ?? { label: status ?? "—", cls: "bg-gray-100 text-gray-500 border-gray-200" }
+  return (
+    <span className={`inline-block rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold ${s.cls}`}>
+      {s.label}
+    </span>
+  )
+}
+
+function RetryNightsBridgeButton({ reference }: { reference: string }) {
+  const [loading, setLoading] = useState(false)
+  const [done, setDone] = useState(false)
+  const [error, setError] = useState("")
+
+  async function handleClick() {
+    if (done || loading) return
+    setLoading(true)
+    setError("")
+    try {
+      const res = await fetch("/api/admin/retry-nightsbridge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference }),
+      })
+      const data = (await res.json()) as { ok: boolean; error?: string }
+      if (data.ok) setDone(true)
+      else setError(data.error ?? "Retry failed")
+    } catch {
+      setError("Network error")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div>
+      <button
+        onClick={handleClick}
+        disabled={loading || done}
+        title={error || "Push this booking to NightsBridge again"}
+        className="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 font-mono text-[11px] font-semibold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-60"
+      >
+        {loading
+          ? <Loader2 className="size-3.5 animate-spin" />
+          : done
+            ? <CheckCircle2 className="size-3.5" />
+            : <RefreshCw className="size-3.5" />
+        }
+        {done ? "Sent" : "Retry"}
+      </button>
+      {error && <p className="mt-1 max-w-[140px] font-mono text-[9px] leading-tight text-red-500">{error}</p>}
+    </div>
+  )
+}
+
+function WebsiteBookingsSection({ rows }: { rows: WebsiteBooking[] }) {
+  if (rows.length === 0) return null
+  return (
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
+        <p className="font-serif text-sm font-bold text-gray-900">Website Bookings</p>
+        <p className="mt-0.5 font-mono text-[10px] text-gray-400">
+          Guests who booked &amp; paid on the website. A warning shows when they are not yet on NightsBridge — use Retry to push them across.
+        </p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[860px] text-sm">
+          <thead>
+            <tr className="border-b border-gray-100 bg-gray-50">
+              {["Guest", "Dates", "Room", "Amount", "Payment", "NightsBridge", ""].map((h) => (
+                <th key={h} className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-gray-400">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {rows.map((w) => {
+              const onNB = w.status === "completed" && !!w.booking_id
+              const nbFailed = w.status === "failed"
+              return (
+                <tr key={w.reference} className="transition-colors hover:bg-gray-50/60">
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-gray-900">{w.guest_name ?? "—"}</p>
+                    <p className="font-mono text-[10px] text-gray-400">{w.guest_email ?? ""}</p>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 font-mono text-[11px] text-gray-600">
+                    {w.checkin ? fmtDate(w.checkin) : "—"} → {w.checkout ? fmtDate(w.checkout) : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-gray-700">{w.room_name || w.room_type_name || "—"}</td>
+                  <td className="whitespace-nowrap px-4 py-3 font-mono text-[11px] text-gray-700">
+                    {w.amount ? `R ${Number(w.amount).toLocaleString("en-ZA", { minimumFractionDigits: 2 })}` : "—"}
+                  </td>
+                  <td className="px-4 py-3"><PaymentBadge status={w.booking_status} /></td>
+                  <td className="px-4 py-3">
+                    {onNB ? (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-700">
+                        <CheckCircle2 className="size-3" /> On NightsBridge{w.booking_id ? ` #${w.booking_id}` : ""}
+                      </span>
+                    ) : (
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold ${
+                          nbFailed ? "border-red-200 bg-red-50 text-red-700" : "border-amber-200 bg-amber-50 text-amber-700"
+                        }`}
+                        title={w.error ?? undefined}
+                      >
+                        <AlertTriangle className="size-3" /> {nbFailed ? "NightsBridge failed" : "Not yet on NightsBridge"}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">{!onNB && <RetryNightsBridgeButton reference={w.reference} />}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
-export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
+export function BookingsClient({ bookings, websiteBookings }: { bookings: BookingRow[]; websiteBookings: WebsiteBooking[] }) {
   const [tab, setTab] = useState<Tab>("all")
   const [showAdd, setShowAdd] = useState(false)
   const [panelBooking, setPanelBooking] = useState<BookingRow | null>(null)
@@ -405,6 +538,9 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
             </button>
           ))}
         </div>
+
+        {/* Website bookings (pay-first pipeline) — paid guests who may not be on NightsBridge yet */}
+        <WebsiteBookingsSection rows={websiteBookings} />
 
         {/* Tab bar */}
         <div className="flex gap-1 overflow-x-auto rounded-xl border border-gray-200 bg-white p-1 shadow-sm">

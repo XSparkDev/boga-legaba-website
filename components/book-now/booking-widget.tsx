@@ -166,10 +166,9 @@ export function BookingWidget({
       maxOccupancy,
     }
 
-    // ── BOOK FIRST: create the real NightsBridge booking now. The guest stays
-    // right here (no page navigation) while it's created, and is only sent to
-    // Paystack once the booking has genuinely reached a "completed" state —
-    // never on "processing", and never just because the job was accepted. ────
+    // ── PAY FIRST: /api/booking/start sets up payment immediately and fires the
+    // NightsBridge booking off in the background. The guest goes straight to
+    // Paystack — no waiting for the ~50-90s NightsBridge job. ────────────────
     setStep("paying")
     try {
       const res = await fetch("/api/booking/start", {
@@ -177,8 +176,14 @@ export function BookingWidget({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bookingPayload),
       })
-      const data = (await res.json()) as { ok: boolean; reference?: string; error?: string }
-      if (data.ok && data.reference) {
+      const data = (await res.json()) as { ok: boolean; reference?: string; paymentUrl?: string; error?: string }
+      if (data.ok && data.paymentUrl) {
+        // Happy path: straight to checkout.
+        window.location.href = data.paymentUrl
+      } else if (data.ok && data.reference) {
+        // Rare: Paystack pre-generation returned no URL. The booking is already
+        // AWAITING_PAYMENT, so the first poll immediately falls through to
+        // goToPayment(), which generates a session via /api/payment/initiate.
         pollBookingStatus(data.reference, amountRands)
       } else {
         setErrorMsg(data.error ?? "Could not start your booking. Please try WhatsApp or contact us.")
@@ -219,8 +224,10 @@ export function BookingWidget({
         body: JSON.stringify({
           email: d.guestEmail ?? email,
           amountRands,
-          bookingRef: d.bookingRef ?? "",
+          bookingRef: d.bookingRef || reference,
+          internalReference: reference,
           guestName: d.guestName ?? `${firstname} ${surname}`.trim(),
+          guestPhone: phone,
           checkin: d.checkin ?? arrive,
           checkout: d.checkout ?? depart,
           roomTypeName: d.roomTypeName ?? roomTypeName,

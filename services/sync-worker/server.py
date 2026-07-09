@@ -334,7 +334,16 @@ def _now_iso() -> str:
 def _run_booking_to_db(params: dict, book_script: "Path", reference: str) -> None:
     """Run the booking script (blocking, ~50s) and record the outcome in
     booking_job. Runs in a background thread so the HTTP request can return
-    immediately — nothing waits on the ~50s Playwright job."""
+    immediately — nothing waits on the ~50s Playwright job.
+
+    PAY-FIRST: this worker owns ONLY the NightsBridge track — booking_job.status
+    ('processing'/'completed'/'failed') plus booking_id/room_name. It must NOT
+    touch booking_status: that is the website's payment track (PENDING ->
+    AWAITING_PAYMENT -> PAYMENT_CONFIRMED -> ...), which now runs in parallel and
+    is often already past AWAITING_PAYMENT by the time this finishes. A stray
+    FAILED transition here could wrongly fail a booking the guest already paid
+    for. The admin page reads status/booking_id to show 'not yet on NightsBridge'
+    and to offer a retry."""
     print(f"[worker] booking_job[{reference}] background thread STARTED (room={params.get('roomTypeName')})")
     global _running
     got_lock = _lock.acquire(timeout=70)
@@ -388,28 +397,16 @@ def _run_booking_to_db(params: dict, book_script: "Path", reference: str) -> Non
             if room_name:
                 fields["room_name"] = room_name
             _write_booking_job(reference, fields)
-            # A real, non-empty booking_id scraped from NightsBridge's own
-            # confirmation page is both "the booking was created" AND "we
-            # verified it" in one step with the current scripts — chain
-            # straight through both stages. (A future script that separates
-            # "submitted" from "verified via booking-summary page" into two
-            # distinct moments would call these at the right points instead.)
-            _transition_booking_status(reference, "NIGHTSBRIDGE_BOOKING_CREATED")
-            _transition_booking_status(reference, "NIGHTSBRIDGE_VERIFIED")
         elif result.get("ok") and not booking_id:
             err = "Booking could not be confirmed — NightsBridge returned no booking number. Please try again or contact us."
             _write_booking_job(reference, {"status": "failed", "error": err})
-            _transition_booking_status(reference, "FAILED", reason=err)
         else:
             err = result.get("error") or (proc.stderr or "").strip() or "Booking failed"
             _write_booking_job(reference, {"status": "failed", "error": err[:800]})
-            _transition_booking_status(reference, "FAILED", reason=err[:800])
     except subprocess.TimeoutExpired:
         _write_booking_job(reference, {"status": "failed", "error": "Booking timed out"})
-        _transition_booking_status(reference, "FAILED", reason="Booking timed out")
     except Exception as exc:
         _write_booking_job(reference, {"status": "failed", "error": str(exc)[:800]})
-        _transition_booking_status(reference, "FAILED", reason=str(exc)[:800])
     finally:
         if got_lock:
             _running = False

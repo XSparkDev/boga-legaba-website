@@ -29,7 +29,13 @@ export type BookingStatus = (typeof BOOKING_STATUSES)[number]
  * any point); BOGA_NOTIFIED and FAILED are terminal.
  */
 const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
-  PENDING: ["NIGHTSBRIDGE_BOOKING_CREATED", "FAILED"],
+  // PAY-FIRST FLOW: PENDING can now jump straight to AWAITING_PAYMENT. The
+  // website drives the payment track (PENDING -> AWAITING_PAYMENT -> ...)
+  // independently of the NightsBridge track (booking_job.status +
+  // booking_id/room_name, driven by the worker in the background). The old
+  // NIGHTSBRIDGE_* stages remain valid targets but are no longer part of the
+  // guest's path to payment.
+  PENDING: ["NIGHTSBRIDGE_BOOKING_CREATED", "AWAITING_PAYMENT", "FAILED"],
   NIGHTSBRIDGE_BOOKING_CREATED: ["NIGHTSBRIDGE_VERIFIED", "FAILED"],
   NIGHTSBRIDGE_VERIFIED: ["CONFIRMATION_EMAIL_SENT", "FAILED"],
   CONFIRMATION_EMAIL_SENT: ["AWAITING_PAYMENT", "FAILED"],

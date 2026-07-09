@@ -1,22 +1,28 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkRoomTypeAvailableLive } from "@/lib/nightsbridge-api"
 import { hasActiveHold, createHold } from "@/lib/booking-holds"
-import { ensurePendingBookingJob } from "@/lib/booking-job"
-import { triggerAsyncBooking, type PaymentContext } from "@/lib/payment-utils"
+import { ensurePendingBookingJob, savePaystackUrl, getBookingJob } from "@/lib/booking-job"
+import { triggerAsyncBooking, initiatePaystackPayment, buildGuestPendingEmail, type PaymentContext } from "@/lib/payment-utils"
+import { transitionBookingStatus } from "@/lib/booking-status"
+import { Resend } from "resend"
 
 export const dynamic = "force-dynamic"
 
 const NB_BBID = 21091
 
 /**
- * BOOK-FIRST FLOW, step 1: create the real NightsBridge booking BEFORE any
- * payment is requested. Kicks off the same reliable async booking engine used
- * by the old post-payment flow (background job + booking_job table), just
- * moved earlier — the guest lands on /booking/processing to watch it complete,
- * then only afterwards gets sent to Paystack to pay for an already-real room.
+ * PAY-FIRST FLOW, step 1: set the guest up to pay IMMEDIATELY, and fire the
+ * NightsBridge booking off in the background (best-effort). Two independent
+ * tracks on the one booking_job row:
+ *   - Payment track  = booking_status (PENDING -> AWAITING_PAYMENT -> ...),
+ *     driven here + by /api/payment/{verify,webhook}.
+ *   - NightsBridge track = booking_job.status + booking_id/room_name, driven by
+ *     the worker in the background. The admin page surfaces "not yet on
+ *     NightsBridge" until it completes, and can retry it.
  *
- * Returns fast (job accepted); the actual ~50-90s Playwright booking runs in
- * the worker's background and is tracked via /api/booking/status.
+ * The guest no longer waits ~50-90s for NightsBridge before paying — we keep
+ * only the fast live-availability gate, then generate the Paystack session and
+ * return its URL so the widget can redirect straight to checkout.
  */
 export async function POST(request: NextRequest) {
   let body: Record<string, unknown>
@@ -110,25 +116,74 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  if (jobState === "created") {
-    const accepted = await triggerAsyncBooking(ctx)
-    console.log(`[booking/start] reference=${reference} triggerAsyncBooking accepted=${accepted}`)
-    if (!accepted) {
-      // NOTE: booking_job already has a "processing" row for this reference (from
-      // ensurePendingBookingJob above) that will now never be updated, since the
-      // worker never started the job. Harmless (the widget won't navigate to the
-      // polling page on this ok:false response, and `reference` is unique per
-      // attempt so it's never reused), but flagged here for visibility.
-      console.error(`[booking/start] reference=${reference} worker REJECTED/UNREACHABLE — leaving orphaned processing row, guest will see an error and can retry`)
-      return NextResponse.json(
-        { ok: false, error: "Could not start the booking. Please try again or contact us on WhatsApp." },
-        { status: 502 },
-      )
+  // "exists" → a job for this reference is already in flight (shouldn't normally
+  // happen since we just generated a fresh reference). Don't re-trigger or
+  // re-generate a second Paystack session — just hand back the one already saved.
+  if (jobState === "exists") {
+    const { job } = await getBookingJob(reference)
+    const existingUrl = (job?.context as { paystackUrl?: string } | null)?.paystackUrl ?? ""
+    return NextResponse.json({ ok: true, reference, paymentUrl: existingUrl })
+  }
+
+  // ── Fire the NightsBridge booking in the BACKGROUND (best-effort) ──────────
+  // Pay-first: we do NOT block on it and do NOT fail the guest if the worker is
+  // unreachable. The booking_job.status track stays "processing"; the admin
+  // page shows "not yet on NightsBridge" and offers a Retry.
+  triggerAsyncBooking(ctx)
+    .then((accepted) => console.log(`[booking/start] reference=${reference} background worker trigger accepted=${accepted}`))
+    .catch((err) => console.error(`[booking/start] reference=${reference} background worker trigger error:`, err))
+
+  // ── Fast path: create the Paystack session and move onto the payment track ──
+  const amountRands = Number(body.amountRands ?? 0)
+  let paymentUrl = ""
+  if (amountRands > 0) {
+    const payment = await initiatePaystackPayment({
+      email: ctx.guestEmail,
+      amountRands,
+      bookingRef: reference,        // no NightsBridge NBID yet — use the internal ref
+      internalReference: reference, // drives the state machine from verify/webhook
+      guestName: ctx.guestName,
+      guestPhone: ctx.guestPhone,
+      checkin,
+      checkout,
+      roomTypeName,
+    })
+    if (payment.ok) {
+      paymentUrl = payment.authorization_url
+      await savePaystackUrl(reference, paymentUrl)
+    } else {
+      console.error(`[booking/start] reference=${reference} Paystack init failed: ${payment.error}`)
     }
   }
-  // "exists" → a job for this reference is already in flight (shouldn't normally
-  // happen since we just generated a fresh reference) — do NOT re-trigger.
 
-  console.log(`[booking/start] reference=${reference} SUCCESS — returning to widget for redirect to /booking/processing`)
-  return NextResponse.json({ ok: true, reference })
+  // Onto the payment track immediately — independent of the NightsBridge track.
+  await transitionBookingStatus(reference, "AWAITING_PAYMENT", { from: ["PENDING"] })
+
+  // "Complete payment" email — non-blocking so it never delays the redirect.
+  if (paymentUrl) {
+    const resendKey = process.env.RESEND_API_KEY
+    if (resendKey && resendKey !== "re_REPLACE_ME" && ctx.guestEmail) {
+      const resend = new Resend(resendKey)
+      const from = process.env.RESEND_FROM_EMAIL ?? "Boga Legaba <onboarding@resend.dev>"
+      resend.emails
+        .send({
+          from,
+          to: ctx.guestEmail,
+          subject: "Complete your payment – Boga Legaba",
+          html: buildGuestPendingEmail({
+            guestName: ctx.guestName,
+            bookingRef: reference,
+            checkin,
+            checkout,
+            roomTypeName,
+            estimatedTotal: amountRands > 0 ? `R ${amountRands.toLocaleString("en-ZA", { minimumFractionDigits: 2 })}` : "",
+            paymentUrl,
+          }),
+        })
+        .catch((err) => console.error(`[booking/start] reference=${reference} pending email error:`, err))
+    }
+  }
+
+  console.log(`[booking/start] reference=${reference} SUCCESS — payment ready (paymentUrl=${paymentUrl ? "yes" : "no"}), NightsBridge running in background`)
+  return NextResponse.json({ ok: true, reference, paymentUrl })
 }
