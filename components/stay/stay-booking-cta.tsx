@@ -8,7 +8,7 @@ import { BUSINESS } from "@/data/rooms"
  */
 export function StayBookingCta() {
   return (
-    <section className="bg-[#0a0a0a] py-16 text-white lg:py-24">
+    <section className="bg-[#000000] py-16 text-white lg:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-gold">

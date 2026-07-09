@@ -57,7 +57,46 @@ def _day_of(iso: str) -> int:
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def book_room(params: dict) -> dict:
+# Error substrings that mean the attempt was AMBIGUOUS/TRANSIENT — the Angular
+# SPA didn't confirm, but nothing told us the room is genuinely unavailable.
+# Proven empirically: retrying the IDENTICAL request with no code changes has
+# turned this exact failure into a real booking (e.g. request #1 failed, #2 on
+# the same room/dates booked fine seconds later) — this is a UI-automation
+# timing race (a click landing before Angular finished rendering the next
+# step), not a real NightsBridge rejection. Retrying is the correct fix.
+_RETRYABLE_ERROR_MARKERS = (
+    "did not return a booking number",
+    "Could not set the stay dates",
+    "Could not find the submit/confirm button",
+    "Guest booking form did not open",
+)
+
+
+def book_room(params: dict, max_attempts: int = 3) -> dict:
+    """Retry wrapper around _book_room_once — see _RETRYABLE_ERROR_MARKERS for
+    which failures are worth retrying (transient automation timing) vs which
+    are real, stable outcomes (sold out, room/meal-plan name mismatch) that
+    retrying identical params would never change."""
+    last_result: dict = {"ok": False, "error": "Booking did not run"}
+    for attempt in range(1, max_attempts + 1):
+        result = _book_room_once(params)
+        if result.get("ok"):
+            return result
+        last_result = result
+        error_text = str(result.get("error", ""))
+        is_retryable = any(marker in error_text for marker in _RETRYABLE_ERROR_MARKERS)
+        if not is_retryable or attempt == max_attempts:
+            break
+        print(
+            f"[book_nightsbridge] Attempt {attempt}/{max_attempts} was ambiguous "
+            f"(transient automation timing, not a real rejection) — retrying: {error_text[:150]}",
+            file=sys.stderr,
+        )
+        time.sleep(3)
+    return last_result
+
+
+def _book_room_once(params: dict) -> dict:
     checkin      = params["checkin"]
     checkout     = params["checkout"]
     room_type    = params["roomTypeName"]
@@ -152,6 +191,24 @@ def book_room(params: dict) -> dict:
                 }
             time.sleep(5)
 
+            # ── Step 3b: Confirm the guest form actually opened ────────────
+            # If room/meal-plan selection landed on the wrong (or no) section,
+            # the firstname field never appears — fail fast here with a clear
+            # reason instead of silently filling nothing and surfacing a
+            # confusing "no booking number" error from an unrelated page state.
+            try:
+                page.wait_for_selector('input[name="firstname"]', timeout=8_000)
+            except Exception:
+                return {
+                    "ok": False,
+                    "error": (
+                        f"Guest booking form did not open for room '{room_type}' / "
+                        f"meal plan '{meal_plan}'. The room or meal-plan selection "
+                        "likely landed on the wrong section, or that combination "
+                        "isn't bookable for these dates."
+                    ),
+                }
+
             # ── Step 4: Fill guest form ────────────────────────────────────
             _fill_guest_form(
                 page,
@@ -209,39 +266,67 @@ def book_room(params: dict) -> dict:
                 "sold out", "no availability", "booking failed",
                 "we were unable", "cannot be booked",
             ]
-            booking_ref = _extract_booking_ref(page_text)
-            if not booking_ref and any(p in text_lower for p in error_phrases):
+            if any(p in text_lower for p in error_phrases):
                 return {
                     "ok": False,
                     "error": "NightsBridge indicated no availability for these dates. " + page_text[:300],
                 }
 
-            # Require clear confirmation signals — "reference" excluded as it appears on the form page
-            confirmation_keywords = ["confirmed", "thank you", "booking number", "booking id"]
-            has_confirmation = booking_ref or any(kw in text_lower for kw in confirmation_keywords)
-            if not has_confirmation:
+            # A GENUINE booking always ends on a confirmation page with a booking
+            # NUMBER. Require one — a stray "thank you"/"confirmed" keyword is NOT
+            # enough (that produced false "booked" results with a blank number).
+            confirmation = _parse_confirmation(page)
+            booking_ref = _extract_booking_ref(page_text) or (confirmation.get("bookingId") or "").strip()
+
+            if booking_ref:
                 try:
-                    page.screenshot(path="/tmp/booking_no_confirm.png")
+                    page.screenshot(path="/tmp/booking_confirmed.png")
                 except Exception:
                     pass
                 return {
-                    "ok": False,
-                    "error": (
-                        "The booking form was not accepted by NightsBridge — "
-                        "terms & conditions may not have been checked or the payment method was not selected. "
-                        "Please try again. If this repeats, contact the property directly."
-                    ),
+                    "ok": True,
+                    "bookingRef": booking_ref,
+                    "confirmation": confirmation,
                 }
 
-            confirmation = _parse_confirmation(page)
+            # No booking number → the booking did NOT complete. Capture what
+            # NightsBridge actually showed so the real reason is recorded (e.g. a
+            # last-minute booking cut-off, or a rule blocking the date).
             try:
-                page.screenshot(path="/tmp/booking_confirmed.png")
+                page.screenshot(path="/tmp/booking_no_confirm.png")
             except Exception:
                 pass
+
+            # CRITICAL — the page we land back on after a failed submit is the
+            # multi-room availability grid, which lists ALL room types. A blind
+            # page_text[:450] snippet shows whichever room happens to sort first
+            # in that grid, NOT the room the guest actually requested. Anchor the
+            # diagnostic snippet on the REQUESTED room's own text instead.
+            #
+            # We deliberately do NOT try to infer "SOLD" from this page text.
+            # A genuine sellout (every physical room of this type taken for the
+            # requested nights) is authoritatively caught EARLIER by the worker's
+            # availability pre-check (_check_room_availability), which fails
+            # before Playwright ever runs. By the time we reach this point the
+            # room WAS available per that check, so a missing booking number here
+            # is a transient automation/timing failure, not a sellout — it must
+            # stay RETRYABLE. A previous attempt to read "SOLD" from a wide text
+            # window around the room name produced false positives (it caught the
+            # word "SOLD" belonging to an adjacent room, or to a day OUTSIDE the
+            # guest's stay), turning a retryable transient failure into a hard,
+            # non-retryable rejection of a room that was genuinely bookable.
+            flat_text = " ".join(page_text.split())
+            room_idx = flat_text.lower().find(room_type.lower())
+            if room_idx != -1:
+                window_start = max(0, room_idx - 40)
+                window_end = min(len(flat_text), room_idx + 500)
+                snippet = flat_text[window_start:window_end]
+            else:
+                snippet = flat_text[:450]
+
             return {
-                "ok": True,
-                "bookingRef": booking_ref,
-                "confirmation": confirmation,
+                "ok": False,
+                "error": f"NightsBridge did not return a booking number. The page showed: {snippet}",
             }
 
         except Exception as exc:
@@ -470,13 +555,26 @@ def _click_view_rates(page, room_type_name: str) -> bool:
 
 
 def _click_book_now(page, meal_plan_name: str) -> bool:
-    """Find the meal plan section and click its BOOK NOW button."""
+    """Find the meal plan section and click its BOOK NOW button.
+
+    CRITICAL — same shared-ancestor trap as `_click_view_rates`: every room's
+    rates panel lives in the DOM at once, so walking up from a BOOK NOW button
+    can bleed into a parent that also contains OTHER rooms' text, and
+    `.includes(mealPlanName)` can then match a meal plan belonging to a
+    different (collapsed) room card. Only the just-selected room's panel is
+    actually expanded/visible, so we restrict the search to VISIBLE buttons
+    first, and only fall back to hidden ones if nothing visible matches.
+    """
     return page.evaluate(
         """(mealPlanName) => {
             const mpLower = mealPlanName.toLowerCase();
-            const bookBtns = Array.from(document.querySelectorAll('button')).filter(
+            function isVisible(el) { return !!(el && el.offsetParent !== null); }
+            const allBookBtns = Array.from(document.querySelectorAll('button')).filter(
                 b => b.innerText?.trim().toUpperCase() === 'BOOK NOW'
             );
+            const bookBtns = allBookBtns.filter(isVisible).length
+                ? allBookBtns.filter(isVisible)
+                : allBookBtns;
             for (const btn of bookBtns) {
                 let el = btn;
                 for (let i = 0; i < 7; i++) {
@@ -862,7 +960,7 @@ def _parse_confirmation(page) -> dict:
             const payM = text.match(/(The property will[^\n.]+\.)/i);
 
             return {
-                bookingId:   G(['bookingid', 'booking id', 'booking number'], /Booking\s*ID\s*(\d+)/i),
+                bookingId:   G(['bookingid', 'booking id', 'booking number'], /Booking\s*ID[:\s]*([A-Za-z0-9\-]+)/i),
                 propertyName,
                 arrival:     G(['arrival'], /Arrival\s*([A-Za-z][^\n]{3,40})/i),
                 leaving:     G(['leaving', 'depart'], /Leaving[:\s]*([A-Za-z][^\n]{3,40})/i),
@@ -888,6 +986,13 @@ def _extract_booking_ref(text: str) -> str | None:
     patterns = [
         # NightsBridge bbid-prefixed refs e.g. "21091-12345"
         r'\b(21091-\d+)\b',
+        # "Booking ID:" — confirmed real format seen in NightsBridge's own
+        # confirmation emails, e.g. "Booking ID: NB-120562673". Distinct from
+        # "Booking Number"/"Booking Reference" below: NONE of those patterns
+        # match the word "ID", so a genuine success on this exact label was
+        # previously undetected — reported as a failure (stuck polling on the
+        # site) even though NightsBridge had already confirmed the booking.
+        r'[Bb]ooking\s+[Ii][Dd][:\s#]+([A-Z0-9\-]{4,20})',
         # Explicit booking reference label
         r'[Bb]ooking\s+[Rr]ef(?:erence)?[:\s#]+([A-Z0-9\-]{4,20})',
         r'[Cc]onfirmation\s+[Nn](?:umber|o\.?)[:\s#]+([A-Z0-9\-]{4,20})',

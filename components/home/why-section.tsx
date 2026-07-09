@@ -14,7 +14,7 @@ export function WhySection() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <Reveal>
             <span className="section-label">Why Boga Legaba</span>
-            <h2 className="font-display text-[clamp(36px,5vw,56px)] leading-[0.95] tracking-[-0.02em] text-[#0A0A0A] mb-6">
+            <h2 className="font-display text-[clamp(36px,5vw,56px)] leading-[0.95] tracking-[-0.02em] text-[#000000] mb-6">
               Built for the way South Africans travel and do business.
             </h2>
             <p className="font-body text-base text-body-text leading-relaxed">
@@ -28,13 +28,13 @@ export function WhySection() {
               {FEATURES.map((item, i) => (
                 <div
                   key={i}
-                  className="flex items-start gap-5 py-6 border-b border-[#0A0A0A]/10 last:border-0"
+                  className="flex items-start gap-5 py-6 border-b border-[#000000]/10 last:border-0"
                 >
-                  <div className="w-10 h-10 rounded-full bg-[#0A0A0A] flex items-center justify-center flex-shrink-0 text-gold text-lg">
+                  <div className="w-10 h-10 rounded-full bg-[#000000] flex items-center justify-center flex-shrink-0 text-gold text-lg">
                     {item.icon}
                   </div>
                   <div>
-                    <h4 className="font-body font-medium text-[#0A0A0A] mb-1">{item.title}</h4>
+                    <h4 className="font-body font-medium text-[#000000] mb-1">{item.title}</h4>
                     <p className="font-body text-sm text-taupe leading-relaxed">{item.desc}</p>
                   </div>
                 </div>

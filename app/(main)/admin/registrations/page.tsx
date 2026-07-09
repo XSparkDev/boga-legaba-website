@@ -28,7 +28,7 @@ export default async function RegistrationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="sticky top-0 z-30 border-b border-white/10 bg-[#0a0a0a] px-4 py-3 sm:px-6">
+      <div className="sticky top-0 z-30 border-b border-white/10 bg-[#000000] px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-7xl items-center gap-3">
           <Link href="/admin/dashboard" className="flex items-center gap-1 font-mono text-[11px] text-white/60 hover:text-white">
             <ChevronLeft className="size-3.5" /> Dashboard

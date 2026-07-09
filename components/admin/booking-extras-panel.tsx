@@ -125,7 +125,7 @@ export function BookingExtrasPanel({ booking, onClose }: { booking: Booking; onC
     setInvoices((list) => list.map((i) => (i.id === inv.id ? { ...i, ...inv } : i)))
   }
 
-  const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#b8973a] focus:outline-none"
+  const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#996948] focus:outline-none"
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 px-4 py-8 backdrop-blur-sm">
@@ -146,10 +146,10 @@ export function BookingExtrasPanel({ booking, onClose }: { booking: Booking; onC
           {/* Department */}
           <section>
             <h3 className="mb-2 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-500">
-              <Building2 className="size-3.5 text-[#b8973a]" /> Department / corporate
+              <Building2 className="size-3.5 text-[#996948]" /> Department / corporate
             </h3>
             <label className="mb-2 flex items-center gap-2 text-sm text-gray-700">
-              <input type="checkbox" checked={isDept} onChange={(e) => setIsDept(e.target.checked)} className="accent-[#b8973a]" />
+              <input type="checkbox" checked={isDept} onChange={(e) => setIsDept(e.target.checked)} className="accent-[#996948]" />
               This is a department booking (no upfront payment)
             </label>
             {isDept && (
@@ -159,7 +159,7 @@ export function BookingExtrasPanel({ booking, onClose }: { booking: Booking; onC
                 <input placeholder="Contact person" value={contact} onChange={(e) => setContact(e.target.value)} className={`${inputCls} col-span-2`} />
               </div>
             )}
-            <button onClick={saveDept} disabled={deptSaving} className="mt-2 rounded-lg bg-[#b8973a] px-4 py-1.5 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50">
+            <button onClick={saveDept} disabled={deptSaving} className="mt-2 rounded-lg bg-[#996948] px-4 py-1.5 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50">
               {deptSaving ? "Saving…" : "Save department details"}
             </button>
           </section>
@@ -170,9 +170,9 @@ export function BookingExtrasPanel({ booking, onClose }: { booking: Booking; onC
           <section>
             <div className="mb-2 flex items-center justify-between">
               <h3 className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-gray-500">
-                <FileText className="size-3.5 text-[#b8973a]" /> Invoices
+                <FileText className="size-3.5 text-[#996948]" /> Invoices
               </h3>
-              <button onClick={newInvoice} disabled={busy} className="flex items-center gap-1 rounded-lg border border-[#b8973a]/40 bg-[#b8973a]/10 px-2.5 py-1 text-[11px] font-medium text-[#b8973a] hover:bg-[#b8973a]/20">
+              <button onClick={newInvoice} disabled={busy} className="flex items-center gap-1 rounded-lg border border-[#996948]/40 bg-[#996948]/10 px-2.5 py-1 text-[11px] font-medium text-[#996948] hover:bg-[#996948]/20">
                 <Plus className="size-3" /> New invoice
               </button>
             </div>
@@ -185,10 +185,10 @@ export function BookingExtrasPanel({ booking, onClose }: { booking: Booking; onC
               <div className="flex flex-wrap gap-2">
                 {invoices.map((inv) => (
                   <button key={inv.id} onClick={() => openInvoice(inv.id)}
-                    className={`rounded-lg border px-3 py-1.5 text-left text-xs ${selected?.id === inv.id ? "border-[#b8973a] bg-amber-50" : "border-gray-200 hover:border-gray-300"}`}>
+                    className={`rounded-lg border px-3 py-1.5 text-left text-xs ${selected?.id === inv.id ? "border-[#996948] bg-amber-50" : "border-gray-200 hover:border-gray-300"}`}>
                     <span className="font-mono font-semibold text-gray-800">{inv.invoice_no}</span>
                     <span className="ml-2 text-gray-400">{inv.status}</span>
-                    <span className="ml-2 text-[#b8973a]">{zar(inv.total)}</span>
+                    <span className="ml-2 text-[#996948]">{zar(inv.total)}</span>
                   </button>
                 ))}
               </div>
@@ -223,14 +223,14 @@ export function BookingExtrasPanel({ booking, onClose }: { booking: Booking; onC
                   <input placeholder="Description (e.g. Breakfast x2)" value={desc} onChange={(e) => setDesc(e.target.value)} className={`${inputCls} flex-1`} />
                   <input placeholder="Qty" value={qty} onChange={(e) => setQty(e.target.value)} className={`${inputCls} w-16`} />
                   <input placeholder="Unit R" value={price} onChange={(e) => setPrice(e.target.value)} className={`${inputCls} w-24`} />
-                  <button onClick={addItem} disabled={busy || !desc.trim()} className="rounded-lg bg-[#b8973a] px-3 py-2 text-sm text-white hover:brightness-110 disabled:opacity-50"><Plus className="size-4" /></button>
+                  <button onClick={addItem} disabled={busy || !desc.trim()} className="rounded-lg bg-[#996948] px-3 py-2 text-sm text-white hover:brightness-110 disabled:opacity-50"><Plus className="size-4" /></button>
                 </div>
 
                 <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
-                  <p className="text-sm font-semibold text-gray-800">Total: <span className="text-[#b8973a]">{zar(selected.total)}</span></p>
+                  <p className="text-sm font-semibold text-gray-800">Total: <span className="text-[#996948]">{zar(selected.total)}</span></p>
                   <div className="flex gap-2">
                     <button onClick={() => status("paid")} disabled={busy} className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100">Mark paid</button>
-                    <button onClick={release} disabled={busy} className="flex items-center gap-1 rounded-lg bg-[#0a0a0a] px-3 py-1.5 text-xs font-semibold text-[#C9A84C] hover:brightness-125">
+                    <button onClick={release} disabled={busy} className="flex items-center gap-1 rounded-lg bg-[#000000] px-3 py-1.5 text-xs font-semibold text-[#996948] hover:brightness-125">
                       <Send className="size-3.5" /> Send to guest
                     </button>
                   </div>

@@ -21,7 +21,7 @@ import {
   Building2,
 } from "lucide-react"
 import Link from "next/link"
-import type { BookingRow } from "@/app/(main)/admin/bookings/page"
+import type { BookingRow, WebsiteBooking } from "@/app/(main)/admin/bookings/page"
 import { BookingExtrasPanel } from "@/components/admin/booking-extras-panel"
 
 // ---------------------------------------------------------------------------
@@ -83,7 +83,7 @@ function filterBookings(bookings: BookingRow[], tab: Tab): BookingRow[] {
 // Add Booking modal
 // ---------------------------------------------------------------------------
 
-const inputCls = "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 font-mono text-sm text-gray-900 placeholder:text-gray-300 focus:border-[#b8973a] focus:outline-none focus:ring-1 focus:ring-[#b8973a]/30"
+const inputCls = "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 font-mono text-sm text-gray-900 placeholder:text-gray-300 focus:border-[#996948] focus:outline-none focus:ring-1 focus:ring-[#996948]/30"
 
 type BookingFormState = {
   checkin: string; checkout: string; roomTypeName: string; mealPlanName: string
@@ -173,7 +173,7 @@ function AddBookingModal({ onClose }: { onClose: () => void }) {
               <button onClick={() => { setResult(null); setForm(EMPTY_FORM) }} className="flex-1 rounded-lg border border-gray-200 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 Add another
               </button>
-              <button onClick={onClose} className="flex-1 rounded-lg bg-[#b8973a] py-2 text-sm font-semibold text-white hover:brightness-110">
+              <button onClick={onClose} className="flex-1 rounded-lg bg-[#996948] py-2 text-sm font-semibold text-white hover:brightness-110">
                 Done
               </button>
             </div>
@@ -240,7 +240,7 @@ function AddBookingModal({ onClose }: { onClose: () => void }) {
             <button
               type="submit"
               disabled={submitting}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b8973a] py-3 font-mono text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#996948] py-3 font-mono text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
             >
               {submitting ? <><Loader2 className="size-4 animate-spin" /> Creating booking on NightsBridge…</> : <><Plus className="size-4" /> Create Booking</>}
             </button>
@@ -317,10 +317,208 @@ function ActionButton({
 }
 
 // ---------------------------------------------------------------------------
+// Website bookings (pay-first pipeline) — payment badge + NightsBridge retry
+// ---------------------------------------------------------------------------
+
+const PAYMENT_STATUS: Record<string, { label: string; cls: string }> = {
+  PENDING:           { label: "Pending",      cls: "bg-gray-100 text-gray-500 border-gray-200"    },
+  AWAITING_PAYMENT:  { label: "Awaiting pay", cls: "bg-amber-50 text-amber-700 border-amber-200"  },
+  PAYMENT_CONFIRMED: { label: "Paid",         cls: "bg-blue-50 text-blue-700 border-blue-200"     },
+  BOGA_NOTIFIED:     { label: "Paid",         cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  PAYMENT_FAILED:    { label: "Payment failed", cls: "bg-red-50 text-red-700 border-red-200"      },
+  FAILED:            { label: "Failed",       cls: "bg-red-50 text-red-700 border-red-200"        },
+}
+
+// A guest who reached checkout but never paid: either Paystack told us it
+// failed (PAYMENT_FAILED), or they abandoned the tab so no event ever came and
+// the row is still AWAITING_PAYMENT well after it was created. STALE_MINUTES is
+// how long we wait before treating an unpaid AWAITING_PAYMENT as abandoned.
+const ABANDONED_AFTER_MINUTES = 30
+
+function isUnsuccessfulPayment(w: WebsiteBooking): boolean {
+  if (w.booking_status === "PAYMENT_FAILED") return true
+  if (w.booking_status === "AWAITING_PAYMENT") {
+    const ageMin = (Date.now() - new Date(w.created_at).getTime()) / 60000
+    return ageMin >= ABANDONED_AFTER_MINUTES
+  }
+  return false
+}
+
+function isPaid(w: WebsiteBooking): boolean {
+  return w.booking_status === "PAYMENT_CONFIRMED" || w.booking_status === "BOGA_NOTIFIED"
+}
+
+function PaymentBadge({ status }: { status: string | null }) {
+  const s = PAYMENT_STATUS[status ?? ""] ?? { label: status ?? "—", cls: "bg-gray-100 text-gray-500 border-gray-200" }
+  return (
+    <span className={`inline-block rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold ${s.cls}`}>
+      {s.label}
+    </span>
+  )
+}
+
+function RetryNightsBridgeButton({ reference }: { reference: string }) {
+  const [loading, setLoading] = useState(false)
+  const [done, setDone] = useState(false)
+  const [error, setError] = useState("")
+
+  async function handleClick() {
+    if (done || loading) return
+    setLoading(true)
+    setError("")
+    try {
+      const res = await fetch("/api/admin/retry-nightsbridge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference }),
+      })
+      const data = (await res.json()) as { ok: boolean; error?: string }
+      if (data.ok) setDone(true)
+      else setError(data.error ?? "Retry failed")
+    } catch {
+      setError("Network error")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div>
+      <button
+        onClick={handleClick}
+        disabled={loading || done}
+        title={error || "Push this booking to NightsBridge again"}
+        className="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 font-mono text-[11px] font-semibold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-60"
+      >
+        {loading
+          ? <Loader2 className="size-3.5 animate-spin" />
+          : done
+            ? <CheckCircle2 className="size-3.5" />
+            : <RefreshCw className="size-3.5" />
+        }
+        {done ? "Sent" : "Retry"}
+      </button>
+      {error && <p className="mt-1 max-w-[140px] font-mono text-[9px] leading-tight text-red-500">{error}</p>}
+    </div>
+  )
+}
+
+type WebFilter = "all" | "paid" | "unsuccessful"
+
+function WebsiteBookingsSection({ rows }: { rows: WebsiteBooking[] }) {
+  const [filter, setFilter] = useState<WebFilter>("all")
+  if (rows.length === 0) return null
+
+  const paidCount = rows.filter(isPaid).length
+  const unsuccessfulCount = rows.filter(isUnsuccessfulPayment).length
+
+  const visible = rows.filter((w) => {
+    if (filter === "paid") return isPaid(w)
+    if (filter === "unsuccessful") return isUnsuccessfulPayment(w)
+    return true
+  })
+
+  const tabs: { key: WebFilter; label: string; count: number }[] = [
+    { key: "all",          label: "All",          count: rows.length },
+    { key: "paid",         label: "Paid",         count: paidCount },
+    { key: "unsuccessful", label: "Unsuccessful", count: unsuccessfulCount },
+  ]
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
+        <p className="font-serif text-sm font-bold text-gray-900">Website Bookings</p>
+        <p className="mt-0.5 font-mono text-[10px] text-gray-400">
+          Everyone who started a booking on the website. <span className="text-emerald-700">Paid</span> guests can be pushed to NightsBridge (Retry).
+          {" "}<span className="text-red-700">Unsuccessful</span> = payment failed or the guest abandoned checkout without paying.
+        </p>
+        <div className="mt-2 flex gap-1.5">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setFilter(t.key)}
+              className={`rounded-full border px-2.5 py-1 font-mono text-[10px] font-semibold transition-colors ${
+                filter === t.key
+                  ? "border-gray-900 bg-gray-900 text-white"
+                  : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+              }`}
+            >
+              {t.label} ({t.count})
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[860px] text-sm">
+          <thead>
+            <tr className="border-b border-gray-100 bg-gray-50">
+              {["Guest", "Dates", "Room", "Amount", "Payment", "NightsBridge", ""].map((h) => (
+                <th key={h} className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-gray-400">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {visible.length === 0 ? (
+              <tr><td colSpan={7} className="px-4 py-6 text-center font-mono text-[11px] text-gray-400">No bookings in this view</td></tr>
+            ) : visible.map((w) => {
+              const onNB = w.status === "completed" && !!w.booking_id
+              const nbFailed = w.status === "failed"
+              const paid = isPaid(w)
+              const abandoned = w.booking_status === "AWAITING_PAYMENT" && isUnsuccessfulPayment(w)
+              return (
+                <tr key={w.reference} className="transition-colors hover:bg-gray-50/60">
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-gray-900">{w.guest_name ?? "—"}</p>
+                    <p className="font-mono text-[10px] text-gray-400">{w.guest_email ?? ""}</p>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 font-mono text-[11px] text-gray-600">
+                    {w.checkin ? fmtDate(w.checkin) : "—"} → {w.checkout ? fmtDate(w.checkout) : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-gray-700">{w.room_name || w.room_type_name || "—"}</td>
+                  <td className="whitespace-nowrap px-4 py-3 font-mono text-[11px] text-gray-700">
+                    {w.amount ? `R ${Number(w.amount).toLocaleString("en-ZA", { minimumFractionDigits: 2 })}` : "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    {abandoned
+                      ? <span className="inline-block rounded-full border border-red-200 bg-red-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-red-700" title={`Started ${fmtDate(w.created_at.slice(0, 10))}, never paid`}>Not completed</span>
+                      : <PaymentBadge status={w.booking_status} />}
+                  </td>
+                  <td className="px-4 py-3">
+                    {!paid ? (
+                      <span className="font-mono text-[10px] text-gray-300">—</span>
+                    ) : onNB ? (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-700">
+                        <CheckCircle2 className="size-3" /> On NightsBridge{w.booking_id ? ` #${w.booking_id}` : ""}
+                      </span>
+                    ) : (
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold ${
+                          nbFailed ? "border-red-200 bg-red-50 text-red-700" : "border-amber-200 bg-amber-50 text-amber-700"
+                        }`}
+                        title={w.error ?? undefined}
+                      >
+                        <AlertTriangle className="size-3" /> {nbFailed ? "NightsBridge failed" : "Not yet on NightsBridge"}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">{paid && !onNB && <RetryNightsBridgeButton reference={w.reference} />}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
-export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
+export function BookingsClient({ bookings, websiteBookings }: { bookings: BookingRow[]; websiteBookings: WebsiteBooking[] }) {
   const [tab, setTab] = useState<Tab>("all")
   const [showAdd, setShowAdd] = useState(false)
   const [panelBooking, setPanelBooking] = useState<BookingRow | null>(null)
@@ -346,22 +544,22 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top bar */}
-      <div className="sticky top-0 z-30 border-b border-white/10 bg-[#0a0a0a] px-4 py-3 sm:px-6">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link href="/admin/dashboard" className="flex items-center gap-1.5 font-mono text-[11px] text-white/50 hover:text-white/80 transition-colors">
+      <div className="sticky top-0 z-30 border-b border-white/10 bg-[#000000] px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href="/admin/dashboard" className="flex shrink-0 items-center gap-1.5 font-mono text-[11px] text-white/50 hover:text-white/80 transition-colors">
               <ArrowLeft className="size-3.5" />
               Dashboard
             </Link>
             <span className="text-white/20">/</span>
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#b8973a]/20">
-                <CalendarDays className="size-3.5 text-[#b8973a]" />
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#996948]/20">
+                <CalendarDays className="size-3.5 text-[#996948]" />
               </div>
               <span className="font-serif text-sm font-bold text-white">Bookings</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/admin/bookings"
               className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-[11px] text-white/60 hover:text-white transition-colors"
@@ -371,7 +569,7 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
             </Link>
             <button
               onClick={() => setShowAdd(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-[#b8973a] px-3 py-1.5 font-mono text-[11px] font-semibold text-white hover:brightness-110"
+              className="flex items-center gap-1.5 rounded-lg bg-[#996948] px-3 py-1.5 font-mono text-[11px] font-semibold text-white hover:brightness-110"
             >
               <Plus className="size-3.5" />
               Add Booking
@@ -393,7 +591,7 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
             <button
               key={label}
               onClick={() => setTab(t)}
-              className={`flex items-center gap-3 rounded-xl border bg-white p-4 shadow-sm text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${tab === t ? "border-[#b8973a]" : "border-gray-200"}`}
+              className={`flex items-center gap-3 rounded-xl border bg-white p-4 shadow-sm text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${tab === t ? "border-[#996948]" : "border-gray-200"}`}
             >
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${color}`}>
                 <Icon className="size-4" />
@@ -406,6 +604,9 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
           ))}
         </div>
 
+        {/* Website bookings (pay-first pipeline) — paid guests who may not be on NightsBridge yet */}
+        <WebsiteBookingsSection rows={websiteBookings} />
+
         {/* Tab bar */}
         <div className="flex gap-1 overflow-x-auto rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
           {tabs.map(t => (
@@ -414,7 +615,7 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
               onClick={() => setTab(t.id)}
               className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 font-mono text-[11px] font-medium transition-colors ${
                 tab === t.id
-                  ? "bg-[#b8973a] text-white"
+                  ? "bg-[#996948] text-white"
                   : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
               }`}
             >
@@ -493,7 +694,7 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
                         <td className="px-4 py-3">
                           <p className="text-sm text-gray-700">{b.room_type ?? "—"}</p>
                           {b.avg_rate && (
-                            <p className="font-mono text-[10px] text-[#b8973a]">
+                            <p className="font-mono text-[10px] text-[#996948]">
                               R {Math.round(b.avg_rate).toLocaleString("en-ZA")}/night
                             </p>
                           )}
@@ -550,7 +751,7 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
                             )}
                             <button
                               onClick={() => setPanelBooking(b)}
-                              className="flex items-center gap-1 rounded-lg border border-[#b8973a]/40 bg-[#b8973a]/10 px-2 py-1.5 font-mono text-[11px] text-[#b8973a] transition-colors hover:bg-[#b8973a]/20"
+                              className="flex items-center gap-1 rounded-lg border border-[#996948]/40 bg-[#996948]/10 px-2 py-1.5 font-mono text-[11px] text-[#996948] transition-colors hover:bg-[#996948]/20"
                             >
                               <FileText className="size-3" />
                               Invoice / Dept
@@ -574,8 +775,8 @@ export function BookingsClient({ bookings }: { bookings: BookingRow[] }) {
 
         {/* No sync yet help text */}
         {bookings.length === 0 && (
-          <div className="rounded-xl border border-[#b8973a]/20 bg-[#fdf8ef] p-5">
-            <p className="font-mono text-[11px] text-[#b8973a]">
+          <div className="rounded-xl border border-[#996948]/20 bg-[#fdf8ef] p-5">
+            <p className="font-mono text-[11px] text-[#996948]">
               No bookings in Supabase yet. Go to the{" "}
               <Link href="/admin/dashboard" className="underline">Dashboard</Link>{" "}
               and run a sync to pull bookings from NightsBridge.

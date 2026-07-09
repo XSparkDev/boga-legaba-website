@@ -38,6 +38,43 @@ export type BookingRow = {
   is_department: boolean
 }
 
+/**
+ * A booking made on the WEBSITE (booking_job table) — pay-first flow. These may
+ * not be on NightsBridge yet: `status`/`booking_id` are the NightsBridge track,
+ * `booking_status` is the payment track. The admin uses these to spot paid
+ * guests who still need to be pushed to NightsBridge (with a retry).
+ */
+export type WebsiteBooking = {
+  reference: string
+  guest_name: string | null
+  guest_email: string | null
+  checkin: string | null
+  checkout: string | null
+  room_type_name: string | null
+  room_name: string | null
+  amount: number | null
+  status: string | null          // NightsBridge track: processing | completed | failed
+  booking_id: string | null      // NightsBridge NBID once booked
+  booking_status: string | null  // payment track: PENDING | AWAITING_PAYMENT | PAYMENT_CONFIRMED | ...
+  error: string | null
+  created_at: string
+}
+
+async function fetchWebsiteBookings(): Promise<WebsiteBooking[]> {
+  try {
+    const sb = createSupabaseAdminClient()
+    const { data, error } = await sb
+      .from("booking_job")
+      .select("reference, guest_name, guest_email, checkin, checkout, room_type_name, room_name, amount, status, booking_id, booking_status, error, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100)
+    if (error || !data) return []
+    return data as WebsiteBooking[]
+  } catch {
+    return []
+  }
+}
+
 async function fetchBookings(): Promise<BookingRow[]> {
   try {
     const sb = createSupabaseAdminClient()
@@ -90,11 +127,11 @@ async function fetchBookings(): Promise<BookingRow[]> {
 export default async function BookingsPage() {
   if (!(await isAuthenticated())) redirect("/admin/login")
 
-  const bookings = await fetchBookings()
+  const [bookings, websiteBookings] = await Promise.all([fetchBookings(), fetchWebsiteBookings()])
 
   // Read-only join against the app-owned booking_department table for badges.
   const deptIds = await getDepartmentBookingIds(bookings.map((b) => b.bookingid))
   const withDept = bookings.map((b) => ({ ...b, is_department: deptIds.has(b.bookingid) }))
 
-  return <BookingsClient bookings={withDept} />
+  return <BookingsClient bookings={withDept} websiteBookings={websiteBookings} />
 }

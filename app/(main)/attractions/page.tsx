@@ -49,17 +49,17 @@ export default async function AttractionsPage() {
         <section className="bg-[#f5f0e8] py-12 lg:py-16">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mb-6 flex items-center gap-2">
-              <MapPin className="size-4 text-[#b8973a]" />
-              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#b8973a]">
+              <MapPin className="size-4 text-[#996948]" />
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#996948]">
                 Live · Sourced from NightsBridge
               </p>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
               {estData?.areainfo ? (
-                <div className="rounded-xl border border-[#b8973a]/20 bg-white p-6 shadow-sm">
+                <div className="rounded-xl border border-[#996948]/20 bg-white p-6 shadow-sm">
                   <h2 className="mb-3 flex items-center gap-2 font-serif text-xl font-bold text-gray-900">
-                    <span className="text-[#b8973a]">About Mahikeng</span>
+                    <span className="text-[#996948]">About Mahikeng</span>
                   </h2>
                   <p className="text-sm leading-relaxed text-gray-600">{estData.areainfo}</p>
 
@@ -68,7 +68,7 @@ export default async function AttractionsPage() {
                       href={`https://www.google.com/maps?q=${estData.lat},${estData.lng}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-4 inline-flex items-center gap-2 rounded-lg border border-[#b8973a]/30 px-4 py-2 font-mono text-[11px] text-[#b8973a] hover:bg-[#b8973a]/5 transition-colors"
+                      className="mt-4 inline-flex items-center gap-2 rounded-lg border border-[#996948]/30 px-4 py-2 font-mono text-[11px] text-[#996948] hover:bg-[#996948]/5 transition-colors"
                     >
                       <Navigation2 className="size-3.5" />
                       View on Google Maps
@@ -78,15 +78,15 @@ export default async function AttractionsPage() {
               ) : null}
 
               {nbAttractions.length > 0 ? (
-                <div className="rounded-xl border border-[#b8973a]/20 bg-white p-6 shadow-sm">
+                <div className="rounded-xl border border-[#996948]/20 bg-white p-6 shadow-sm">
                   <h2 className="mb-4 flex items-center gap-2 font-serif text-xl font-bold text-gray-900">
-                    <Star className="size-5 text-[#b8973a]" />
+                    <Star className="size-5 text-[#996948]" />
                     What to see and do
                   </h2>
                   <ul className="space-y-2">
                     {nbAttractions.map((a, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                        <span className="mt-0.5 shrink-0 text-[#b8973a] font-bold">✦</span>
+                        <span className="mt-0.5 shrink-0 text-[#996948] font-bold">✦</span>
                         {a}
                       </li>
                     ))}
@@ -102,7 +102,7 @@ export default async function AttractionsPage() {
                   🗺️ Getting to Boga Legaba
                 </h3>
                 {estData.address ? (
-                  <p className="mb-2 font-mono text-[11px] text-[#b8973a]">
+                  <p className="mb-2 font-mono text-[11px] text-[#996948]">
                     {estData.address.replace(/\n/g, " · ")}
                   </p>
                 ) : null}
@@ -118,9 +118,9 @@ export default async function AttractionsPage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {ATTRACTIONS.map(({ Icon, name, distance, note }, i) => (
               <Reveal as="article" key={name} delay={i * 70}>
-                <div className="flex h-full flex-col rounded-xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                <div className="flex h-full flex-col rounded-xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#996948]/40">
                   <div className="flex items-center justify-between">
-                    <span className="inline-flex size-11 items-center justify-center rounded-full bg-[#0a0a0a] text-gold">
+                    <span className="inline-flex size-11 items-center justify-center rounded-full bg-[#000000] text-gold">
                       <Icon className="size-5" />
                     </span>
                     <span className="font-mono text-xs uppercase tracking-wider text-taupe">{distance}</span>
@@ -145,7 +145,7 @@ export default async function AttractionsPage() {
         </div>
       </section>
 
-      <section className="bg-[#0a0a0a] py-14 text-white">
+      <section className="bg-[#000000] py-14 text-white">
         <div className="mx-auto flex max-w-4xl flex-col items-center gap-5 px-4 text-center sm:px-6 lg:px-8">
           <h2 className="text-balance font-serif text-2xl font-bold sm:text-3xl">
             Book your stay in Mahikeng&apos;s most central guest house

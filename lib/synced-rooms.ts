@@ -39,10 +39,10 @@ const PROPERTY_META: Record<
   string,
   { id: PropertyId; color: string; colorHex: string }
 > = {
-  Chababa: { id: "chababa", color: "prop-chababa", colorHex: "#d4a017" },
-  "Interlaken A": { id: "interlaken-a", color: "prop-interlaken", colorHex: "#e07b39" },
-  Lantana: { id: "lantana", color: "prop-lantana", colorHex: "#5a8f5a" },
-  "Transnet Portfolio": { id: "transnet", color: "prop-transnet", colorHex: "#4a6fa5" },
+  Chababa: { id: "chababa", color: "prop-chababa", colorHex: "#C1C4C2" },
+  "Interlaken A": { id: "interlaken-a", color: "prop-interlaken", colorHex: "#73CAC3" },
+  Lantana: { id: "lantana", color: "prop-lantana", colorHex: "#7A8850" },
+  "Transnet Portfolio": { id: "transnet", color: "prop-transnet", colorHex: "#996948" },
 }
 
 function asBedConfig(value: string | null | undefined): BedConfig {
@@ -130,7 +130,7 @@ export function buildSyncedProperties(rows: SyncedRoomRow[]): SyncedProperty[] {
         address,
         tagline: "",
         color: meta?.color ?? "prop-chababa",
-        colorHex: meta?.colorHex ?? "#d4a017",
+        colorHex: meta?.colorHex ?? "#C1C4C2",
         roomCount: rooms.length,
         description: "",
         locationNote: "",

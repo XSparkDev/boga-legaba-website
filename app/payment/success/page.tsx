@@ -10,6 +10,7 @@ function SuccessContent() {
   const checkin      = params.get("checkin") ?? ""
   const checkout     = params.get("checkout") ?? ""
   const roomTypeName = params.get("roomTypeName") ?? ""
+  const roomName     = params.get("roomName") ?? ""
   const amount       = params.get("amount") ?? ""
 
   const fmtDate = (iso: string) => {
@@ -26,7 +27,7 @@ function SuccessContent() {
 
   const details = [
     { label: "Booking Reference", value: bookingRef },
-    { label: "Room",              value: roomTypeName },
+    { label: "Room",              value: roomName || roomTypeName },
     { label: "Check-in",         value: fmtDate(checkin) },
     { label: "Check-out",        value: fmtDate(checkout) },
     { label: "Amount Paid",      value: amountFormatted, gold: true },
@@ -48,7 +49,7 @@ function SuccessContent() {
               BOGA LEGABA
             </p>
             <p className="tracking-[0.18em] mt-1" style={{ color: "#8C7B6B", fontSize: "10px" }}>
-              PRIVATE GAME LODGE
+              GUEST HOUSE &amp; CONFERENCE CENTRE
             </p>
             {/* Gold divider */}
             <div className="mx-auto mt-4" style={{ height: "1px", width: "48px", background: "#C9A84C", opacity: 0.6 }} />
@@ -115,8 +116,25 @@ function SuccessContent() {
           <div className="mx-6 mb-5 px-4 py-3 rounded-xl" style={{ background: "#F2EDE4", border: "1px solid #E8E0D4" }}>
             <p style={{ margin: 0, fontSize: "12px", color: "#8C7B6B", lineHeight: 1.6, textAlign: "center" }}>
               A confirmation email has been sent to you with all the details.<br />
-              We look forward to welcoming you to the bush.
+              We look forward to welcoming you.
             </p>
+            <p style={{ margin: "8px 0 0", fontSize: "11px", color: "#8C7B6B", lineHeight: 1.6, textAlign: "center" }}>
+              If you don&apos;t receive it shortly, please contact us at Boga Legaba.
+            </p>
+          </div>
+
+          {/* Registration CTA */}
+          <div className="mx-6 mb-5 px-4 py-3.5 rounded-xl text-center" style={{ background: "#FEF9EE", border: "1px solid #EDD9A3" }}>
+            <p style={{ margin: "0 0 10px", fontSize: "12.5px", color: "#3D3532", lineHeight: 1.6 }}>
+              <strong>One more step</strong> — complete your guest registration before you arrive.
+            </p>
+            <a
+              href={`/register${bookingRef ? `?ref=${encodeURIComponent(bookingRef)}` : ""}`}
+              className="inline-flex w-full items-center justify-center rounded-xl py-3 text-sm font-semibold transition-all"
+              style={{ background: "#0A0A0A", color: "#C9A84C", letterSpacing: "0.04em" }}
+            >
+              Complete Guest Registration
+            </a>
           </div>
 
           {/* CTA */}

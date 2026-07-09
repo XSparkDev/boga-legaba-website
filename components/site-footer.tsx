@@ -44,7 +44,7 @@ export function SiteFooter() {
   const { isOpen, openModal, closeModal } = useBookingModal()
 
   return (
-    <footer className="bg-[#0a0a0a] text-white">
+    <footer className="bg-[#000000] text-white">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
           <div>

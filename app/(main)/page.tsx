@@ -1,5 +1,19 @@
-import { redirect } from "next/navigation"
+import { HomeHero } from "@/components/home/hero"
+import { StatsBar } from "@/components/stats-bar"
+import { PropertyOverview } from "@/components/property-overview"
+import { WhatsAppSection } from "@/components/home/whatsapp-section"
+import { WhySection } from "@/components/home/why-section"
+import { ReviewsSection } from "@/components/home/reviews-section"
 
 export default function HomePage() {
-  redirect("/stay")
+  return (
+    <main>
+      <HomeHero />
+      <StatsBar />
+      <PropertyOverview />
+      <WhySection />
+      <ReviewsSection />
+      <WhatsAppSection />
+    </main>
+  )
 }

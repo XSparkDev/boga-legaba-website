@@ -3,7 +3,10 @@ import { checkRoomTypeAvailableLive } from "@/lib/nightsbridge-api"
 import { Resend } from "resend"
 import { buildGuestPendingEmail } from "@/lib/payment-utils"
 
-export const maxDuration = 90
+// The worker now retries internally (up to 3 attempts) on ambiguous/transient
+// booking failures — allow enough time for that instead of aborting early
+// while the worker is still legitimately working.
+export const maxDuration = 350
 
 const NB_BBID = 21091
 
@@ -76,7 +79,11 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(85_000),
+      // Must exceed the worker's own timeout (340s, including its internal
+      // retries) so we never abort while a booking is still legitimately in
+      // progress — an abort here means an admin sees "failed" for a booking
+      // that actually succeeds a few seconds later.
+      signal: AbortSignal.timeout(345_000),
     })
 
     const data = (await res.json()) as Record<string, unknown>

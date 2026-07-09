@@ -1,31 +1,35 @@
 import { NextRequest, NextResponse } from "next/server"
-import { processPayment, type PaymentContext } from "@/lib/payment-utils"
+import { sendPaymentConfirmedEmails, type PaymentContext } from "@/lib/payment-utils"
+import { transitionBookingStatus } from "@/lib/booking-status"
 
 export const dynamic = "force-dynamic"
 
 type BookingMeta = {
   bookingRef?: string
+  internalReference?: string
   guestEmail?: string
   guestName?: string
   guestPhone?: string
   checkin?: string
   checkout?: string
   roomTypeName?: string
-  mealPlanName?: string
-  adults?: number
-  children1?: number
-  children2?: number
-  firstname?: string
-  surname?: string
-  arrivalTime?: string
-  airline?: string
-  flightno?: string
-  notes?: string
-  bbid?: number
-  maxAdults?: number | null
-  maxOccupancy?: number | null
+  roomName?: string
 }
 
+/**
+ * BOOK-FIRST FLOW, step 3: Paystack redirects here after the guest pays. The
+ * room was already booked on NightsBridge in step 1 (see /api/booking/start) —
+ * this just verifies the payment and sends the final confirmation email. If
+ * payment fails or is abandoned here, the booking is left as-is (the guest
+ * already has NightsBridge's own reservation email) — nothing is auto-cancelled.
+ *
+ * Same AWAITING_PAYMENT -> PAYMENT_CONFIRMED guarded transition as the
+ * webhook (see lib/booking-status.ts + the matching comment in
+ * app/api/payment/webhook/route.ts) — this is the browser-redirect path, the
+ * webhook is the server-to-server path, and whichever gets here first wins
+ * the compare-and-swap. The other skips the emails but still redirects the
+ * guest to the success page.
+ */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const reference = searchParams.get("reference") ?? searchParams.get("trxref")
@@ -33,17 +37,13 @@ export async function GET(request: NextRequest) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || `https://${request.headers.get("host")}`
   const secretKey = process.env.PAYSTACK_SECRET_KEY
 
-  const fail = (bookingRef = "", reason = "") =>
+  const fail = (bookingRef = "") =>
     NextResponse.redirect(
-      new URL(
-        `/payment/failed?bookingRef=${encodeURIComponent(bookingRef)}${reason ? `&reason=${encodeURIComponent(reason)}` : ""}`,
-        siteUrl,
-      ),
+      new URL(`/payment/failed?bookingRef=${encodeURIComponent(bookingRef)}`, siteUrl),
     )
 
   if (!secretKey || !reference) return fail()
 
-  // ── Verify the payment with Paystack (also returns our booking metadata) ──
   let amountPaid = 0
   let meta: BookingMeta = {}
   try {
@@ -54,54 +54,50 @@ export async function GET(request: NextRequest) {
       status: boolean
       data?: { status: string; amount: number; metadata?: { booking?: BookingMeta } }
     }
-    if (!data.status || data.data?.status !== "success") return fail()
+    if (!data.status || data.data?.status !== "success") return fail(meta.bookingRef)
     amountPaid = (data.data?.amount ?? 0) / 100
     meta = data.data?.metadata?.booking ?? {}
   } catch {
     return fail()
   }
 
-  // ── Payment is good → NOW create the booking on NightsBridge ──────────────
+  const internalReference = meta.internalReference || ""
   const ctx: PaymentContext = {
-    reference,
-    bookingRef:   meta.bookingRef ?? "",
-    guestEmail:   meta.guestEmail ?? "",
-    guestName:    meta.guestName ?? "",
-    guestPhone:   meta.guestPhone ?? "",
-    checkin:      meta.checkin ?? "",
-    checkout:     meta.checkout ?? "",
+    reference: internalReference || reference,
+    bookingRef: meta.bookingRef ?? "",
+    guestEmail: meta.guestEmail ?? "",
+    guestName: meta.guestName ?? "",
+    guestPhone: meta.guestPhone ?? "",
+    checkin: meta.checkin ?? "",
+    checkout: meta.checkout ?? "",
     roomTypeName: meta.roomTypeName ?? "",
+    roomName: meta.roomName || undefined,
     amountPaid,
-    mealPlanName: meta.mealPlanName,
-    adults:       meta.adults,
-    children1:    meta.children1,
-    children2:    meta.children2,
-    firstname:    meta.firstname,
-    surname:      meta.surname,
-    arrivalTime:  meta.arrivalTime,
-    airline:      meta.airline,
-    flightno:     meta.flightno,
-    notes:        meta.notes,
-    bbid:         meta.bbid,
-    maxAdults:    meta.maxAdults ?? undefined,
-    maxOccupancy: meta.maxOccupancy ?? undefined,
   }
 
-  const { booked, bookingRef, refunded } = await processPayment(ctx)
-
-  // Payment succeeded but the booking could not be created. If we managed to
-  // auto-refund, tell the guest they've been refunded; otherwise tell them we
-  // have their payment and will sort it out (admin already alerted).
-  if (!booked) {
-    return fail(bookingRef, refunded ? "refunded" : "paid-not-booked")
+  if (!internalReference) {
+    console.error(`[payment/verify] paystackRef=${reference} has no internalReference in metadata — cannot drive the state machine (old/manual transaction?), sending emails unconditionally as a best-effort fallback`)
+    await sendPaymentConfirmedEmails(ctx)
+  } else {
+    const claimed = await transitionBookingStatus(internalReference, "PAYMENT_CONFIRMED", {
+      from: ["AWAITING_PAYMENT"],
+      reason: `Guest browser redirect (paystackRef=${reference})`,
+    })
+    if (claimed.ok) {
+      await sendPaymentConfirmedEmails(ctx)
+      await transitionBookingStatus(internalReference, "BOGA_NOTIFIED", { from: ["PAYMENT_CONFIRMED"] })
+    } else {
+      console.log(`[payment/verify] internalRef=${internalReference} PAYMENT_CONFIRMED transition rejected (${claimed.reason}) — already processed via webhook, skipping duplicate emails`)
+    }
   }
 
   const successUrl = new URL(
-    `/payment/success?bookingRef=${encodeURIComponent(bookingRef)}` +
+    `/payment/success?bookingRef=${encodeURIComponent(ctx.bookingRef)}` +
       `&guestName=${encodeURIComponent(ctx.guestName)}` +
       `&checkin=${encodeURIComponent(ctx.checkin)}` +
       `&checkout=${encodeURIComponent(ctx.checkout)}` +
       `&roomTypeName=${encodeURIComponent(ctx.roomTypeName)}` +
+      `&roomName=${encodeURIComponent(ctx.roomName ?? "")}` +
       `&amount=${amountPaid}`,
     siteUrl,
   )

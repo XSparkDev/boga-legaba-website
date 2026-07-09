@@ -89,7 +89,7 @@ export default function FaqsPage() {
         </div>
       </section>
 
-      <section className="bg-[#0a0a0a] py-14 text-white">
+      <section className="bg-[#000000] py-14 text-white">
         <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 text-center sm:px-6 lg:px-8">
           <h2 className="font-serif text-2xl font-bold sm:text-3xl">Still have questions?</h2>
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -99,13 +99,13 @@ export default function FaqsPage() {
               rel="noreferrer"
               data-ga4-event="whatsapp_click"
               data-ga4-label="FAQs"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#996948] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             >
               <MessageCircle className="size-4" /> Chat on WhatsApp
             </a>
             <a
               href={`mailto:${BUSINESS.email}`}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#0a0a0a]"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#000000]"
             >
               <Mail className="size-4" /> {BUSINESS.email}
             </a>

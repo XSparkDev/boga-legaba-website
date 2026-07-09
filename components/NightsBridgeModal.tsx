@@ -46,7 +46,7 @@ export function NightsBridgeModal({ isOpen, onClose }: NightsBridgeModalProps) {
         <div className="relative flex shrink-0 items-start justify-between border-b border-black/10 px-6 py-5 pr-14">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-black/50">Boga Legaba</p>
-            <h2 id="nightsbridge-modal-title" className="mt-1 font-display text-xl font-bold text-[#0A0A0A] sm:text-2xl">
+            <h2 id="nightsbridge-modal-title" className="mt-1 font-display text-xl font-bold text-[#000000] sm:text-2xl">
               Check Availability &amp; Book
             </h2>
           </div>

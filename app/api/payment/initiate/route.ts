@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
-import { checkRoomTypeAvailableLive } from "@/lib/nightsbridge-api"
-import { hasActiveHold, createHold, releaseHold } from "@/lib/booking-holds"
+import { initiatePaystackPayment } from "@/lib/payment-utils"
 
-const NB_BBID = 21091
+export const dynamic = "force-dynamic"
 
+/**
+ * BOOK-FIRST FLOW, step 2: the room is already really booked on NightsBridge
+ * by this point (see /api/booking/start + /api/booking/status) — this just
+ * starts a Paystack payment for it. No availability/hold checks needed here
+ * anymore, since the booking itself is already the authoritative reservation.
+ *
+ * NOTE: the primary path now pre-generates this session server-side inside
+ * /api/booking/status (so the SAME link can be embedded in the "booking
+ * reserved" email and used for the immediate browser redirect — one Paystack
+ * session per booking, never two). This route is kept as the widget's
+ * fallback for the rare case that pre-generation failed.
+ */
 export async function POST(request: NextRequest) {
-  const secretKey = process.env.PAYSTACK_SECRET_KEY
-  if (!secretKey || secretKey === "sk_test_REPLACE_ME") {
-    return NextResponse.json({ ok: false, error: "Payment not configured" }, { status: 503 })
-  }
-
   let body: Record<string, unknown>
   try {
     body = await request.json()
@@ -17,145 +23,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Invalid request body" }, { status: 400 })
   }
 
-  const {
-    email, amountRands, bookingRef, guestName, guestPhone, checkin, checkout, roomTypeName,
-    // Full booking payload — carried through Paystack so the booking can be
-    // created AFTER payment succeeds (pay-first flow).
-    mealPlanName, adults, children1, children2, firstname, surname,
-    arrivalTime, airline, flightno, notes, bbid, maxAdults, maxOccupancy,
-  } = body as {
-    email: string
-    amountRands: number
-    bookingRef: string
-    guestName: string
-    guestPhone: string
-    checkin: string
-    checkout: string
-    roomTypeName: string
-    mealPlanName?: string
-    adults?: number
-    children1?: number
-    children2?: number
-    firstname?: string
-    surname?: string
-    arrivalTime?: string
-    airline?: string
-    flightno?: string
-    notes?: string
-    bbid?: number
-    maxAdults?: number
-    maxOccupancy?: number
-  }
-
-  if (!email || !amountRands || !bookingRef) {
-    return NextResponse.json({ ok: false, error: "Missing email, amountRands or bookingRef" }, { status: 400 })
-  }
-
-  // ── Availability gate BEFORE taking payment ────────────────────────────────
-  // Don't charge a guest for a room that was just taken. "unknown" (NB
-  // unreachable) does not block — the final booking after payment is the
-  // authoritative gate and will refund-alert if it fails.
-  const gateBbid = typeof bbid === "number" ? bbid : NB_BBID
-  const live = await checkRoomTypeAvailableLive(gateBbid, roomTypeName, checkin, checkout)
-  if (live.status === "unavailable") {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: `Sorry — ${roomTypeName} was just taken for ${checkin} to ${checkout}. Please choose different dates or another room.`,
-      },
-      { status: 409 },
-    )
-  }
-
-  // ── Soft-hold gate: is another guest already paying for this room/dates? ────
-  // Blocks a second guest HERE (before they pay) while an active hold exists,
-  // instead of letting them pay and then discover the booking failed.
-  const heldByAnother = await hasActiveHold(gateBbid, roomTypeName, checkin, checkout)
-  if (heldByAnother) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: `${roomTypeName} is being booked by another guest right now for ${checkin} to ${checkout}. Please try again in a few minutes or choose another room.`,
-      },
-      { status: 409 },
-    )
-  }
-
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    `https://${request.headers.get("host")}`
-
-  const reference = `BL-${bookingRef}-${Date.now()}`
-
-  // Place the hold now (keyed by this payment reference) so a second guest is
-  // blocked while this one pays. Auto-expires (~15 min); released on booking.
-  await createHold({ reference, bbid: gateBbid, roomTypeName, checkin, checkout })
-  const callbackUrl = `${siteUrl}/api/payment/verify`
-
-  try {
-    const res = await fetch("https://api.paystack.co/transaction/initialize", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email,
-        amount: Math.round(amountRands * 100), // kobo / cents
-        reference,
-        callback_url: callbackUrl,
-        currency: "ZAR",
-        metadata: {
-          // Everything needed to CREATE the booking after payment.
-          booking: {
-            bookingRef,
-            guestEmail: email,
-            guestName,
-            guestPhone: guestPhone ?? "",
-            checkin,
-            checkout,
-            roomTypeName,
-            mealPlanName: mealPlanName ?? "Room Only",
-            adults: adults ?? 2,
-            children1: children1 ?? 0,
-            children2: children2 ?? 0,
-            firstname: firstname ?? "",
-            surname: surname ?? "",
-            arrivalTime: arrivalTime ?? "",
-            airline: airline ?? "",
-            flightno: flightno ?? "",
-            notes: notes ?? "",
-            bbid: gateBbid,
-            maxAdults: maxAdults ?? null,
-            maxOccupancy: maxOccupancy ?? null,
-          },
-          custom_fields: [
-            { display_name: "Booking Ref",  variable_name: "booking_ref",  value: bookingRef },
-            { display_name: "Room",         variable_name: "room_type",    value: roomTypeName },
-            { display_name: "Check-in",     variable_name: "checkin",      value: checkin },
-            { display_name: "Check-out",    variable_name: "checkout",     value: checkout },
-            { display_name: "Phone",        variable_name: "guest_phone",  value: guestPhone ?? "" },
-          ],
-        },
-      }),
-    })
-
-    const data = (await res.json()) as { status: boolean; message: string; data?: { authorization_url: string; reference: string } }
-    if (!data.status || !data.data) {
-      // Payment never started — don't leave a hold blocking the room.
-      await releaseHold(reference)
-      return NextResponse.json({ ok: false, error: data.message || "Paystack init failed" }, { status: 400 })
-    }
-
-    return NextResponse.json({
-      ok: true,
-      authorization_url: data.data.authorization_url,
-      reference: data.data.reference,
-    })
-  } catch (err) {
-    // Payment never started — release the hold so the room isn't locked for 15 min.
-    await releaseHold(reference)
-    const msg = err instanceof Error ? err.message : "Payment initiation failed"
-    return NextResponse.json({ ok: false, error: msg }, { status: 502 })
-  }
+  const result = await initiatePaystackPayment(body as never)
+  return NextResponse.json(result, { status: result.ok ? 200 : (result.error === "Payment not configured" ? 503 : 400) })
 }

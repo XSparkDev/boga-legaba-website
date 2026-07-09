@@ -29,10 +29,9 @@ function ratesHeight(n: number) {
   return Math.max(180, n * 38 + 40)
 }
 
-const GOLD = "#b8973a"
-const INK = "#0a0a0a"
-const EMERALD = "#10b981"
-const RED = "#ef4444"
+const GOLD = "#996948"
+const INK = "#000000"
+const TEAL = "#73CAC3" // Chart data-series accent (brand guide: charts use brand accents only)
 
 function rand(n: number) {
   return `R ${Math.round(n).toLocaleString("en-ZA")}`
@@ -70,7 +69,7 @@ export function AnalyticsCharts({
 }) {
   const donut = [
     { name: "Booked", value: todayBooked, color: GOLD },
-    { name: "Available", value: todayAvailable, color: EMERALD },
+    { name: "Available", value: todayAvailable, color: TEAL },
   ].filter((d) => d.value > 0)
   const hasDonut = todayBooked + todayAvailable > 0
   const hasRates = rates.some((r) => r.single != null || r.double != null)
@@ -83,12 +82,6 @@ export function AnalyticsCharts({
         <div className="h-56 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={trend} margin={{ top: 5, right: 8, left: -22, bottom: 0 }}>
-              <defs>
-                <linearGradient id="occFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={GOLD} stopOpacity={0.35} />
-                  <stop offset="100%" stopColor={GOLD} stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f1f1" vertical={false} />
               <XAxis
                 dataKey="date"
@@ -116,7 +109,8 @@ export function AnalyticsCharts({
                 name="Rooms occupied"
                 stroke={GOLD}
                 strokeWidth={2}
-                fill="url(#occFill)"
+                fill={GOLD}
+                fillOpacity={0.15}
               />
             </AreaChart>
           </ResponsiveContainer>

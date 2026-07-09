@@ -134,7 +134,7 @@ export function SbdFormGenerator({ formData }: { formData: SbdFormData }) {
               type="button"
               disabled={!SBD_FORMS_ENABLED || !ready}
               onClick={() => openForm(sbd.id, sbd.title)}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-[#0A0A0A] bg-[#0A0A0A] px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-gold hover:text-[#0A0A0A] disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-[#000000] bg-[#000000] px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-gold hover:text-[#000000] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Printer className="size-3.5" />
               Generate form

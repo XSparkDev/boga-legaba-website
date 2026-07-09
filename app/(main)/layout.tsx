@@ -1,25 +1,27 @@
-import { Playfair_Display, DM_Sans, IBM_Plex_Mono } from "next/font/google"
+import { League_Spartan, Montserrat, Open_Sans } from "next/font/google"
 import { BodyScrollReset } from "@/components/body-scroll-reset"
 import { MainSiteChrome } from "@/components/main-site-chrome"
 import { Toaster } from "sonner"
 import "../globals.css"
 
-const playfair = Playfair_Display({
+// Boga Legaba Brand Guidelines — three approved typefaces.
+const leagueSpartan = League_Spartan({
   subsets: ["latin"],
-  variable: "--font-playfair",
+  weight: ["700", "800"],
+  variable: "--font-title",
   display: "swap",
 })
 
-const dmSans = DM_Sans({
+const montserrat = Montserrat({
   subsets: ["latin"],
-  variable: "--font-dm-sans",
+  weight: ["500", "600", "700"],
+  variable: "--font-heading",
   display: "swap",
 })
 
-const ibmPlexMono = IBM_Plex_Mono({
+const openSans = Open_Sans({
   subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-ibm-plex-mono",
+  variable: "--font-body",
   display: "swap",
 })
 
@@ -27,7 +29,7 @@ export default function MainSiteLayout({ children }: { children: React.ReactNode
   return (
     <div
       data-site="main"
-      className={`${playfair.variable} ${dmSans.variable} ${ibmPlexMono.variable} min-h-[100dvh] overflow-x-clip bg-background font-body antialiased`}
+      className={`${leagueSpartan.variable} ${montserrat.variable} ${openSans.variable} min-h-[100dvh] overflow-x-clip bg-background font-body antialiased`}
     >
       <BodyScrollReset />
       <MainSiteChrome>{children}</MainSiteChrome>

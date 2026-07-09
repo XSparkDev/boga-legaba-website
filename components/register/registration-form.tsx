@@ -26,7 +26,7 @@ const EMPTY: Fields = {
 }
 
 const input =
-  "w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-300 focus:border-[#b8973a] focus:outline-none focus:ring-1 focus:ring-[#b8973a]/30"
+  "w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-300 focus:border-[#996948] focus:outline-none focus:ring-1 focus:ring-[#996948]/30"
 
 export function RegistrationForm({ bookingRef }: { bookingRef?: string }) {
   const [f, setF] = useState<Fields>(EMPTY)
@@ -62,7 +62,7 @@ export function RegistrationForm({ bookingRef }: { bookingRef?: string }) {
 
   if (step === "done") {
     return (
-      <div className="rounded-2xl border border-[#E8E0D4] bg-white p-8 text-center shadow-sm">
+      <div className="rounded-2xl border border-[#D6D6D5] bg-white p-8 text-center shadow-sm">
         <CheckCircle2 className="mx-auto mb-3 size-10 text-emerald-500" />
         <h2 className="font-serif text-xl text-gray-900">Thank you, {f.full_name.split(" ")[0]}</h2>
         <p className="mt-2 text-sm text-gray-500">
@@ -83,7 +83,7 @@ export function RegistrationForm({ bookingRef }: { bookingRef?: string }) {
   return (
     <form onSubmit={submit} className="space-y-5 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
       {bookingRef && (
-        <p className="rounded-lg bg-[#b8973a]/10 px-3 py-2 font-mono text-xs text-[#b8973a]">
+        <p className="rounded-lg bg-[#996948]/10 px-3 py-2 font-mono text-xs text-[#996948]">
           Booking reference: {bookingRef}
         </p>
       )}
@@ -123,7 +123,7 @@ export function RegistrationForm({ bookingRef }: { bookingRef?: string }) {
       </Field>
 
       <label className="flex items-start gap-2 text-xs text-gray-600">
-        <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-0.5 accent-[#b8973a]" />
+        <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-0.5 accent-[#996948]" />
         <span>I confirm the details above are correct and I accept the house rules.</span>
       </label>
 
@@ -132,7 +132,7 @@ export function RegistrationForm({ bookingRef }: { bookingRef?: string }) {
       <button
         type="submit"
         disabled={step === "saving"}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b8973a] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110 disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#996948] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110 disabled:opacity-50"
       >
         {step === "saving" ? <><Loader2 className="size-4 animate-spin" /> Submitting…</> : <>Submit registration <ArrowRight className="size-4" /></>}
       </button>

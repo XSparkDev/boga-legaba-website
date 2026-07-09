@@ -17,6 +17,16 @@ from pathlib import Path
 _server_dir = Path(__file__).resolve().parent
 _default_scraper = _server_dir / "scraper"
 
+# Which script actually creates the booking. Default is the ADMIN
+# Calendar -> "Add Booking" automation (book_nightsbridge_admin.py) — this
+# replaces the old guest-widget automation per the switch to admin-form
+# booking. The old script (book_nightsbridge.py, proven working in
+# production) is left untouched on disk specifically so this is a ONE env var
+# away from an instant rollback if the new admin-form automation misbehaves —
+# no code change or redeploy needed, just set BOOKING_SCRIPT=book_nightsbridge.py
+# on the Render service and restart.
+BOOKING_SCRIPT_NAME = os.environ.get("BOOKING_SCRIPT", "book_nightsbridge_admin.py")
+
 
 def _resolve_scraper_dir() -> Path:
     env_dir = os.environ.get("SCRAPER_DIR")
@@ -176,7 +186,11 @@ def _check_room_availability(params: dict) -> dict:
 
         room_ids = [r["bbroomid"] for r in rooms_resp.data]
 
-        # Check if ANY physical room is available for ALL requested nights
+        # Check if ANY physical room is available for ALL requested nights.
+        # Also track how many cache rows exist for these dates at all: the sync
+        # only caches a limited forward window, so a stay beyond that window has
+        # ZERO rows — which must be treated as "unknown", NOT "unavailable".
+        cache_rows_seen = 0
         for bbroomid in room_ids:
             cache_resp = (
                 sb.table("availability_cache")
@@ -185,11 +199,23 @@ def _check_room_availability(params: dict) -> dict:
                 .in_("check_date", night_dates)
                 .execute()
             )
-            available_nights = {r["check_date"] for r in cache_resp.data if r["is_available"]}
+            rows = cache_resp.data or []
+            cache_rows_seen += len(rows)
+            available_nights = {r["check_date"] for r in rows if r["is_available"]}
             if all(night in available_nights for night in night_dates):
                 # Found a room that's free the whole stay
                 print(f"[worker] Availability OK: bbroomid={bbroomid} free {checkin}–{checkout}")
                 return {"ok": True}
+
+        # No cached data for these nights at all → the stay is beyond the synced
+        # window. Don't falsely reject it — let NightsBridge be the gatekeeper
+        # (same philosophy as the staleness guard above).
+        if cache_rows_seen == 0:
+            print(
+                f"[worker] No availability_cache rows for {checkin}–{checkout} "
+                "(beyond synced window) — passing through to NightsBridge"
+            )
+            return {"ok": True}
 
         print(f"[worker] Availability FAIL: no '{room_type_name}' free {checkin}–{checkout}")
         return {
@@ -204,6 +230,188 @@ def _check_room_availability(params: dict) -> dict:
         # Never block a booking on a DB error — NightsBridge will catch it
         print(f"[worker] Availability check error (non-blocking): {exc}", file=sys.stderr)
         return {"ok": True}
+
+
+def _supabase_client():
+    """Build a Supabase service-role client, or None if unavailable."""
+    try:
+        from supabase import create_client
+    except ImportError:
+        return None
+    try:
+        env = _build_env()
+        url = (env.get("SUPABASE_URL") or "").strip()
+        key = (env.get("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
+        if not url or not key:
+            return None
+        return create_client(url, key)
+    except Exception as exc:
+        print(f"[worker] Supabase client error: {exc}", file=sys.stderr)
+        return None
+
+
+def _write_booking_job(reference: str, fields: dict) -> None:
+    """Upsert the booking_job row for this reference (async booking status).
+    Best-effort — a DB failure here must never crash the booking thread."""
+    if not reference:
+        return
+    try:
+        sb = _supabase_client()
+        if sb is None:
+            print("[worker] booking_job: no Supabase client — cannot record status", file=sys.stderr)
+            return
+        sb.table("booking_job").upsert({"reference": reference, **fields}, on_conflict="reference").execute()
+        print(f"[worker] booking_job[{reference}] -> {fields.get('status')}")
+    except Exception as exc:
+        print(f"[worker] booking_job write error ({reference}): {exc}", file=sys.stderr)
+
+
+# Mirrors lib/booking-status.ts's ALLOWED_TRANSITIONS — keep these in sync.
+# The worker only ever drives the first three stages (PENDING through
+# NIGHTSBRIDGE_VERIFIED) or FAILED; the website drives the rest.
+_ALLOWED_TRANSITIONS = {
+    "PENDING": ["NIGHTSBRIDGE_BOOKING_CREATED", "AWAITING_PAYMENT", "FAILED"],
+    "NIGHTSBRIDGE_BOOKING_CREATED": ["NIGHTSBRIDGE_VERIFIED", "FAILED"],
+    "NIGHTSBRIDGE_VERIFIED": ["CONFIRMATION_EMAIL_SENT", "FAILED"],
+    "CONFIRMATION_EMAIL_SENT": ["AWAITING_PAYMENT", "FAILED"],
+    "AWAITING_PAYMENT": ["PAYMENT_CONFIRMED", "PAYMENT_FAILED", "FAILED"],
+    "PAYMENT_FAILED": ["PAYMENT_CONFIRMED", "AWAITING_PAYMENT", "FAILED"],
+    "PAYMENT_CONFIRMED": ["BOGA_NOTIFIED", "FAILED"],
+    "BOGA_NOTIFIED": [],
+    "FAILED": [],
+}
+
+
+def _predecessors_of(to_status: str) -> list:
+    return [frm for frm, tos in _ALLOWED_TRANSITIONS.items() if to_status in tos]
+
+
+def _transition_booking_status(reference: str, to_status: str, reason: str | None = None) -> bool:
+    """Atomic guarded transition — same compare-and-swap idempotency
+    mechanism as lib/booking-status.ts's transitionBookingStatus(). Only
+    succeeds if the row's current booking_status is a legal predecessor of
+    to_status; returns False (not an error) if some other writer already
+    moved it, which is the expected/safe outcome under a race, not a bug."""
+    if not reference:
+        return False
+    try:
+        sb = _supabase_client()
+        if sb is None:
+            return False
+        allowed_from = _predecessors_of(to_status)
+        resp = (
+            sb.table("booking_job")
+            .update({
+                "booking_status": to_status,
+                "booking_status_reason": reason,
+                "booking_status_updated_at": _now_iso(),
+            })
+            .eq("reference", reference)
+            .in_("booking_status", allowed_from)
+            .execute()
+        )
+        won = bool(resp.data)
+        if won:
+            print(f"[worker] booking_status[{reference}] -> {to_status}" + (f" ({reason})" if reason else ""))
+            try:
+                sb.table("booking_status_history").insert({
+                    "reference": reference, "to_status": to_status, "reason": reason,
+                }).execute()
+            except Exception as hist_exc:
+                print(f"[worker] booking_status_history insert failed ({reference}): {hist_exc}", file=sys.stderr)
+        else:
+            print(f"[worker] booking_status[{reference}] transition to {to_status} REJECTED (not in {allowed_from})")
+        return won
+    except Exception as exc:
+        print(f"[worker] booking_status transition error ({reference} -> {to_status}): {exc}", file=sys.stderr)
+        return False
+
+
+def _now_iso() -> str:
+    import datetime
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+def _run_booking_to_db(params: dict, book_script: "Path", reference: str) -> None:
+    """Run the booking script (blocking, ~50s) and record the outcome in
+    booking_job. Runs in a background thread so the HTTP request can return
+    immediately — nothing waits on the ~50s Playwright job.
+
+    PAY-FIRST: this worker owns ONLY the NightsBridge track — booking_job.status
+    ('processing'/'completed'/'failed') plus booking_id/room_name. It must NOT
+    touch booking_status: that is the website's payment track (PENDING ->
+    AWAITING_PAYMENT -> PAYMENT_CONFIRMED -> ...), which now runs in parallel and
+    is often already past AWAITING_PAYMENT by the time this finishes. A stray
+    FAILED transition here could wrongly fail a booking the guest already paid
+    for. The admin page reads status/booking_id to show 'not yet on NightsBridge'
+    and to offer a retry."""
+    print(f"[worker] booking_job[{reference}] background thread STARTED (room={params.get('roomTypeName')})")
+    global _running
+    got_lock = _lock.acquire(timeout=70)
+    print(f"[worker] booking_job[{reference}] lock acquired={got_lock} — running subprocess now")
+    if got_lock:
+        _running = True
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(book_script), "--params", json.dumps(params)],
+            capture_output=True,
+            text=True,
+            # 340s ceiling — see the matching comment in _handle_book (sync
+            # mode) for why this is wide enough for either script.
+            timeout=340,
+            env=_build_env(),
+        )
+        result = {}
+        stdout = (proc.stdout or "").strip()
+        if stdout:
+            try:
+                result = json.loads(stdout)
+            except json.JSONDecodeError:
+                result = {}
+        conf = result.get("confirmation") or {}
+        # bookingRef/confirmation.bookingId = old guest-widget script's shape.
+        # nbid/bookingId at top level = new admin-form script's shape (NBID is
+        # NightsBridge's own identifier, confirmed from the
+        # /booking-summary/{NBID} URL). Check both so either script's output
+        # is read correctly — a naming mismatch here would silently mark a
+        # genuinely successful admin booking as failed.
+        booking_id = (
+            result.get("bookingRef")
+            or conf.get("bookingId")
+            or result.get("nbid")
+            or result.get("bookingId")
+            or ""
+        ).strip()
+        # A REAL NightsBridge booking always has a booking number on its
+        # confirmation page. If the script reported ok but we couldn't capture a
+        # booking number, the booking did NOT genuinely complete (a false
+        # positive from a stray "thank you"/"confirmed" on the page) — treat it
+        # as failed so we never tell a guest they're booked when they aren't.
+        if result.get("ok") and booking_id:
+            # roomName is only present from book_nightsbridge_admin.py (the
+            # admin-calendar flow knows the exact physical unit booked, e.g.
+            # "Red Room"). The old guest-widget script never learns this —
+            # omit the field entirely rather than write an empty string, so
+            # downstream code's `room_name ?? room_type_name` fallback works.
+            fields = {"status": "completed", "booking_id": booking_id, "error": None}
+            room_name = result.get("roomName")
+            if room_name:
+                fields["room_name"] = room_name
+            _write_booking_job(reference, fields)
+        elif result.get("ok") and not booking_id:
+            err = "Booking could not be confirmed — NightsBridge returned no booking number. Please try again or contact us."
+            _write_booking_job(reference, {"status": "failed", "error": err})
+        else:
+            err = result.get("error") or (proc.stderr or "").strip() or "Booking failed"
+            _write_booking_job(reference, {"status": "failed", "error": err[:800]})
+    except subprocess.TimeoutExpired:
+        _write_booking_job(reference, {"status": "failed", "error": "Booking timed out"})
+    except Exception as exc:
+        _write_booking_job(reference, {"status": "failed", "error": str(exc)[:800]})
+    finally:
+        if got_lock:
+            _running = False
+            _lock.release()
 
 
 def _run_sync() -> tuple[int, str]:
@@ -318,20 +526,59 @@ class Handler(BaseHTTPRequestHandler):
         # Availability pre-check — fast Supabase query before spinning up Playwright
         avail = _check_room_availability(params)
         if not avail["ok"]:
+            # In async mode, record the failure so the website's poll sees it.
+            if params.get("async") and params.get("reference"):
+                _write_booking_job(params["reference"], {"status": "failed", "error": avail["error"]})
             self._json(409, {"ok": False, "error": avail["error"]})
             return
 
-        book_script = SCRAPER_DIR / "book_nightsbridge.py"
+        book_script = SCRAPER_DIR / BOOKING_SCRIPT_NAME
         if not book_script.exists():
+            if params.get("async") and params.get("reference"):
+                _write_booking_job(params["reference"], {"status": "failed", "error": "Booking script not found"})
             self._json(503, {"ok": False, "error": "Booking script not found"})
             return
 
+        # ── ASYNC MODE ──────────────────────────────────────────────────────
+        # The website passes async=true + a payment reference. We start the
+        # ~50s booking in a BACKGROUND thread, write the outcome to booking_job,
+        # and return 202 immediately so no HTTP request ever waits on it. The
+        # website polls booking_job for the result.
+        if params.get("async") and params.get("reference"):
+            reference = params["reference"]
+            _write_booking_job(reference, {"status": "processing", "error": None})
+            t = threading.Thread(
+                target=_run_booking_to_db,
+                args=(params, book_script, reference),
+                daemon=True,
+            )
+            t.start()
+            self._json(202, {"ok": True, "accepted": True, "reference": reference})
+            return
+
+        # ── SYNC MODE (legacy / admin) ──────────────────────────────────────
+        # Serialise with the 5-minutely sync: two Playwright/Chromium processes
+        # running at once on the free tier starve each other for memory and make
+        # a booking crawl past its timeout. Wait (bounded) for any in-progress
+        # sync to finish so the booking gets the box to itself and runs fast.
+        # If we can't get the lock in time we proceed anyway — never fail a paid
+        # booking just because a sync is busy.
+        global _running
+        got_lock = _lock.acquire(timeout=70)
+        if got_lock:
+            _running = True
         try:
             proc = subprocess.run(
                 [sys.executable, str(book_script), "--params", json.dumps(params)],
                 capture_output=True,
                 text=True,
-                timeout=120,
+                # 340s ceiling: generous enough for either script. The old
+                # guest-widget script retries internally (up to 3 attempts) on
+                # ambiguous/transient failures. The admin-form script
+                # (default) does NOT auto-retry — a single real-browser run
+                # through several form steps plus verification still needs
+                # real headroom, and a wide ceiling costs nothing on failure.
+                timeout=340,
                 env=_build_env(),
             )
             stdout = proc.stdout.strip()
@@ -344,9 +591,13 @@ class Handler(BaseHTTPRequestHandler):
                     pass
             self._json(500, {"ok": False, "error": proc.stderr or "Booking failed"})
         except subprocess.TimeoutExpired:
-            self._json(504, {"ok": False, "error": "Booking timed out after 120 s"})
+            self._json(504, {"ok": False, "error": "Booking timed out after 340 s"})
         except Exception as exc:
             self._json(500, {"ok": False, "error": str(exc)})
+        finally:
+            if got_lock:
+                _running = False
+                _lock.release()
 
 
     def _handle_manage_booking(self) -> None:

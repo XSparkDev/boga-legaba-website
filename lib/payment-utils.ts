@@ -1,33 +1,96 @@
 /**
- * Shared utilities for payment processing — used by both the verify callback
- * route and the Paystack webhook handler so logic is never duplicated.
+ * Shared utilities for the booking + payment flow: BOOK-FIRST — the guest's
+ * room is created on NightsBridge before payment is ever requested (see
+ * /api/booking/start + /api/booking/status), then Paystack only confirms
+ * payment for an already-real booking.
  */
 import { Resend } from "resend"
-import { releaseHold } from "@/lib/booking-holds"
 import { emailShell, emailHero, emailInfoTable, emailButton, emailCallout, emailParagraph, EMAIL_COLORS, EMAIL_BRAND, type InfoRow } from "@/lib/email-theme"
 
+// ── Paystack session creation ───────────────────────────────────────────────
+
+export type InitiatePaymentArgs = {
+  email: string
+  amountRands: number
+  bookingRef: string
+  guestName?: string
+  guestPhone?: string
+  checkin?: string
+  checkout?: string
+  roomTypeName?: string
+  /** The exact physical room (e.g. "Red Room") — see PaymentContext.roomName. */
+  roomName?: string
+  /** booking_job.reference (e.g. "BLJOB-...") — DIFFERENT from bookingRef,
+   * which is the NightsBridge booking id shown to guests. Threaded through
+   * Paystack metadata so the webhook/verify callback (which only receives
+   * Paystack's own transaction reference) can look up and transition the
+   * right booking_job row in the state machine. */
+  internalReference?: string
+}
+
+export type InitiatePaymentResult =
+  | { ok: true; authorization_url: string; reference: string }
+  | { ok: false; error: string }
+
 /**
- * Attempt an automatic full refund of a Paystack transaction. Returns true only
- * if Paystack accepts the refund request. Best-effort — never throws.
+ * Create ONE Paystack checkout session for a booking. Extracted so it can be
+ * called from two places that must share the exact same session — the
+ * guest's browser redirect AND the "booking reserved" email's fallback
+ * link — without creating two separate Paystack transactions for one
+ * booking (a real double-charge risk if a guest used both links).
  */
-async function attemptPaystackRefund(reference: string): Promise<boolean> {
+export async function initiatePaystackPayment(args: InitiatePaymentArgs): Promise<InitiatePaymentResult> {
   const secretKey = process.env.PAYSTACK_SECRET_KEY
-  if (!secretKey || !reference) return false
+  if (!secretKey || secretKey === "sk_test_REPLACE_ME") {
+    return { ok: false, error: "Payment not configured" }
+  }
+  if (!args.email || !args.amountRands || !args.bookingRef) {
+    return { ok: false, error: "Missing email, amountRands or bookingRef" }
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.bogalegaba.co.za"
+  const reference = `BL-${args.bookingRef}-${Date.now()}`
+  const callbackUrl = `${siteUrl}/api/payment/verify`
+
   try {
-    const res = await fetch("https://api.paystack.co/refund", {
+    const res = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ transaction: reference }),
-      signal: AbortSignal.timeout(20_000),
+      headers: { Authorization: `Bearer ${secretKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: args.email,
+        amount: Math.round(args.amountRands * 100), // kobo / cents
+        reference,
+        callback_url: callbackUrl,
+        currency: "ZAR",
+        metadata: {
+          booking: {
+            bookingRef: args.bookingRef,
+            internalReference: args.internalReference ?? "",
+            guestEmail: args.email,
+            guestName: args.guestName ?? "",
+            guestPhone: args.guestPhone ?? "",
+            checkin: args.checkin ?? "",
+            checkout: args.checkout ?? "",
+            roomTypeName: args.roomTypeName ?? "",
+            roomName: args.roomName ?? "",
+          },
+          custom_fields: [
+            { display_name: "Booking Ref", variable_name: "booking_ref", value: args.bookingRef },
+            { display_name: "Room",        variable_name: "room",        value: args.roomName || args.roomTypeName || "" },
+            { display_name: "Check-in",    variable_name: "checkin",     value: args.checkin ?? "" },
+            { display_name: "Check-out",   variable_name: "checkout",    value: args.checkout ?? "" },
+            { display_name: "Phone",       variable_name: "guest_phone", value: args.guestPhone ?? "" },
+          ],
+        },
+      }),
     })
-    const data = (await res.json().catch(() => ({}))) as { status?: boolean }
-    return data.status === true
+    const data = (await res.json()) as { status: boolean; message: string; data?: { authorization_url: string; reference: string } }
+    if (!data.status || !data.data) {
+      return { ok: false, error: data.message || "Paystack init failed" }
+    }
+    return { ok: true, authorization_url: data.data.authorization_url, reference: data.data.reference }
   } catch (err) {
-    console.error("[payment] Automatic refund error:", err)
-    return false
+    return { ok: false, error: err instanceof Error ? err.message : "Payment initiation failed" }
   }
 }
 
@@ -60,6 +123,16 @@ function resolveGuestName(ctx: { guestName?: string; firstname?: string; surname
   return { firstname: firstname || "—", surname: surname || "—", full }
 }
 
+/**
+ * The exact physical room (e.g. "Red Room") if known, otherwise the category
+ * (e.g. "Double Room (Bath only)") as a fallback for bookings made via the
+ * old guest-widget flow, which never learns the specific unit. Guests should
+ * always see this, not the raw category, wherever the room is displayed.
+ */
+function resolveRoomLabel(roomName?: string, roomTypeName?: string): string {
+  return roomName || roomTypeName || "—"
+}
+
 // ── Core payment processor ────────────────────────────────────────────────────
 
 export interface PaymentContext {
@@ -71,9 +144,14 @@ export interface PaymentContext {
   checkin:      string
   checkout:     string
   roomTypeName: string
+  /** The exact physical room booked (e.g. "Red Room"), known once the
+   * admin-calendar booking succeeds — prefer this over roomTypeName
+   * wherever the room is shown to the guest. Absent for the old
+   * guest-widget flow, which never learns the specific unit. */
+  roomName?:    string
   amountPaid:   number
-  // Full booking payload — needed to CREATE the booking AFTER payment succeeds
-  // (pay-first flow: nothing is booked on NightsBridge until the guest has paid).
+  // Full booking payload — used to CREATE the booking (book-first flow: this
+  // happens BEFORE payment is requested, via /api/booking/start).
   mealPlanName?: string
   adults?:       number
   children1?:    number
@@ -89,199 +167,117 @@ export interface PaymentContext {
   maxOccupancy?: number
 }
 
+/** The exact payload the NightsBridge worker's /book endpoint expects. */
+function buildWorkerBookingPayload(ctx: PaymentContext, extra: Record<string, unknown> = {}) {
+  const [firstname, ...rest] = (ctx.guestName || "").trim().split(/\s+/)
+  return {
+    checkin:       ctx.checkin,
+    checkout:      ctx.checkout,
+    roomTypeName:  ctx.roomTypeName,
+    mealPlanName:  ctx.mealPlanName ?? "Room Only",
+    adults:        ctx.adults ?? 2,
+    children1:     ctx.children1 ?? 0,
+    children2:     ctx.children2 ?? 0,
+    firstname:     ctx.firstname ?? firstname ?? "",
+    surname:       ctx.surname ?? rest.join(" ") ?? "",
+    phone:         ctx.guestPhone,
+    email:         ctx.guestEmail,
+    arrivalTime:   ctx.arrivalTime ?? "",
+    airline:       ctx.airline ?? "",
+    flightno:      ctx.flightno ?? "",
+    notes:         ctx.notes ?? "",
+    paymentMethod: "bank_transfer",
+    maxAdults:     ctx.maxAdults,
+    maxOccupancy:  ctx.maxOccupancy,
+    ...extra,
+  }
+}
+
 /**
- * Called after Paystack confirms a successful payment (from both the redirect
- * callback and the server-side webhook).
- *
- * PAY-FIRST FLOW: the guest has already paid, and NOTHING is booked yet. So this
- * now CREATES the real NightsBridge booking (via the worker), and only on success
- * sends the confirmation emails. NightsBridge itself emails the guest once the
- * booking is registered. If the booking fails after a successful payment, we fire
- * an urgent "refund required" alert to the admin.
- *
- * Returns whether the booking was created, plus the real booking reference.
+ * Fire the worker's ASYNC booking: the worker starts the ~50s booking in the
+ * background, records the outcome in booking_job (keyed by the payment
+ * reference), and returns 202 immediately. This call therefore returns fast —
+ * nothing waits on the booking. Returns true if the worker accepted the job.
  */
-export async function processPayment(
-  ctx: PaymentContext,
-): Promise<{ booked: boolean; bookingRef: string; confirmation?: Record<string, string>; refunded?: boolean }> {
+export async function triggerAsyncBooking(ctx: PaymentContext): Promise<boolean> {
+  const workerUrl  = (process.env.SYNC_WORKER_URL ?? "").replace(/\/run$/, "")
+  const cronSecret = process.env.CRON_SECRET
+  if (!workerUrl || !cronSecret) {
+    console.error(`[payment] triggerAsyncBooking reference=${ctx.reference}: SYNC_WORKER_URL / CRON_SECRET not set`)
+    return false
+  }
+  const payload = buildWorkerBookingPayload(ctx, { async: true, reference: ctx.reference })
+  // Guard against the worker's own required-field validation rejecting the
+  // request server-side (e.g. an empty surname when guestName is a single
+  // word) — that would make triggerAsyncBooking return false, but by then
+  // ensurePendingBookingJob has ALREADY written a "pending" row, so log the
+  // exact payload shape sent so a rejection reason is traceable, not guessed.
+  console.log(`[payment] triggerAsyncBooking reference=${ctx.reference} POST ${workerUrl}/book firstname="${payload.firstname}" surname="${payload.surname}" room="${payload.roomTypeName}"`)
+  try {
+    const res = await fetch(`${workerUrl}/book`, {
+      method:  "POST",
+      headers: { Authorization: `Bearer ${cronSecret}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      // Only kicking off the job — the worker returns 202 in well under a second.
+      signal: AbortSignal.timeout(30_000),
+    })
+    const data = (await res.json().catch(() => ({}))) as { ok?: boolean; accepted?: boolean; error?: string }
+    const accepted = res.status === 202 || data.accepted === true || data.ok === true
+    if (!accepted) {
+      console.error(`[payment] triggerAsyncBooking reference=${ctx.reference} REJECTED by worker: HTTP ${res.status} — ${data.error ?? "(no error message)"}`)
+    } else {
+      console.log(`[payment] triggerAsyncBooking reference=${ctx.reference} ACCEPTED (HTTP ${res.status})`)
+    }
+    return accepted
+  } catch (err) {
+    console.error(`[payment] triggerAsyncBooking reference=${ctx.reference} EXCEPTION:`, err instanceof Error ? err.message : err)
+    return false
+  }
+}
+
+/**
+ * BOOK-FIRST FLOW: the NightsBridge booking is now created BEFORE payment is
+ * ever requested (see /api/booking/start + /api/booking/status). By the time
+ * Paystack confirms a successful payment, the room is already reserved — so
+ * this just sends the final "Payment Confirmed" email to the guest and a
+ * notification to admin. It never creates or retries a booking.
+ *
+ * If the guest's payment fails or they abandon checkout, the booking is left
+ * as-is (the guest already received NightsBridge's own reservation email) —
+ * per business decision, nothing is auto-cancelled or refunded.
+ */
+export async function sendPaymentConfirmedEmails(ctx: PaymentContext): Promise<void> {
   const resendKey  = process.env.RESEND_API_KEY
   const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL ?? "bogalegaba@gmail.com"
   const from       = process.env.RESEND_FROM_EMAIL ?? "Boga Legaba <onboarding@resend.dev>"
-  const useResend  = Boolean(resendKey && resendKey !== "re_REPLACE_ME")
+  if (!resendKey || resendKey === "re_REPLACE_ME") return
 
-  // ── Step 1: CREATE the NightsBridge booking (payment already succeeded) ──
-  let booked = false
-  let bookingRef = ctx.bookingRef
-  let confirmation: Record<string, string> | undefined
-  const workerUrl  = (process.env.SYNC_WORKER_URL ?? "").replace(/\/run$/, "")
-  const cronSecret = process.env.CRON_SECRET
+  const resend = new Resend(resendKey)
+  const guestFullName = resolveGuestName(ctx).full
 
-  if (workerUrl && cronSecret) {
-    const [firstname, ...rest] = (ctx.guestName || "").trim().split(/\s+/)
-    try {
-      const res = await fetch(`${workerUrl}/book`, {
-        method:  "POST",
-        headers: {
-          Authorization:  `Bearer ${cronSecret}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          checkin:       ctx.checkin,
-          checkout:      ctx.checkout,
-          roomTypeName:  ctx.roomTypeName,
-          mealPlanName:  ctx.mealPlanName ?? "Room Only",
-          adults:        ctx.adults ?? 2,
-          children1:     ctx.children1 ?? 0,
-          children2:     ctx.children2 ?? 0,
-          firstname:     ctx.firstname ?? firstname ?? "",
-          surname:       ctx.surname ?? rest.join(" ") ?? "",
-          phone:         ctx.guestPhone,
-          email:         ctx.guestEmail,
-          arrivalTime:   ctx.arrivalTime ?? "",
-          airline:       ctx.airline ?? "",
-          flightno:      ctx.flightno ?? "",
-          notes:         ctx.notes ?? "",
-          paymentMethod: "bank_transfer",
-          maxAdults:     ctx.maxAdults,
-          maxOccupancy:  ctx.maxOccupancy,
-        }),
-        signal: AbortSignal.timeout(120_000),
-      })
-      const result = (await res.json().catch(() => ({}))) as {
-        ok?: boolean
-        bookingRef?: string
-        confirmation?: Record<string, string>
-      }
-      booked = result.ok === true
-      if (result.bookingRef) bookingRef = result.bookingRef
-      confirmation = result.confirmation
-    } catch (err) {
-      console.error("[payment] NightsBridge booking error:", err)
-    }
-  }
-
-  const ctxRef: PaymentContext = { ...ctx, bookingRef }
-
-  // Release the soft hold: its job is done once we've attempted the booking
-  // (booked → room is now really booked; failed → we're about to refund).
-  await releaseHold(ctx.reference)
-
-  // ── Step 1b: Booking failed after payment → try to REFUND automatically ──
-  // Only fall back to a manual "staff must refund by hand" alert if the
-  // automatic refund itself fails.
-  let refunded = false
-  if (!booked) {
-    refunded = await attemptPaystackRefund(ctx.reference)
-  }
-
-  // ── Step 2: Emails ───────────────────────────────────────────────────────
-  if (useResend) {
-    const resend = new Resend(resendKey!)
-
-    // Guest branded confirmation — only when the booking actually went through.
-    if (booked && ctx.guestEmail) {
-      try {
-        await resend.emails.send({
-          from,
-          to:      ctx.guestEmail,
-          subject: "Payment Confirmed – Boga Legaba",
-          html:    buildGuestConfirmEmail(ctxRef),
-        })
-      } catch (err) {
-        console.error("[payment] Guest confirmation email error:", err)
-      }
-    }
-
-    // Guest refund notice — booking failed but we auto-refunded them.
-    if (!booked && refunded && ctx.guestEmail) {
-      try {
-        await resend.emails.send({
-          from,
-          to:      ctx.guestEmail,
-          subject: "Refund processed – Boga Legaba",
-          html:    buildGuestRefundEmail(ctxRef),
-        })
-      } catch (err) {
-        console.error("[payment] Guest refund email error:", err)
-      }
-    }
-
-    // Admin payment notification (always) — explicit first/surname, accurate status.
-    const guestFullName = resolveGuestName(ctxRef).full
+  if (ctx.guestEmail) {
     try {
       await resend.emails.send({
         from,
-        to:      adminEmail,
-        subject: `New Payment – ${guestFullName} · ${bookingRef || "no ref"}`,
-        html:    buildAdminPaymentEmail(ctxRef, booked),
+        to:      ctx.guestEmail,
+        subject: "Payment Confirmed – Boga Legaba",
+        html:    buildGuestConfirmEmail(ctx),
       })
     } catch (err) {
-      console.error("[payment] Admin notification email error:", err)
-    }
-
-    // Payment succeeded but booking FAILED.
-    if (!booked) {
-      if (refunded) {
-        // Auto-refund worked — just inform admin (no manual action needed).
-        try {
-          await resend.emails.send({
-            from,
-            to:      adminEmail,
-            subject: `Auto-refunded – booking failed after payment – ${guestFullName}`,
-            html:    buildNBFailureEmail(ctxRef, true),
-          })
-        } catch { /* best effort */ }
-      } else {
-        // Auto-refund also failed → urgent manual refund required.
-        try {
-          await resend.emails.send({
-            from,
-            to:      adminEmail,
-            subject: `ACTION REQUIRED – PAID, booking FAILED, AUTO-REFUND FAILED – ${guestFullName}`,
-            html:    buildNBFailureEmail(ctxRef, false),
-          })
-        } catch { /* best effort */ }
-      }
+      console.error("[payment] Guest confirmation email error:", err)
     }
   }
 
-  return { booked, bookingRef, confirmation, refunded }
-}
-
-// ── Email: guest auto-refund notice ───────────────────────────────────────────
-
-export function buildGuestRefundEmail(ctx: PaymentContext) {
-  const amount = fmtAmount(ctx.amountPaid)
-  const { firstname } = resolveGuestName(ctx)
-
-  return emailShell({
-    title: "Payment Refunded – Boga Legaba",
-    preheader: `Your payment of ${amount} has been refunded.`,
-    eyebrow: "Refund Processed",
-    accentBarColor: EMAIL_COLORS.gold,
-    bodyHtml:
-      emailHero({
-        eyebrow: "Refund Processed",
-        heading: `We're sorry, ${firstname}`,
-        subtext: "We were unable to confirm your room, so your payment has been refunded in full.",
-      }) +
-      emailInfoTable(
-        [
-          { label: "Room requested", value: ctx.roomTypeName || "—" },
-          { label: "Check-in", value: fmtDate(ctx.checkin) },
-          { label: "Check-out", value: fmtDate(ctx.checkout) },
-          { label: "Amount refunded", value: amount, emphasis: true },
-        ],
-        { title: "Refund details" },
-      ) +
-      emailParagraph(
-        `We hit a snag confirming this room automatically, so no booking was made and your payment of <strong style="color:${EMAIL_COLORS.bodyText};">${amount}</strong> has been refunded to your original payment method. Depending on your bank, this can take a few business days to reflect.`,
-      ) +
-      emailParagraph(
-        "Please feel free to try booking again, or contact us directly and we'll gladly help you find a room.",
-      ) +
-      emailButton("WhatsApp Us", EMAIL_BRAND.whatsappHref),
-  })
+  try {
+    await resend.emails.send({
+      from,
+      to:      adminEmail,
+      subject: `New Payment – ${guestFullName} · ${ctx.bookingRef || "no ref"}`,
+      html:    buildAdminPaymentEmail(ctx, true),
+    })
+  } catch (err) {
+    console.error("[payment] Admin notification email error:", err)
+  }
 }
 
 // ── Email: guest payment confirmation ─────────────────────────────────────────
@@ -299,7 +295,7 @@ export function buildGuestConfirmEmail(ctx: PaymentContext) {
       <tr>
         <td width="50%" style="background:${c.white};padding:16px 20px;border-right:1px solid ${c.border};border-bottom:1px solid ${c.border};">
           <p style="margin:0;color:${c.muted};font-size:9px;text-transform:uppercase;letter-spacing:1.5px;">Room</p>
-          <p style="margin:5px 0 0;color:${c.black};font-size:14px;font-weight:600;">${ctx.roomTypeName || "—"}</p>
+          <p style="margin:5px 0 0;color:${c.black};font-size:14px;font-weight:600;">${resolveRoomLabel(ctx.roomName, ctx.roomTypeName)}</p>
         </td>
         <td width="50%" style="background:${c.sand};padding:16px 20px;border-bottom:1px solid ${c.border};">
           <p style="margin:0;color:${c.muted};font-size:9px;text-transform:uppercase;letter-spacing:1.5px;">Guest</p>
@@ -392,6 +388,14 @@ export function buildGuestConfirmEmail(ctx: PaymentContext) {
     </table>
   </td></tr>`
 
+  const registrationHref = `${EMAIL_BRAND.websiteHref}/register?ref=${encodeURIComponent(ctx.bookingRef || "")}`
+  const registrationCta =
+    emailCallout(
+      `<strong style="color:${c.bodyText};">One more step — complete your guest registration.</strong><br>` +
+        `Please fill in your digital check-in details before you arrive so we have everything ready for you.`,
+      { tone: "warning" },
+    ) + emailButton("Complete Guest Registration", registrationHref)
+
   return emailShell({
     title: "Payment Confirmed – Boga Legaba",
     preheader: `Your stay is confirmed. Booking reference ${ctx.bookingRef || ""} · ${amount} paid.`,
@@ -409,7 +413,7 @@ export function buildGuestConfirmEmail(ctx: PaymentContext) {
         <p style="margin:0;color:${c.gold};font-size:44px;font-weight:700;font-family:'Playfair Display',Georgia,serif;letter-spacing:1px;">${amount}</p>
         <p style="margin:10px 0 0;color:${c.muted};font-size:11px;">Paid securely via Paystack &middot; VAT included</p>
       </td></tr>` +
-      stayDetails + gettingThere + contactUs + goodToKnow,
+      stayDetails + registrationCta + gettingThere + contactUs + goodToKnow,
   })
 }
 
@@ -421,18 +425,26 @@ export function buildGuestPendingEmail({
   checkin,
   checkout,
   roomTypeName,
+  roomName,
   estimatedTotal,
+  paymentUrl,
 }: {
   guestName:      string
   bookingRef:     string
   checkin:        string
   checkout:       string
   roomTypeName:   string
+  /** The exact physical room (e.g. "Red Room") — see resolveRoomLabel(). */
+  roomName?:      string
   estimatedTotal: string
+  /** The SAME Paystack session used for the browser redirect — a fallback
+   * link in case the guest closed the tab or the redirect didn't fire.
+   * Omitted entirely (no payment section) if pre-generation failed. */
+  paymentUrl?:    string
 }) {
   const rows: InfoRow[] = []
   if (bookingRef) rows.push({ label: "Booking Reference", value: bookingRef })
-  rows.push({ label: "Room", value: roomTypeName || "—" })
+  rows.push({ label: "Room", value: resolveRoomLabel(roomName, roomTypeName) })
   rows.push({ label: "Check-in", value: fmtDate(checkin) })
   rows.push({ label: "Check-out", value: fmtDate(checkout) })
   if (estimatedTotal) rows.push({ label: "Amount Due", value: estimatedTotal, emphasis: true })
@@ -442,14 +454,19 @@ export function buildGuestPendingEmail({
     preheader: `Your room is reserved. Booking reference ${bookingRef || ""}.`,
     bodyHtml:
       emailParagraph(
-        `Dear <strong style="color:${EMAIL_COLORS.bodyText};">${guestName || "Guest"}</strong>,<br>Your room has been reserved. You were redirected to complete payment — if payment didn't go through, please contact us via WhatsApp and quote your booking reference.`,
+        `Dear <strong style="color:${EMAIL_COLORS.bodyText};">${guestName || "Guest"}</strong>,<br>Your room has been reserved at Boga Legaba. Please see your booking details below.`,
       ) +
       emailInfoTable(rows) +
-      emailCallout(
-        "<strong>&#9888; Awaiting Payment</strong><br>Your booking is held for 24 hours. If payment did not complete, please contact us via WhatsApp and we will assist you.",
-        { tone: "warning" },
-      ) +
-      emailButton("WhatsApp Us", EMAIL_BRAND.whatsappHref),
+      (paymentUrl
+        ? emailCallout(
+            `<strong>Complete your payment</strong><br>If you were not redirected to payment, you can complete payment here: <a href="${paymentUrl}" style="color:${EMAIL_COLORS.gold};font-weight:600;">${paymentUrl}</a>.<br>If you have already paid, please disregard this link.`,
+            { tone: "warning" },
+          )
+        : emailCallout(
+            "<strong>&#9888; Payment link unavailable</strong><br>We couldn't generate a payment link automatically — please contact us via WhatsApp and quote your booking reference to arrange payment.",
+            { tone: "warning" },
+          )) +
+      (paymentUrl ? emailButton("Complete Payment", paymentUrl) : emailButton("WhatsApp Us", EMAIL_BRAND.whatsappHref)),
     footerNote: "This is an automated notification. Please keep it for your records.",
   })
 }
@@ -467,7 +484,7 @@ export function buildAdminPaymentEmail(ctx: PaymentContext, booked: boolean = tr
     { label: "Email", value: ctx.guestEmail || "—" },
     { label: "Phone", value: ctx.guestPhone || "—" },
     { label: "Booking Reference", value: ctx.bookingRef || "—" },
-    { label: "Room", value: ctx.roomTypeName || "—" },
+    { label: "Room", value: resolveRoomLabel(ctx.roomName, ctx.roomTypeName) },
     { label: "Check-in", value: fmtDate(ctx.checkin) },
     { label: "Check-out", value: fmtDate(ctx.checkout) },
     { label: "Amount Paid", value: amount, emphasis: true },
@@ -492,39 +509,3 @@ export function buildAdminPaymentEmail(ctx: PaymentContext, booked: boolean = tr
   })
 }
 
-// ── Email: NightsBridge confirm failure alert ──────────────────────────────────
-
-export function buildNBFailureEmail(ctx: PaymentContext, refunded: boolean = false) {
-  const amount = fmtAmount(ctx.amountPaid)
-  const { full } = resolveGuestName(ctx)
-
-  const heading = refunded ? "Booking Failed — Guest Auto-Refunded" : "Booking Failed — Manual Refund Required"
-  const message = refunded
-    ? `Payment was received but we could not automatically create this booking on NightsBridge. The guest has already been <strong style="color:${EMAIL_COLORS.bodyText};">refunded in full</strong> via Paystack — no further action is needed unless you want to follow up with the guest directly.`
-    : `Payment was received but we could not automatically create this booking on NightsBridge, <strong style="color:${EMAIL_COLORS.danger};">and the automatic refund also failed</strong>. Please refund the guest manually via the Paystack dashboard and follow up with them directly.`
-
-  const rows: InfoRow[] = [
-    { label: "Guest", value: full },
-    { label: "Email", value: ctx.guestEmail || "—" },
-    { label: "Phone", value: ctx.guestPhone || "—" },
-    { label: "Room requested", value: ctx.roomTypeName || "—" },
-    { label: "Check-in", value: fmtDate(ctx.checkin) },
-    { label: "Check-out", value: fmtDate(ctx.checkout) },
-    { label: "Paystack Reference", value: ctx.reference || "—" },
-    { label: "Amount", value: amount, emphasis: true },
-  ]
-
-  return emailShell({
-    title: "Action Required – Boga Legaba",
-    eyebrow: "Admin Alert",
-    accentBarColor: EMAIL_COLORS.danger,
-    bodyHtml:
-      `<tr><td style="padding:32px 40px 20px;">
-        <p style="margin:0 0 8px;color:${EMAIL_COLORS.danger};font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;">&#9888; ${refunded ? "Refunded automatically" : "Action Required"}</p>
-        <p style="margin:0;color:${EMAIL_COLORS.black};font-size:20px;font-weight:400;font-family:'Playfair Display',Georgia,serif;">${heading}</p>
-        <p style="margin:8px 0 0;color:${EMAIL_COLORS.muted};font-size:13px;line-height:1.7;">${message}</p>
-      </td></tr>` +
-      emailInfoTable(rows),
-    footerNote: "Admin alert · Boga Legaba booking system.",
-  })
-}

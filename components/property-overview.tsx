@@ -67,7 +67,7 @@ export function PropertyOverview() {
                     <p className="font-mono text-[10px] tracking-[0.18em] text-gold uppercase mb-2">
                       {p.tagline}
                     </p>
-                    <h3 className="font-display text-[28px] leading-tight text-[#0A0A0A] mb-1">{p.code}</h3>
+                    <h3 className="font-display text-[28px] leading-tight text-[#000000] mb-1">{p.code}</h3>
                     <p className="font-mono text-[11px] text-taupe tracking-wide mb-3">{p.address}</p>
                     <p className="font-body text-sm text-body-text leading-relaxed mb-5 line-clamp-3 flex-1">
                       {p.description}

@@ -54,9 +54,14 @@ export async function hasActiveHold(
     }
 
     const target = normalizeName(roomTypeName)
-    return (data ?? []).some((h) => {
+    const rows = data ?? []
+    // Exact match first — falling straight to substring matching risks a hold
+    // on a differently-named-but-similar room (e.g. "Double Room (Bath)" vs
+    // "Double Room (Bath & Shower)") wrongly blocking this booking.
+    if (rows.some((h) => normalizeName(h.room_type_name as string) === target)) return true
+    return rows.some((h) => {
       const held = normalizeName(h.room_type_name as string)
-      return held === target || held.includes(target) || target.includes(held)
+      return held.includes(target) || target.includes(held)
     })
   } catch (err) {
     console.warn("[booking-hold] hasActiveHold error (failing open):", err)
