@@ -58,16 +58,24 @@ export async function GET(request: NextRequest) {
 
   let bookingStatus = job.booking_status as BookingStatus | undefined
 
-  // Self-healing bridge: if booking_status is missing (migration 014 not
-  // applied to this database yet — the column simply doesn't exist, so
-  // Supabase never returns it), fall back to the older `status` signal so a
-  // real, successful booking still reaches the guest instead of hanging
-  // forever. This is exactly the failure mode that caused the original
-  // "stuck on Reserving your room, no email, no redirect" bug: a real
-  // NightsBridge booking existed, but nothing ever advanced booking_status
-  // past its default because the column wasn't there to advance.
-  if (!bookingStatus && status === "completed" && job.booking_id) {
-    console.warn(`[booking/status] reference=${reference} booking_status missing (migration 014 not applied?) — bridging from legacy status=completed`)
+  // Self-healing bridge: catches TWO distinct scenarios where the legacy
+  // `status` signal says the booking is genuinely done but booking_status
+  // hasn't caught up, so a real, successful booking still reaches the guest
+  // instead of hanging forever:
+  //  (a) booking_status is missing entirely — migration 014 hasn't been
+  //      applied yet, so the column doesn't exist and Supabase never
+  //      returns it.
+  //  (b) booking_status IS present (the migration ran, so it defaults to
+  //      'PENDING') but stuck there or at NIGHTSBRIDGE_BOOKING_CREATED,
+  //      because whichever worker process wrote status="completed" is still
+  //      running OLD code that doesn't know about booking_status at all and
+  //      so never advances it. A plain `!bookingStatus` check misses this —
+  //      the value is a real, present, non-empty string, just an early one.
+  // Both are exactly the failure mode that caused the original "stuck on
+  // Reserving your room, no email, no redirect" bug.
+  const STAGES_BEFORE_VERIFIED: BookingStatus[] = ["PENDING", "NIGHTSBRIDGE_BOOKING_CREATED"]
+  if (status === "completed" && job.booking_id && (!bookingStatus || STAGES_BEFORE_VERIFIED.includes(bookingStatus))) {
+    console.warn(`[booking/status] reference=${reference} booking_status is ${bookingStatus ?? "missing"} despite legacy status=completed (old worker code, or migration 014 not applied?) — bridging to NIGHTSBRIDGE_VERIFIED`)
     bookingStatus = "NIGHTSBRIDGE_VERIFIED"
   }
 
