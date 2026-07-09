@@ -325,7 +325,27 @@ const PAYMENT_STATUS: Record<string, { label: string; cls: string }> = {
   AWAITING_PAYMENT:  { label: "Awaiting pay", cls: "bg-amber-50 text-amber-700 border-amber-200"  },
   PAYMENT_CONFIRMED: { label: "Paid",         cls: "bg-blue-50 text-blue-700 border-blue-200"     },
   BOGA_NOTIFIED:     { label: "Paid",         cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  PAYMENT_FAILED:    { label: "Payment failed", cls: "bg-red-50 text-red-700 border-red-200"      },
   FAILED:            { label: "Failed",       cls: "bg-red-50 text-red-700 border-red-200"        },
+}
+
+// A guest who reached checkout but never paid: either Paystack told us it
+// failed (PAYMENT_FAILED), or they abandoned the tab so no event ever came and
+// the row is still AWAITING_PAYMENT well after it was created. STALE_MINUTES is
+// how long we wait before treating an unpaid AWAITING_PAYMENT as abandoned.
+const ABANDONED_AFTER_MINUTES = 30
+
+function isUnsuccessfulPayment(w: WebsiteBooking): boolean {
+  if (w.booking_status === "PAYMENT_FAILED") return true
+  if (w.booking_status === "AWAITING_PAYMENT") {
+    const ageMin = (Date.now() - new Date(w.created_at).getTime()) / 60000
+    return ageMin >= ABANDONED_AFTER_MINUTES
+  }
+  return false
+}
+
+function isPaid(w: WebsiteBooking): boolean {
+  return w.booking_status === "PAYMENT_CONFIRMED" || w.booking_status === "BOGA_NOTIFIED"
 }
 
 function PaymentBadge({ status }: { status: string | null }) {
@@ -383,15 +403,50 @@ function RetryNightsBridgeButton({ reference }: { reference: string }) {
   )
 }
 
+type WebFilter = "all" | "paid" | "unsuccessful"
+
 function WebsiteBookingsSection({ rows }: { rows: WebsiteBooking[] }) {
+  const [filter, setFilter] = useState<WebFilter>("all")
   if (rows.length === 0) return null
+
+  const paidCount = rows.filter(isPaid).length
+  const unsuccessfulCount = rows.filter(isUnsuccessfulPayment).length
+
+  const visible = rows.filter((w) => {
+    if (filter === "paid") return isPaid(w)
+    if (filter === "unsuccessful") return isUnsuccessfulPayment(w)
+    return true
+  })
+
+  const tabs: { key: WebFilter; label: string; count: number }[] = [
+    { key: "all",          label: "All",          count: rows.length },
+    { key: "paid",         label: "Paid",         count: paidCount },
+    { key: "unsuccessful", label: "Unsuccessful", count: unsuccessfulCount },
+  ]
+
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
         <p className="font-serif text-sm font-bold text-gray-900">Website Bookings</p>
         <p className="mt-0.5 font-mono text-[10px] text-gray-400">
-          Guests who booked &amp; paid on the website. A warning shows when they are not yet on NightsBridge — use Retry to push them across.
+          Everyone who started a booking on the website. <span className="text-emerald-700">Paid</span> guests can be pushed to NightsBridge (Retry).
+          {" "}<span className="text-red-700">Unsuccessful</span> = payment failed or the guest abandoned checkout without paying.
         </p>
+        <div className="mt-2 flex gap-1.5">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setFilter(t.key)}
+              className={`rounded-full border px-2.5 py-1 font-mono text-[10px] font-semibold transition-colors ${
+                filter === t.key
+                  ? "border-gray-900 bg-gray-900 text-white"
+                  : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+              }`}
+            >
+              {t.label} ({t.count})
+            </button>
+          ))}
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[860px] text-sm">
@@ -405,9 +460,13 @@ function WebsiteBookingsSection({ rows }: { rows: WebsiteBooking[] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {rows.map((w) => {
+            {visible.length === 0 ? (
+              <tr><td colSpan={7} className="px-4 py-6 text-center font-mono text-[11px] text-gray-400">No bookings in this view</td></tr>
+            ) : visible.map((w) => {
               const onNB = w.status === "completed" && !!w.booking_id
               const nbFailed = w.status === "failed"
+              const paid = isPaid(w)
+              const abandoned = w.booking_status === "AWAITING_PAYMENT" && isUnsuccessfulPayment(w)
               return (
                 <tr key={w.reference} className="transition-colors hover:bg-gray-50/60">
                   <td className="px-4 py-3">
@@ -421,9 +480,15 @@ function WebsiteBookingsSection({ rows }: { rows: WebsiteBooking[] }) {
                   <td className="whitespace-nowrap px-4 py-3 font-mono text-[11px] text-gray-700">
                     {w.amount ? `R ${Number(w.amount).toLocaleString("en-ZA", { minimumFractionDigits: 2 })}` : "—"}
                   </td>
-                  <td className="px-4 py-3"><PaymentBadge status={w.booking_status} /></td>
                   <td className="px-4 py-3">
-                    {onNB ? (
+                    {abandoned
+                      ? <span className="inline-block rounded-full border border-red-200 bg-red-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-red-700" title={`Started ${fmtDate(w.created_at.slice(0, 10))}, never paid`}>Not completed</span>
+                      : <PaymentBadge status={w.booking_status} />}
+                  </td>
+                  <td className="px-4 py-3">
+                    {!paid ? (
+                      <span className="font-mono text-[10px] text-gray-300">—</span>
+                    ) : onNB ? (
                       <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-700">
                         <CheckCircle2 className="size-3" /> On NightsBridge{w.booking_id ? ` #${w.booking_id}` : ""}
                       </span>
@@ -438,7 +503,7 @@ function WebsiteBookingsSection({ rows }: { rows: WebsiteBooking[] }) {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3">{!onNB && <RetryNightsBridgeButton reference={w.reference} />}</td>
+                  <td className="px-4 py-3">{paid && !onNB && <RetryNightsBridgeButton reference={w.reference} />}</td>
                 </tr>
               )
             })}

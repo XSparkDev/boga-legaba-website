@@ -16,6 +16,12 @@ export const BOOKING_STATUSES = [
   "AWAITING_PAYMENT",
   "PAYMENT_CONFIRMED",
   "BOGA_NOTIFIED",
+  // Guest reached checkout but the payment did not succeed — Paystack sent a
+  // charge.failed (declined card, insufficient funds, etc.). DISTINCT from the
+  // generic FAILED so the admin can see "tried to book but payment failed".
+  // Not terminal: a guest who retries a declined card can still succeed, so
+  // PAYMENT_CONFIRMED remains reachable from here.
+  "PAYMENT_FAILED",
   "FAILED",
 ] as const
 
@@ -39,7 +45,10 @@ const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   NIGHTSBRIDGE_BOOKING_CREATED: ["NIGHTSBRIDGE_VERIFIED", "FAILED"],
   NIGHTSBRIDGE_VERIFIED: ["CONFIRMATION_EMAIL_SENT", "FAILED"],
   CONFIRMATION_EMAIL_SENT: ["AWAITING_PAYMENT", "FAILED"],
-  AWAITING_PAYMENT: ["PAYMENT_CONFIRMED", "FAILED"],
+  AWAITING_PAYMENT: ["PAYMENT_CONFIRMED", "PAYMENT_FAILED", "FAILED"],
+  // A declined payment can be retried by the guest → allow it to recover to
+  // PAYMENT_CONFIRMED, or back to AWAITING_PAYMENT if they re-open checkout.
+  PAYMENT_FAILED: ["PAYMENT_CONFIRMED", "AWAITING_PAYMENT", "FAILED"],
   PAYMENT_CONFIRMED: ["BOGA_NOTIFIED", "FAILED"],
   BOGA_NOTIFIED: [],
   FAILED: [],

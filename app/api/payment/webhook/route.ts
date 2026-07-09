@@ -100,5 +100,30 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // ── Failed / declined payment ──────────────────────────────────────────────
+  // Paystack fires charge.failed when a payment attempt is declined (bad card,
+  // insufficient funds, etc.). We record it so the admin can see guests who
+  // tried to book but did not pay. NOT terminal — if the guest retries and
+  // succeeds, a later charge.success recovers the booking to PAYMENT_CONFIRMED.
+  // (Abandoned checkouts, where the guest just closes the tab, fire NO event —
+  // those stay at AWAITING_PAYMENT and the admin UI flags them as stale.)
+  if (event.event === "charge.failed" || (event.event === "charge.success" && event.data?.status && event.data.status !== "success")) {
+    const paystackReference = event.data?.reference ?? ""
+    const meta = event.data?.metadata?.booking ?? {}
+    const internalReference = meta.internalReference || ""
+    const gatewayReason = event.data?.status ?? "failed"
+    console.log(`[webhook] charge.failed paystackRef=${paystackReference} internalRef=${internalReference} reason=${gatewayReason}`)
+
+    if (internalReference) {
+      const marked = await transitionBookingStatus(internalReference, "PAYMENT_FAILED", {
+        from: ["AWAITING_PAYMENT", "PAYMENT_FAILED"],
+        reason: `Paystack charge.failed (${gatewayReason}) ref=${paystackReference}`,
+      })
+      if (!marked.ok) {
+        console.log(`[webhook] internalRef=${internalReference} PAYMENT_FAILED transition skipped (${marked.reason}) — booking already advanced (e.g. a later attempt succeeded)`)
+      }
+    }
+  }
+
   return NextResponse.json({ ok: true })
 }
