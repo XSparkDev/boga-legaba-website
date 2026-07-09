@@ -140,12 +140,14 @@ def _open_add_booking(page) -> bool:
             page.click("button:has-text('Add Booking')", timeout=5_000)
         except Exception:
             return False
-    # Wait for the booking form to actually render, rather than a blind sleep:
-    # returns as soon as cui-date-selector appears (usually well under a second)
-    # instead of always burning a fixed 1.5s, and is more reliable on a slow
-    # load because it will wait up to 8s if the modal is genuinely sluggish.
+    # Wait for the ACTUAL arrival-date input to be present — the exact element
+    # the next step drives. We match it by its Angular formcontrolname
+    # ('fromdate'), NOT placeholder: NightsBridge now renders THREE inputs with
+    # placeholder='Select Date' (an extra month-caption input, value "July 2026",
+    # comes first), so the old placeholder+index approach grabbed the wrong,
+    # unclickable element. formcontrolname is unique and stable.
     try:
-        page.wait_for_selector("cui-date-selector", timeout=8_000, state="attached")
+        page.wait_for_selector("[formcontrolname='fromdate'] input", timeout=12_000, state="attached")
         return True
     except Exception:
         return page.evaluate("() => document.querySelector('cui-date-selector') !== null")
@@ -192,7 +194,12 @@ def _click_picker_day(page, day: int) -> bool:
 
 def _set_date_field(page, input_locator, iso_date: str, field_label: str) -> bool:
     try:
-        input_locator.click(timeout=5_000)
+        # Open the ngx-bootstrap datepicker with a direct DOM click. A normal
+        # Playwright .click() scrolls the field up under the modal's sticky
+        # header, which then intercepts the click so the picker never opens
+        # (this is what caused the "Could not open the ... picker" failures). A
+        # JS click fires the same event Angular listens for, with no scrolling.
+        input_locator.evaluate("el => el.click()")
     except Exception:
         print(f"[admin-booking] Could not open the {field_label} picker", file=sys.stderr)
         return False
@@ -412,7 +419,21 @@ def _verify_booking_summary(page, expected_unit: str, expected_firstname: str, e
         return {"ok": False, "error": f"Landed on a booking-summary-like URL but could not parse an NBID from it: {page.url}"}
 
     time.sleep(1.5)
-    page_text = page.evaluate("() => document.body.innerText")
+    # Include form-field VALUES, not just visible text. On the redesigned
+    # booking-summary the guest name is shown INSIDE <input> boxes (the "Guest"
+    # and "Booking Made By" fields), and element.value is NOT part of
+    # document.body.innerText — so a text-only scrape misses the name and
+    # false-negatives a perfectly good booking (confirmed live: NBID created,
+    # name visibly correct on screen, yet firstname/surname "not found").
+    page_text = page.evaluate(
+        """() => {
+            const parts = [document.body.innerText];
+            document.querySelectorAll('input, textarea, select').forEach(el => {
+                if (el.value) parts.push(el.value);
+            });
+            return parts.join(' ');
+        }"""
+    )
     flat = " ".join(page_text.split())
 
     booking_id_match = re.search(r"Booking\s*ID[:\s#]+([A-Za-z0-9\-]+)", flat, re.I)
@@ -492,13 +513,13 @@ def book_room(params: dict) -> dict:
             _shot(page, "01_add_booking_open")
 
             print(f"[admin-booking] ref={reference} setting arrival date {checkin}...")
-            arrival_input = page.locator("input[placeholder='Select Date']").nth(0)
+            arrival_input = page.locator("[formcontrolname='fromdate'] input")
             if not _set_date_field(page, arrival_input, checkin, "Arrival Date"):
                 _shot(page, "02_arrival_failed")
                 return {"ok": False, "error": f"Could not set Arrival Date to {checkin}"}
 
             print(f"[admin-booking] ref={reference} setting departure date {checkout}...")
-            departure_input = page.locator("input[placeholder='Select Date']").nth(1)
+            departure_input = page.locator("[formcontrolname='todate'] input")
             if not _set_date_field(page, departure_input, checkout, "Departure Date"):
                 _shot(page, "02_departure_failed")
                 return {"ok": False, "error": f"Could not set Departure Date to {checkout}"}
