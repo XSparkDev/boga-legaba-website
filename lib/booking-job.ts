@@ -25,9 +25,18 @@ export type BookingJob = {
   checkin: string | null
   checkout: string | null
   room_type_name: string | null
+  // The exact physical room booked (e.g. "Red Room") — set once a booking
+  // via the admin-calendar flow succeeds (book_nightsbridge_admin.py knows
+  // the real unit; the old guest-widget script doesn't, so this stays null
+  // for jobs booked that way). Prefer this over room_type_name wherever the
+  // room is shown to the guest.
+  room_name: string | null
   amount: number | null
   context: PaymentContext | Record<string, unknown>
-  emails_sent: boolean
+  // Full pipeline stage — see lib/booking-status.ts. This is the single
+  // source of truth for what stage the booking is at; `status` above only
+  // covers the narrower "did the worker's Playwright job finish" question.
+  booking_status: string
 }
 
 /**
@@ -114,28 +123,22 @@ export async function ensurePendingBookingJob(
 }
 
 /**
- * Atomically claim the right to send the outcome emails for a resolved job.
- * Sets emails_sent=true only if it was false, and returns true only to the
- * single caller that won the flip — so the emails are sent exactly once even
- * though the status endpoint may be polled many times.
+ * Persist the Paystack checkout URL generated for this booking, so every
+ * subsequent poll (not just the one that "won" the email-send race) can read
+ * back the SAME link for the browser redirect — never generate a second
+ * Paystack session for the same booking. Stored in the existing `context`
+ * JSONB column (no migration needed) as `context.paystackUrl`.
  */
-export async function claimEmailSend(reference: string): Promise<boolean> {
-  if (!reference) return false
+export async function savePaystackUrl(reference: string, paystackUrl: string): Promise<void> {
+  if (!reference || !paystackUrl) return
   try {
     const sb = createSupabaseAdminClient()
-    const { data, error } = await sb
-      .from("booking_job")
-      .update({ emails_sent: true, updated_at: new Date().toISOString() })
-      .eq("reference", reference)
-      .eq("emails_sent", false)
-      .select("reference")
-    if (error) {
-      console.warn("[booking-job] claimEmailSend failed:", error.message)
-      return false
-    }
-    return Array.isArray(data) && data.length > 0
+    const { job } = await getBookingJob(reference)
+    const context = { ...(job?.context ?? {}), paystackUrl }
+    const { error } = await sb.from("booking_job").update({ context }).eq("reference", reference)
+    if (error) console.warn(`[booking-job] savePaystackUrl failed reference=${reference}:`, error.message)
   } catch (err) {
-    console.warn("[booking-job] claimEmailSend error:", err)
-    return false
+    console.warn(`[booking-job] savePaystackUrl error reference=${reference}:`, err)
   }
 }
+

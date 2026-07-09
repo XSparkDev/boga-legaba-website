@@ -10,6 +10,7 @@ function SuccessContent() {
   const checkin      = params.get("checkin") ?? ""
   const checkout     = params.get("checkout") ?? ""
   const roomTypeName = params.get("roomTypeName") ?? ""
+  const roomName     = params.get("roomName") ?? ""
   const amount       = params.get("amount") ?? ""
 
   const fmtDate = (iso: string) => {
@@ -26,7 +27,7 @@ function SuccessContent() {
 
   const details = [
     { label: "Booking Reference", value: bookingRef },
-    { label: "Room",              value: roomTypeName },
+    { label: "Room",              value: roomName || roomTypeName },
     { label: "Check-in",         value: fmtDate(checkin) },
     { label: "Check-out",        value: fmtDate(checkout) },
     { label: "Amount Paid",      value: amountFormatted, gold: true },

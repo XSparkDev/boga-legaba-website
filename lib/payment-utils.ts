@@ -7,6 +7,93 @@
 import { Resend } from "resend"
 import { emailShell, emailHero, emailInfoTable, emailButton, emailCallout, emailParagraph, EMAIL_COLORS, EMAIL_BRAND, type InfoRow } from "@/lib/email-theme"
 
+// ── Paystack session creation ───────────────────────────────────────────────
+
+export type InitiatePaymentArgs = {
+  email: string
+  amountRands: number
+  bookingRef: string
+  guestName?: string
+  guestPhone?: string
+  checkin?: string
+  checkout?: string
+  roomTypeName?: string
+  /** The exact physical room (e.g. "Red Room") — see PaymentContext.roomName. */
+  roomName?: string
+  /** booking_job.reference (e.g. "BLJOB-...") — DIFFERENT from bookingRef,
+   * which is the NightsBridge booking id shown to guests. Threaded through
+   * Paystack metadata so the webhook/verify callback (which only receives
+   * Paystack's own transaction reference) can look up and transition the
+   * right booking_job row in the state machine. */
+  internalReference?: string
+}
+
+export type InitiatePaymentResult =
+  | { ok: true; authorization_url: string; reference: string }
+  | { ok: false; error: string }
+
+/**
+ * Create ONE Paystack checkout session for a booking. Extracted so it can be
+ * called from two places that must share the exact same session — the
+ * guest's browser redirect AND the "booking reserved" email's fallback
+ * link — without creating two separate Paystack transactions for one
+ * booking (a real double-charge risk if a guest used both links).
+ */
+export async function initiatePaystackPayment(args: InitiatePaymentArgs): Promise<InitiatePaymentResult> {
+  const secretKey = process.env.PAYSTACK_SECRET_KEY
+  if (!secretKey || secretKey === "sk_test_REPLACE_ME") {
+    return { ok: false, error: "Payment not configured" }
+  }
+  if (!args.email || !args.amountRands || !args.bookingRef) {
+    return { ok: false, error: "Missing email, amountRands or bookingRef" }
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.bogalegaba.co.za"
+  const reference = `BL-${args.bookingRef}-${Date.now()}`
+  const callbackUrl = `${siteUrl}/api/payment/verify`
+
+  try {
+    const res = await fetch("https://api.paystack.co/transaction/initialize", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${secretKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: args.email,
+        amount: Math.round(args.amountRands * 100), // kobo / cents
+        reference,
+        callback_url: callbackUrl,
+        currency: "ZAR",
+        metadata: {
+          booking: {
+            bookingRef: args.bookingRef,
+            internalReference: args.internalReference ?? "",
+            guestEmail: args.email,
+            guestName: args.guestName ?? "",
+            guestPhone: args.guestPhone ?? "",
+            checkin: args.checkin ?? "",
+            checkout: args.checkout ?? "",
+            roomTypeName: args.roomTypeName ?? "",
+            roomName: args.roomName ?? "",
+          },
+          custom_fields: [
+            { display_name: "Booking Ref", variable_name: "booking_ref", value: args.bookingRef },
+            { display_name: "Room",        variable_name: "room",        value: args.roomName || args.roomTypeName || "" },
+            { display_name: "Check-in",    variable_name: "checkin",     value: args.checkin ?? "" },
+            { display_name: "Check-out",   variable_name: "checkout",    value: args.checkout ?? "" },
+            { display_name: "Phone",       variable_name: "guest_phone", value: args.guestPhone ?? "" },
+          ],
+        },
+      }),
+    })
+    const data = (await res.json()) as { status: boolean; message: string; data?: { authorization_url: string; reference: string } }
+    if (!data.status || !data.data) {
+      return { ok: false, error: data.message || "Paystack init failed" }
+    }
+    return { ok: true, authorization_url: data.data.authorization_url, reference: data.data.reference }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Payment initiation failed" }
+  }
+}
+
 // ── Formatters ────────────────────────────────────────────────────────────────
 
 export function fmtDate(iso: string) {
@@ -36,6 +123,16 @@ function resolveGuestName(ctx: { guestName?: string; firstname?: string; surname
   return { firstname: firstname || "—", surname: surname || "—", full }
 }
 
+/**
+ * The exact physical room (e.g. "Red Room") if known, otherwise the category
+ * (e.g. "Double Room (Bath only)") as a fallback for bookings made via the
+ * old guest-widget flow, which never learns the specific unit. Guests should
+ * always see this, not the raw category, wherever the room is displayed.
+ */
+function resolveRoomLabel(roomName?: string, roomTypeName?: string): string {
+  return roomName || roomTypeName || "—"
+}
+
 // ── Core payment processor ────────────────────────────────────────────────────
 
 export interface PaymentContext {
@@ -47,6 +144,11 @@ export interface PaymentContext {
   checkin:      string
   checkout:     string
   roomTypeName: string
+  /** The exact physical room booked (e.g. "Red Room"), known once the
+   * admin-calendar booking succeeds — prefer this over roomTypeName
+   * wherever the room is shown to the guest. Absent for the old
+   * guest-widget flow, which never learns the specific unit. */
+  roomName?:    string
   amountPaid:   number
   // Full booking payload — used to CREATE the booking (book-first flow: this
   // happens BEFORE payment is requested, via /api/booking/start).
@@ -193,7 +295,7 @@ export function buildGuestConfirmEmail(ctx: PaymentContext) {
       <tr>
         <td width="50%" style="background:${c.white};padding:16px 20px;border-right:1px solid ${c.border};border-bottom:1px solid ${c.border};">
           <p style="margin:0;color:${c.muted};font-size:9px;text-transform:uppercase;letter-spacing:1.5px;">Room</p>
-          <p style="margin:5px 0 0;color:${c.black};font-size:14px;font-weight:600;">${ctx.roomTypeName || "—"}</p>
+          <p style="margin:5px 0 0;color:${c.black};font-size:14px;font-weight:600;">${resolveRoomLabel(ctx.roomName, ctx.roomTypeName)}</p>
         </td>
         <td width="50%" style="background:${c.sand};padding:16px 20px;border-bottom:1px solid ${c.border};">
           <p style="margin:0;color:${c.muted};font-size:9px;text-transform:uppercase;letter-spacing:1.5px;">Guest</p>
@@ -323,18 +425,26 @@ export function buildGuestPendingEmail({
   checkin,
   checkout,
   roomTypeName,
+  roomName,
   estimatedTotal,
+  paymentUrl,
 }: {
   guestName:      string
   bookingRef:     string
   checkin:        string
   checkout:       string
   roomTypeName:   string
+  /** The exact physical room (e.g. "Red Room") — see resolveRoomLabel(). */
+  roomName?:      string
   estimatedTotal: string
+  /** The SAME Paystack session used for the browser redirect — a fallback
+   * link in case the guest closed the tab or the redirect didn't fire.
+   * Omitted entirely (no payment section) if pre-generation failed. */
+  paymentUrl?:    string
 }) {
   const rows: InfoRow[] = []
   if (bookingRef) rows.push({ label: "Booking Reference", value: bookingRef })
-  rows.push({ label: "Room", value: roomTypeName || "—" })
+  rows.push({ label: "Room", value: resolveRoomLabel(roomName, roomTypeName) })
   rows.push({ label: "Check-in", value: fmtDate(checkin) })
   rows.push({ label: "Check-out", value: fmtDate(checkout) })
   if (estimatedTotal) rows.push({ label: "Amount Due", value: estimatedTotal, emphasis: true })
@@ -344,14 +454,19 @@ export function buildGuestPendingEmail({
     preheader: `Your room is reserved. Booking reference ${bookingRef || ""}.`,
     bodyHtml:
       emailParagraph(
-        `Dear <strong style="color:${EMAIL_COLORS.bodyText};">${guestName || "Guest"}</strong>,<br>Your room has been reserved. You were redirected to complete payment — if payment didn't go through, please contact us via WhatsApp and quote your booking reference.`,
+        `Dear <strong style="color:${EMAIL_COLORS.bodyText};">${guestName || "Guest"}</strong>,<br>Your room has been reserved at Boga Legaba. Please see your booking details below.`,
       ) +
       emailInfoTable(rows) +
-      emailCallout(
-        "<strong>&#9888; Awaiting Payment</strong><br>Your booking is held for 24 hours. If payment did not complete, please contact us via WhatsApp and we will assist you.",
-        { tone: "warning" },
-      ) +
-      emailButton("WhatsApp Us", EMAIL_BRAND.whatsappHref),
+      (paymentUrl
+        ? emailCallout(
+            `<strong>Complete your payment</strong><br>If you were not redirected to payment, you can complete payment here: <a href="${paymentUrl}" style="color:${EMAIL_COLORS.gold};font-weight:600;">${paymentUrl}</a>.<br>If you have already paid, please disregard this link.`,
+            { tone: "warning" },
+          )
+        : emailCallout(
+            "<strong>&#9888; Payment link unavailable</strong><br>We couldn't generate a payment link automatically — please contact us via WhatsApp and quote your booking reference to arrange payment.",
+            { tone: "warning" },
+          )) +
+      (paymentUrl ? emailButton("Complete Payment", paymentUrl) : emailButton("WhatsApp Us", EMAIL_BRAND.whatsappHref)),
     footerNote: "This is an automated notification. Please keep it for your records.",
   })
 }
@@ -369,7 +484,7 @@ export function buildAdminPaymentEmail(ctx: PaymentContext, booked: boolean = tr
     { label: "Email", value: ctx.guestEmail || "—" },
     { label: "Phone", value: ctx.guestPhone || "—" },
     { label: "Booking Reference", value: ctx.bookingRef || "—" },
-    { label: "Room", value: ctx.roomTypeName || "—" },
+    { label: "Room", value: resolveRoomLabel(ctx.roomName, ctx.roomTypeName) },
     { label: "Check-in", value: fmtDate(ctx.checkin) },
     { label: "Check-out", value: fmtDate(ctx.checkout) },
     { label: "Amount Paid", value: amount, emphasis: true },

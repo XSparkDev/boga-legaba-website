@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 import { sendPaymentConfirmedEmails, type PaymentContext } from "@/lib/payment-utils"
+import { transitionBookingStatus } from "@/lib/booking-status"
 
 export const dynamic = "force-dynamic"
 
 type BookingMeta = {
   bookingRef?: string
+  internalReference?: string
   guestEmail?: string
   guestName?: string
   guestPhone?: string
   checkin?: string
   checkout?: string
   roomTypeName?: string
+  roomName?: string
 }
 
 /**
@@ -19,6 +22,13 @@ type BookingMeta = {
  * this just verifies the payment and sends the final confirmation email. If
  * payment fails or is abandoned here, the booking is left as-is (the guest
  * already has NightsBridge's own reservation email) — nothing is auto-cancelled.
+ *
+ * Same AWAITING_PAYMENT -> PAYMENT_CONFIRMED guarded transition as the
+ * webhook (see lib/booking-status.ts + the matching comment in
+ * app/api/payment/webhook/route.ts) — this is the browser-redirect path, the
+ * webhook is the server-to-server path, and whichever gets here first wins
+ * the compare-and-swap. The other skips the emails but still redirects the
+ * guest to the success page.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -51,8 +61,9 @@ export async function GET(request: NextRequest) {
     return fail()
   }
 
+  const internalReference = meta.internalReference || ""
   const ctx: PaymentContext = {
-    reference,
+    reference: internalReference || reference,
     bookingRef: meta.bookingRef ?? "",
     guestEmail: meta.guestEmail ?? "",
     guestName: meta.guestName ?? "",
@@ -60,10 +71,25 @@ export async function GET(request: NextRequest) {
     checkin: meta.checkin ?? "",
     checkout: meta.checkout ?? "",
     roomTypeName: meta.roomTypeName ?? "",
+    roomName: meta.roomName || undefined,
     amountPaid,
   }
 
-  await sendPaymentConfirmedEmails(ctx)
+  if (!internalReference) {
+    console.error(`[payment/verify] paystackRef=${reference} has no internalReference in metadata — cannot drive the state machine (old/manual transaction?), sending emails unconditionally as a best-effort fallback`)
+    await sendPaymentConfirmedEmails(ctx)
+  } else {
+    const claimed = await transitionBookingStatus(internalReference, "PAYMENT_CONFIRMED", {
+      from: ["AWAITING_PAYMENT"],
+      reason: `Guest browser redirect (paystackRef=${reference})`,
+    })
+    if (claimed.ok) {
+      await sendPaymentConfirmedEmails(ctx)
+      await transitionBookingStatus(internalReference, "BOGA_NOTIFIED", { from: ["PAYMENT_CONFIRMED"] })
+    } else {
+      console.log(`[payment/verify] internalRef=${internalReference} PAYMENT_CONFIRMED transition rejected (${claimed.reason}) — already processed via webhook, skipping duplicate emails`)
+    }
+  }
 
   const successUrl = new URL(
     `/payment/success?bookingRef=${encodeURIComponent(ctx.bookingRef)}` +
@@ -71,6 +97,7 @@ export async function GET(request: NextRequest) {
       `&checkin=${encodeURIComponent(ctx.checkin)}` +
       `&checkout=${encodeURIComponent(ctx.checkout)}` +
       `&roomTypeName=${encodeURIComponent(ctx.roomTypeName)}` +
+      `&roomName=${encodeURIComponent(ctx.roomName ?? "")}` +
       `&amount=${amountPaid}`,
     siteUrl,
   )

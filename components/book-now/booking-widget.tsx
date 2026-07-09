@@ -192,6 +192,7 @@ export function BookingWidget({
 
   type StatusResponse = {
     status?: string
+    bookingStatus?: string
     error?: string
     bookingRef?: string
     guestName?: string
@@ -199,9 +200,18 @@ export function BookingWidget({
     checkin?: string
     checkout?: string
     roomTypeName?: string
+    paymentUrl?: string
   }
 
   async function goToPayment(reference: string, amountRands: number, d: StatusResponse) {
+    // The status endpoint pre-generates ONE Paystack session the moment the
+    // booking completes (same link it emailed the guest) — use it directly.
+    // Only fall back to generating a fresh session here if that failed, so we
+    // still never create two sessions for the same booking unnecessarily.
+    if (d.paymentUrl) {
+      window.location.href = d.paymentUrl
+      return
+    }
     try {
       const res = await fetch("/api/payment/initiate", {
         method: "POST",
@@ -237,15 +247,20 @@ export function BookingWidget({
       .then((res) => res.json().catch(() => ({})) as Promise<StatusResponse>)
       .then((d) => {
         if (cancelledRef.current) return
-        if (d.status === "completed") {
+        // bookingStatus is the pipeline's single source of truth (see
+        // lib/booking-status.ts) — only redirect once it's actually reached
+        // AWAITING_PAYMENT (meaning the guest email was sent and the Paystack
+        // session for THIS booking was generated), not just on the worker's
+        // narrower "job finished" status.
+        if (d.bookingStatus === "AWAITING_PAYMENT" && d.paymentUrl) {
           return void goToPayment(reference, amountRands, d)
         }
-        if (d.status === "failed") {
+        if (d.bookingStatus === "FAILED" || d.status === "failed") {
           setErrorMsg(d.error || "We couldn't book this room. Please try again or contact us on WhatsApp.")
           setStep("error")
           return
         }
-        // status is "processing" (or missing/unrecognised) — keep polling.
+        // Still earlier in the pipeline (or missing/unrecognised) — keep polling.
         if (cancelledRef.current) return
         if (attempt >= MAX_POLLS) {
           setErrorMsg("This is taking longer than expected. Please contact us on WhatsApp with your details.")

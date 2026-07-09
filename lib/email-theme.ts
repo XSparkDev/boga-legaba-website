@@ -2,12 +2,14 @@
  * Shared HTML-email theme for every transactional email the site sends
  * (payment receipts, admin alerts, enquiry confirmations, registration, etc).
  *
- * Colors/fonts are taken directly from app/globals.css so every email matches
- * the live website: --color-black #0A0A0A, --color-gold #C9A84C,
- * --color-gold-hover #B8973B, --color-sand #F2EDE4, --color-body-text #3D3532,
- * --brand-text-muted #8C7B6B, --color-white #FAFAF8. Display font is Playfair
- * Display (Georgia fallback for email clients); body font is DM Sans (Arial
- * fallback). Keep this file as the single source of truth for email branding —
+ * Colors/fonts are taken directly from app/globals.css's Boga Legaba Brand
+ * Guidelines palette (post-rebrand) so every email matches the live website:
+ * --color-black #000000, --color-gold (Heritage accent) #996948,
+ * --color-gold-hover #000000, --color-sand #F7F7F6, --color-body-text
+ * #000000, --brand-text-muted #6B6B6B, --color-white #FFFFFF. Title font is
+ * League Spartan (Arial fallback for email clients that drop web fonts);
+ * body font is Open Sans (Arial fallback) — same fallback the site itself
+ * uses. Keep this file as the single source of truth for email branding —
  * new emails should build on emailShell()/emailInfoTable() rather than
  * hand-rolling HTML, so brand changes only need to happen once.
  */
@@ -23,22 +25,30 @@ export const EMAIL_BRAND = {
   website: "www.bogalegaba.co.za",
   websiteHref: "https://www.bogalegaba.co.za",
   whatsappHref: "https://wa.me/27828757018",
+  // The actual site logo (public/logo.png, used by components/site-logo.tsx)
+  // hosted at its live, stable URL — not a recreation. It's a dark/black mark
+  // on a transparent background (the site inverts it to white via CSS filter
+  // for its own dark nav bar; email clients can't apply that filter reliably,
+  // so emails place it on a light plate instead — see emailShell()).
+  logoUrl: "https://www.bogalegaba.co.za/logo.png",
+  logoWidth: 900,
+  logoHeight: 394,
 }
 
 export const EMAIL_COLORS = {
-  black: "#0A0A0A",
-  gold: "#C9A84C",
-  goldHover: "#B8973B",
-  sand: "#F2EDE4",
-  border: "#E8E0D4",
-  white: "#FAFAF8",
-  bodyText: "#3D3532",
-  muted: "#8C7B6B",
+  black: "#000000",
+  gold: "#996948",
+  goldHover: "#000000",
+  sand: "#F7F7F6",
+  border: "#E5E5E3",
+  white: "#FFFFFF",
+  bodyText: "#000000",
+  muted: "#6B6B6B",
   danger: "#EF4444",
 }
 
-const FONT_DISPLAY = "'Playfair Display', Georgia, serif"
-const FONT_BODY = "'DM Sans', Arial, Helvetica, sans-serif"
+const FONT_DISPLAY = "'League Spartan', Arial, sans-serif"
+const FONT_BODY = "'Open Sans', Arial, Helvetica, sans-serif"
 
 /**
  * Full HTML document wrapper: header (logo + tagline), optional accent bar,
@@ -71,8 +81,12 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;"
 
   <!-- HEADER -->
   <tr><td style="background:${c.black};padding:32px 40px;text-align:center;">
-    <p style="color:${c.gold};margin:0;font-size:20px;letter-spacing:5px;font-weight:400;font-family:${FONT_DISPLAY};">BOGA LEGABA</p>
-    <p style="color:${c.muted};margin:5px 0 0;font-size:9px;letter-spacing:3px;text-transform:uppercase;">Guest House &amp; Conference Centre</p>
+    <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto 14px;">
+      <tr><td style="background:${c.white};border-radius:8px;padding:12px 20px;line-height:0;">
+        <img src="${EMAIL_BRAND.logoUrl}" width="160" height="${Math.round(160 * (EMAIL_BRAND.logoHeight / EMAIL_BRAND.logoWidth))}" alt="${EMAIL_BRAND.fullName}" style="display:block;width:160px;height:auto;max-width:100%;border:0;outline:none;">
+      </td></tr>
+    </table>
+    <p style="color:${c.muted};margin:0;font-size:9px;letter-spacing:3px;text-transform:uppercase;">Guest House &amp; Conference Centre</p>
     ${eyebrow ? `<p style="color:${c.muted};margin:10px 0 0;font-size:10px;letter-spacing:2px;text-transform:uppercase;">${eyebrow}</p>` : ""}
   </td></tr>
 
@@ -124,7 +138,10 @@ export function emailInfoTable(rows: InfoRow[], opts: { title?: string } = {}) {
   const cells = rows
     .map((r, i) => {
       const bg = i % 2 === 0 ? c.white : c.sand
-      const valueColor = r.emphasis ? c.goldHover : c.bodyText
+      // Emphasis uses the Heritage accent (c.gold) so it visually stands out
+      // from plain body text — c.goldHover is a button-hover value (black),
+      // not a text color, and would be indistinguishable from bodyText here.
+      const valueColor = r.emphasis ? c.gold : c.bodyText
       const valueSize = r.emphasis ? "18px" : "14px"
       const valueWeight = r.emphasis ? "700" : "600"
       const isLast = i === rows.length - 1
