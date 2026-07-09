@@ -75,7 +75,15 @@ async function fetchFromGoogle(): Promise<GoogleReviewsData | null> {
     })
     if (!res.ok) {
       const body = await res.text().catch(() => "")
-      console.error(`[google-reviews] Google API HTTP ${res.status}: ${body.slice(0, 300)}`)
+      // A 403 here almost always means the Places API isn't enabled / billing
+      // is off on the Google Cloud project — an EXPECTED setup state, not a
+      // crash. Log it at warn level (never error) so Next.js doesn't surface a
+      // red dev error overlay; the section just renders nothing until enabled.
+      if (res.status === 403) {
+        console.warn("[google-reviews] Places API not enabled yet — showing no reviews. Enable Places API (New) + billing in Google Cloud, then reviews appear automatically.")
+      } else {
+        console.warn(`[google-reviews] Google API HTTP ${res.status} — showing no reviews. ${body.slice(0, 200)}`)
+      }
       return null
     }
     const data = (await res.json()) as {
@@ -90,7 +98,8 @@ async function fetchFromGoogle(): Promise<GoogleReviewsData | null> {
       source: "google",
     }
   } catch (err) {
-    console.error("[google-reviews] fetch error:", err instanceof Error ? err.message : err)
+    // Network blip / timeout — expected-failure, degrade quietly (no overlay).
+    console.warn("[google-reviews] fetch error — showing no reviews:", err instanceof Error ? err.message : err)
     return null
   }
 }
