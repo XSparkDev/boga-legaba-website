@@ -62,6 +62,23 @@ export async function POST(request: NextRequest) {
     console.warn(`[admin/retry-nightsbridge] status reset failed reference=${reference}:`, err)
   }
 
+  // Wake the worker BEFORE triggering the booking. Unlike /api/booking/start
+  // (which fires this in the background while the guest's availability/hold
+  // checks run — those absorb the wake-up time), a retry has no other work to
+  // do while waiting, so this one is awaited directly. The worker sits on
+  // Render's free tier and spins down after idle time; an admin retry usually
+  // happens after exactly that idle window, so without this the /book call
+  // below (30s timeout) can abort mid-cold-start and wrongly report the job as
+  // rejected even though the worker would have accepted it once awake.
+  const workerBase = (process.env.SYNC_WORKER_URL ?? "").replace(/\/run$/, "")
+  if (workerBase) {
+    try {
+      await fetch(`${workerBase}/health`, { signal: AbortSignal.timeout(45_000) })
+    } catch (err) {
+      console.warn(`[admin/retry-nightsbridge] worker wake-up ping failed reference=${reference}:`, err)
+    }
+  }
+
   const accepted = await triggerAsyncBooking(ctx)
   if (!accepted) {
     return NextResponse.json(
