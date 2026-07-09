@@ -125,7 +125,10 @@ def _open_add_booking(page) -> bool:
     except Exception:
         pass  # may already be on the calendar
     try:
-        page.wait_for_load_state("networkidle", timeout=15_000)
+        # domcontentloaded, not networkidle: the calendar SPA never goes fully
+        # network-idle, so networkidle burned the whole 15s here every time.
+        # The Add-Booking click below has its own 10s actionability wait.
+        page.wait_for_load_state("domcontentloaded", timeout=15_000)
     except Exception:
         pass
     time.sleep(1)
@@ -137,8 +140,15 @@ def _open_add_booking(page) -> bool:
             page.click("button:has-text('Add Booking')", timeout=5_000)
         except Exception:
             return False
-    time.sleep(1.5)
-    return page.evaluate("() => document.querySelector('cui-date-selector') !== null")
+    # Wait for the booking form to actually render, rather than a blind sleep:
+    # returns as soon as cui-date-selector appears (usually well under a second)
+    # instead of always burning a fixed 1.5s, and is more reliable on a slow
+    # load because it will wait up to 8s if the modal is genuinely sluggish.
+    try:
+        page.wait_for_selector("cui-date-selector", timeout=8_000, state="attached")
+        return True
+    except Exception:
+        return page.evaluate("() => document.querySelector('cui-date-selector') !== null")
 
 
 # ---------------------------------------------------------------------------
