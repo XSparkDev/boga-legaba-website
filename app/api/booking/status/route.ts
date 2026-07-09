@@ -56,7 +56,20 @@ export async function GET(request: NextRequest) {
     await releaseHold(reference)
   }
 
-  let bookingStatus = job.booking_status as BookingStatus
+  let bookingStatus = job.booking_status as BookingStatus | undefined
+
+  // Self-healing bridge: if booking_status is missing (migration 014 not
+  // applied to this database yet — the column simply doesn't exist, so
+  // Supabase never returns it), fall back to the older `status` signal so a
+  // real, successful booking still reaches the guest instead of hanging
+  // forever. This is exactly the failure mode that caused the original
+  // "stuck on Reserving your room, no email, no redirect" bug: a real
+  // NightsBridge booking existed, but nothing ever advanced booking_status
+  // past its default because the column wasn't there to advance.
+  if (!bookingStatus && status === "completed" && job.booking_id) {
+    console.warn(`[booking/status] reference=${reference} booking_status missing (migration 014 not applied?) — bridging from legacy status=completed`)
+    bookingStatus = "NIGHTSBRIDGE_VERIFIED"
+  }
 
   // The worker writes status=failed but doesn't know about booking_status
   // (Python side transitions its own successful stages — see server.py — but
@@ -65,6 +78,21 @@ export async function GET(request: NextRequest) {
   // transition succeeds regardless of exactly where it died.
   if (status === "failed" && bookingStatus !== "FAILED") {
     await transitionBookingStatus(reference, "FAILED", { reason: job.error ?? "booking failed" })
+    bookingStatus = "FAILED"
+  }
+
+  // Staleness watchdog: if this booking has been stuck in a non-terminal
+  // stage for far longer than a real booking should ever take, something
+  // died silently (the worker's background thread was killed by a Render
+  // restart/redeploy mid-flight, a crash before it could write anything,
+  // etc.) — treat it as failed so the guest gets an actionable error instead
+  // of "Reserving your room…" forever, and no one contact-less waits on an
+  // email/redirect that will never come.
+  const STALE_MS = 6 * 60_000 // well past the ~50-90s typical booking duration
+  const ageMs = Date.now() - new Date(job.created_at).getTime()
+  if (bookingStatus && bookingStatus !== "FAILED" && bookingStatus !== "BOGA_NOTIFIED" && bookingStatus !== "AWAITING_PAYMENT" && ageMs > STALE_MS) {
+    console.error(`[booking/status] reference=${reference} STALE (${Math.round(ageMs / 1000)}s in ${bookingStatus}) — marking FAILED so the guest isn't stuck loading forever`)
+    await transitionBookingStatus(reference, "FAILED", { reason: `Stale — stuck in ${bookingStatus} for ${Math.round(ageMs / 1000)}s` })
     bookingStatus = "FAILED"
   }
 

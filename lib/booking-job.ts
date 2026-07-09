@@ -36,7 +36,10 @@ export type BookingJob = {
   // Full pipeline stage — see lib/booking-status.ts. This is the single
   // source of truth for what stage the booking is at; `status` above only
   // covers the narrower "did the worker's Playwright job finish" question.
-  booking_status: string
+  // May be undefined at runtime if migration 014 hasn't been applied yet
+  // (column doesn't exist) — callers must not assume it's always present.
+  booking_status: string | undefined
+  created_at: string
 }
 
 /**

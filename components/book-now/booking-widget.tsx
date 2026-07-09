@@ -248,11 +248,16 @@ export function BookingWidget({
       .then((d) => {
         if (cancelledRef.current) return
         // bookingStatus is the pipeline's single source of truth (see
-        // lib/booking-status.ts) — only redirect once it's actually reached
-        // AWAITING_PAYMENT (meaning the guest email was sent and the Paystack
-        // session for THIS booking was generated), not just on the worker's
-        // narrower "job finished" status.
-        if (d.bookingStatus === "AWAITING_PAYMENT" && d.paymentUrl) {
+        // lib/booking-status.ts) — only proceed once it's actually reached
+        // AWAITING_PAYMENT (meaning the guest email step has run). Do NOT
+        // also require d.paymentUrl here: the CONFIRMATION_EMAIL_SENT ->
+        // AWAITING_PAYMENT transition is one-time and guarded, so if Paystack
+        // pre-generation failed that one time, paymentUrl stays empty
+        // forever on every future poll — requiring it here would mean
+        // goToPayment() never gets called at all, so its own fallback
+        // (generate a fresh session via /api/payment/initiate) never gets a
+        // chance to run either. Let goToPayment handle the empty case.
+        if (d.bookingStatus === "AWAITING_PAYMENT") {
           return void goToPayment(reference, amountRands, d)
         }
         if (d.bookingStatus === "FAILED" || d.status === "failed") {
