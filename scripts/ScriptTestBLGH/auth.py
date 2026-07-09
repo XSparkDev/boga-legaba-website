@@ -43,7 +43,11 @@ def _perform_login(page) -> None:
         )
 
     print("Logging in...")
-    page.goto(config.LOGIN_URL, wait_until="networkidle", timeout=config.TIMEOUT_MS)
+    # domcontentloaded, NOT networkidle: NightsBridge's Angular app keeps
+    # background requests running, so networkidle never settles and burns the
+    # full timeout. page.fill() below auto-waits for the inputs to be
+    # actionable, so we lose no reliability by not waiting for network-idle.
+    page.goto(config.LOGIN_URL, wait_until="domcontentloaded", timeout=config.TIMEOUT_MS)
     page.fill(config.LOGIN_SELECTORS["username"], user)
     page.fill(config.LOGIN_SELECTORS["password"], password)
     page.click(config.LOGIN_SELECTORS["submit"])
@@ -69,7 +73,11 @@ def get_authenticated_context(browser):
     if config.STATE_FILE.exists():
         context = browser.new_context(storage_state=str(config.STATE_FILE))
         page = context.new_page()
-        page.goto(config.DASHBOARD_URL, wait_until="networkidle", timeout=config.TIMEOUT_MS)
+        # domcontentloaded (not networkidle) — _is_logged_in() below does an
+        # explicit wait_for_selector on the calendar link, so it already waits
+        # for the real "logged in" signal. Waiting for network-idle first just
+        # adds seconds of dead time on this always-busy SPA.
+        page.goto(config.DASHBOARD_URL, wait_until="domcontentloaded", timeout=config.TIMEOUT_MS)
         if _is_logged_in(page):
             print("Reusing saved session.")
             return context, page
