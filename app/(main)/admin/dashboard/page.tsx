@@ -737,7 +737,7 @@ export default async function AdminDashboardPage() {
                   No cached rates yet — they get written automatically on booking page visits
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto overscroll-x-contain">
                   <table className="w-full min-w-[400px] text-xs">
                     <thead>
                       <tr className="border-b border-gray-100 bg-gray-50">

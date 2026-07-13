@@ -146,7 +146,7 @@ export function NbAuditDashboard({ report }: Props) {
           onChange={(e) => setRoomFilter(e.target.value)}
           className="mb-4 w-full max-w-md rounded-lg border border-border bg-background px-3 py-2 text-sm"
         />
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto overscroll-x-contain">
           <table className="w-full min-w-[720px] text-left font-mono text-[11px]">
             <thead>
               <tr className="border-b border-border text-muted-foreground">

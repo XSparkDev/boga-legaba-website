@@ -357,14 +357,47 @@ function PaymentBadge({ status }: { status: string | null }) {
   )
 }
 
+// The worker only confirms it ACCEPTED the job (HTTP 202) when retry-nightsbridge
+// returns — the real Playwright run happens in a background thread on the
+// worker and can take a few minutes. Poll nightsbridge-job-status until it
+// resolves to "completed" (real booking_id scraped) or "failed", instead of
+// trusting the 202 as proof the booking exists. 3s interval, ~6 min ceiling —
+// matches the worker's own ~340s subprocess timeout plus lock-wait headroom.
+const POLL_INTERVAL_MS = 3000
+const POLL_MAX_ATTEMPTS = 120
+
 function RetryNightsBridgeButton({ reference }: { reference: string }) {
-  const [loading, setLoading] = useState(false)
-  const [done, setDone] = useState(false)
+  const [phase, setPhase] = useState<"idle" | "dispatching" | "polling" | "done">("idle")
   const [error, setError] = useState("")
 
+  async function pollForCompletion() {
+    for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
+      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS))
+      try {
+        const res = await fetch(`/api/admin/nightsbridge-job-status?reference=${encodeURIComponent(reference)}`)
+        const data = (await res.json()) as { ok: boolean; status?: string; booking_id?: string | null; error?: string }
+        if (!data.ok) continue // transient read error — keep polling, don't give up on a blip
+        if (data.status === "completed" && data.booking_id) {
+          setPhase("done")
+          return
+        }
+        if (data.status === "failed") {
+          setError(data.error || "NightsBridge booking failed")
+          setPhase("idle")
+          return
+        }
+        // status === "processing" — still running, keep polling
+      } catch {
+        // network blip — keep polling
+      }
+    }
+    setError("Still processing on NightsBridge — check back or refresh before retrying again.")
+    setPhase("idle")
+  }
+
   async function handleClick() {
-    if (done || loading) return
-    setLoading(true)
+    if (phase === "dispatching" || phase === "polling" || phase === "done") return
+    setPhase("dispatching")
     setError("")
     try {
       const res = await fetch("/api/admin/retry-nightsbridge", {
@@ -373,30 +406,37 @@ function RetryNightsBridgeButton({ reference }: { reference: string }) {
         body: JSON.stringify({ reference }),
       })
       const data = (await res.json()) as { ok: boolean; error?: string }
-      if (data.ok) setDone(true)
-      else setError(data.error ?? "Retry failed")
+      if (!data.ok) {
+        setError(data.error ?? "Retry failed")
+        setPhase("idle")
+        return
+      }
+      setPhase("polling")
+      await pollForCompletion()
     } catch {
       setError("Network error")
-    } finally {
-      setLoading(false)
+      setPhase("idle")
     }
   }
+
+  const busy = phase === "dispatching" || phase === "polling"
+  const done = phase === "done"
 
   return (
     <div>
       <button
         onClick={handleClick}
-        disabled={loading || done}
-        title={error || "Push this booking to NightsBridge again"}
+        disabled={busy || done}
+        title={error || (phase === "polling" ? "Waiting for NightsBridge to confirm the booking…" : "Push this booking to NightsBridge again")}
         className="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 font-mono text-[11px] font-semibold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-60"
       >
-        {loading
+        {busy
           ? <Loader2 className="size-3.5 animate-spin" />
           : done
             ? <CheckCircle2 className="size-3.5" />
             : <RefreshCw className="size-3.5" />
         }
-        {done ? "Sent" : "Retry"}
+        {phase === "polling" ? "Confirming…" : phase === "dispatching" ? "Sending…" : done ? "Sent" : "Retry"}
       </button>
       {error && <p className="mt-1 max-w-[140px] font-mono text-[9px] leading-tight text-red-500">{error}</p>}
     </div>
@@ -448,7 +488,7 @@ function WebsiteBookingsSection({ rows }: { rows: WebsiteBooking[] }) {
           ))}
         </div>
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto overscroll-x-contain">
         <table className="w-full min-w-[860px] text-sm">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50">
@@ -608,7 +648,7 @@ export function BookingsClient({ bookings, websiteBookings }: { bookings: Bookin
         <WebsiteBookingsSection rows={websiteBookings} />
 
         {/* Tab bar */}
-        <div className="flex gap-1 overflow-x-auto rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
+        <div className="flex gap-1 overflow-x-auto overscroll-x-contain rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
           {tabs.map(t => (
             <button
               key={t.id}
@@ -642,7 +682,7 @@ export function BookingsClient({ bookings, websiteBookings }: { bookings: Bookin
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overscroll-x-contain">
               <table className="w-full min-w-[720px] text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">

@@ -4,9 +4,17 @@ import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import { NightsBridgeModal } from "@/components/NightsBridgeModal"
 import { SiteLogo } from "@/components/site-logo"
-import { SiteImage } from "@/components/site-image"
+import { HeroSlideshow } from "@/components/home/hero-slideshow"
 import { useBookingModal } from "@/hooks/useBookingModal"
 import { getSiteImage } from "@/lib/site-images"
+
+const HERO_IMAGES = [
+  "/boga_hero_/hero-1.jpg",
+  "/boga_hero_/hero-2.jpg",
+  "/boga_hero_/hero-3.jpg",
+  "/boga_hero_/hero-4.jpg",
+  "/boga_hero_/hero-5.jpg",
+]
 
 export function HomeHero() {
   const hero = getSiteImage("hero")
@@ -14,14 +22,7 @@ export function HomeHero() {
 
   return (
     <section className="grain relative flex min-h-[100svh] flex-col overflow-x-clip">
-      <SiteImage
-        src={hero.url}
-        alt={hero.alt}
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover"
-      />
+      <HeroSlideshow images={HERO_IMAGES} alt={hero.alt} />
       {/* Flat semi-transparent overlay for text legibility — brand guide: flat
           color blocks, no gradients. */}
       <div className="absolute inset-0 bg-black/55" />

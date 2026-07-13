@@ -47,7 +47,7 @@ export default async function RegistrationsPage() {
             <p className="mt-2 text-xs text-gray-400">If this stays empty after submissions, confirm migration 010 has been applied.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-x-auto overscroll-x-contain rounded-xl border border-gray-200 bg-white shadow-sm">
             <table className="w-full min-w-[900px] text-xs">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50 text-left font-mono text-[10px] uppercase tracking-wider text-gray-400">
