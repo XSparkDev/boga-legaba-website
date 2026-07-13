@@ -567,7 +567,7 @@ def book_room(params: dict) -> dict:
         )
         page = None
         try:
-            print(f"[admin-booking] ref={reference} logging in (admin)...")
+            print(f"[admin-booking] ref={reference} logging in (admin)...", file=sys.stderr)
             context, page = auth.get_authenticated_context(browser)
 
             candidate_units = resolve_units_for_room_type(room_type)
@@ -575,9 +575,9 @@ def book_room(params: dict) -> dict:
                 # Not a category name — try it directly as a raw unit name
                 # (useful for standalone/manual testing).
                 candidate_units = [room_type]
-            print(f"[admin-booking] ref={reference} room type '{room_type}' resolves to candidate units: {candidate_units}")
+            print(f"[admin-booking] ref={reference} room type '{room_type}' resolves to candidate units: {candidate_units}", file=sys.stderr)
 
-            print(f"[admin-booking] ref={reference} opening Add Booking...")
+            print(f"[admin-booking] ref={reference} opening Add Booking...", file=sys.stderr)
             opened = _open_add_booking(page)
             if opened == "relogin":
                 # The dashboard's saved-session check can false-positive (the
@@ -585,7 +585,7 @@ def book_room(params: dict) -> dict:
                 # server actually validates it), so we only discover the
                 # session is really dead here, on the first real navigation.
                 # Re-authenticate fresh and give it exactly one more try.
-                print(f"[admin-booking] ref={reference} bounced to login mid-flow — re-authenticating...")
+                print(f"[admin-booking] ref={reference} bounced to login mid-flow — re-authenticating...", file=sys.stderr)
                 auth._perform_login(page)
                 context.storage_state(path=str(auth.config.STATE_FILE))
                 opened = _open_add_booking(page)
@@ -594,20 +594,20 @@ def book_room(params: dict) -> dict:
                 return {"ok": False, "error": "Could not open the Add Booking form"}
             _shot(page, "01_add_booking_open")
 
-            print(f"[admin-booking] ref={reference} setting arrival date {checkin}...")
+            print(f"[admin-booking] ref={reference} setting arrival date {checkin}...", file=sys.stderr)
             arrival_input = page.locator("[formcontrolname='fromdate'] input")
             if not _set_date_field(page, arrival_input, checkin, "Arrival Date"):
                 _shot(page, "02_arrival_failed")
                 return {"ok": False, "error": f"Could not set Arrival Date to {checkin}"}
 
-            print(f"[admin-booking] ref={reference} setting departure date {checkout}...")
+            print(f"[admin-booking] ref={reference} setting departure date {checkout}...", file=sys.stderr)
             departure_input = page.locator("[formcontrolname='todate'] input")
             if not _set_date_field(page, departure_input, checkout, "Departure Date"):
                 _shot(page, "02_departure_failed")
                 return {"ok": False, "error": f"Could not set Departure Date to {checkout}"}
 
             nights = _read_nights(page)
-            print(f"[admin-booking] ref={reference} Nights auto-calculated: {nights}")
+            print(f"[admin-booking] ref={reference} Nights auto-calculated: {nights}", file=sys.stderr)
             if not nights or nights <= 0:
                 _shot(page, "02_nights_not_calculated")
                 return {"ok": False, "error": f"Dates did not register — Nights read as {nights!r}, expected > 0"}
@@ -623,7 +623,7 @@ def book_room(params: dict) -> dict:
                              f"Candidates tried: {candidate_units}. Dropdown had: {visible_units}.",
                 }
 
-            print(f"[admin-booking] ref={reference} selecting unit '{chosen_unit}'...")
+            print(f"[admin-booking] ref={reference} selecting unit '{chosen_unit}'...", file=sys.stderr)
             if not _select_room_unit(page, chosen_unit):
                 _shot(page, "03_room_select_failed")
                 return {"ok": False, "error": f"Unit '{chosen_unit}' was listed but selecting it failed"}
@@ -632,33 +632,33 @@ def book_room(params: dict) -> dict:
 
             _remove_extra_room_cards(page, chosen_unit)
             card_count = _count_room_cards(page)
-            print(f"[admin-booking] ref={reference} room cards present after cleanup: {card_count}")
+            print(f"[admin-booking] ref={reference} room cards present after cleanup: {card_count}", file=sys.stderr)
 
             rate_plan_label = _resolve_rate_plan_label(meal_plan)
-            print(f"[admin-booking] ref={reference} setting Rate Plan '{rate_plan_label}'...")
+            print(f"[admin-booking] ref={reference} setting Rate Plan '{rate_plan_label}'...", file=sys.stderr)
             if not _select_rate_plan(page, rate_plan_label):
                 _shot(page, "04_rate_plan_failed")
                 return {"ok": False, "error": f"Could not set Rate Plan to '{rate_plan_label}'"}
 
-            print(f"[admin-booking] ref={reference} setting occupancy (adults={adults}, child1={children1}, child2={children2})...")
+            print(f"[admin-booking] ref={reference} setting occupancy (adults={adults}, child1={children1}, child2={children2})...", file=sys.stderr)
             _set_occupancy(page, adults, children1, children2)
 
-            print(f"[admin-booking] ref={reference} filling guest details...")
+            print(f"[admin-booking] ref={reference} filling guest details...", file=sys.stderr)
             guest_results = _fill_guest_details(page, firstname, surname, phone, email, company)
             _shot(page, "04_form_filled")
 
-            print(f"[admin-booking] ref={reference} running pre-submit checklist...")
+            print(f"[admin-booking] ref={reference} running pre-submit checklist...", file=sys.stderr)
             ok, reason = _pre_submit_checklist(page, chosen_unit, guest_results)
             if not ok:
                 _shot(page, "05_pre_submit_check_failed")
                 return {"ok": False, "error": f"Pre-submit check failed: {reason}"}
 
-            print(f"[admin-booking] ref={reference} pre-submit checklist passed — submitting...")
+            print(f"[admin-booking] ref={reference} pre-submit checklist passed — submitting...", file=sys.stderr)
             if not _submit_booking(page):
                 _shot(page, "06_submit_click_failed")
                 return {"ok": False, "error": "Could not find/click the Add Booking submit button"}
 
-            print(f"[admin-booking] ref={reference} verifying via booking-summary page...")
+            print(f"[admin-booking] ref={reference} verifying via booking-summary page...", file=sys.stderr)
             result = _verify_booking_summary(page, chosen_unit, firstname, surname)
             if not result.get("ok"):
                 _shot(page, "07_verification_failed")
@@ -672,7 +672,7 @@ def book_room(params: dict) -> dict:
             # not the category, wherever the room is displayed to the guest.
             result["roomName"] = chosen_unit
             _shot(page, "07_verified")
-            print(f"[admin-booking] ref={reference} VERIFIED — NBID={result['nbid']} bookingId={result.get('bookingId')} room={chosen_unit}")
+            print(f"[admin-booking] ref={reference} VERIFIED — NBID={result['nbid']} bookingId={result.get('bookingId')} room={chosen_unit}", file=sys.stderr)
             return result
 
         except Exception as exc:
