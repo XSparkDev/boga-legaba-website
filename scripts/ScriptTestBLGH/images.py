@@ -282,7 +282,7 @@ def main() -> None:
 
     headless = os.environ.get("HEADLESS", "true").lower() == "true"
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=headless)
+        browser = p.chromium.launch(headless=headless, args=["--disable-dev-shm-usage", "--no-sandbox"])
         try:
             scrape_webview_images(browser)
         finally:

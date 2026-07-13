@@ -66,7 +66,7 @@ def perform_action(booking_ref: str | int, action: str) -> dict:
     headless = os.environ.get("HEADLESS", "true").lower() == "true"
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=headless)
+        browser = p.chromium.launch(headless=headless, args=["--disable-dev-shm-usage", "--no-sandbox"])
         context = browser.new_context(
             user_agent=(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "

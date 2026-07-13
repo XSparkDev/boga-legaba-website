@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
     with sync_playwright() as p:
         headless = os.environ.get("HEADLESS", "true").lower() == "true"
-        browser = p.chromium.launch(headless=headless)
+        browser = p.chromium.launch(headless=headless, args=["--disable-dev-shm-usage", "--no-sandbox"])
 
         context, page = auth.get_authenticated_context(browser)
         page.wait_for_timeout(2_000)

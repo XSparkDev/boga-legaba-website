@@ -493,7 +493,17 @@ def book_room(params: dict) -> dict:
     with sync_playwright() as p:
         import os
         headless = os.environ.get("HEADLESS", "true").lower() == "true"
-        browser = p.chromium.launch(headless=headless)
+        # --disable-dev-shm-usage: Docker's default /dev/shm is only 64MB, far
+        # too small for Chromium's shared memory needs — without this flag the
+        # browser can crash near-instantly on launch inside a container, with
+        # no Python exception and no captured stderr (the OS just kills it),
+        # which is exactly what an "ok": False with an empty error looks like
+        # upstream. --no-sandbox is required because the worker container runs
+        # as root, where Chromium's sandbox refuses to start at all.
+        browser = p.chromium.launch(
+            headless=headless,
+            args=["--disable-dev-shm-usage", "--no-sandbox"],
+        )
         page = None
         try:
             print(f"[admin-booking] ref={reference} logging in (admin)...")

@@ -165,7 +165,7 @@ def upsert_bookings(bookings: list[dict[str, Any]]) -> None:
 
 with sync_playwright() as p:
     headless = os.environ.get("HEADLESS", "true").lower() == "true"
-    browser = p.chromium.launch(headless=headless)
+    browser = p.chromium.launch(headless=headless, args=["--disable-dev-shm-usage", "--no-sandbox"])
 
     context, page = auth.get_authenticated_context(browser)
     # auth already navigated to the dashboard — no need to goto again.

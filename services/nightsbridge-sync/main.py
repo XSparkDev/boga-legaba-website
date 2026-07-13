@@ -57,7 +57,7 @@ def main() -> None:
     print(f"Fetching bookings from {start} to {end}")
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=headless)
+        browser = p.chromium.launch(headless=headless, args=["--disable-dev-shm-usage", "--no-sandbox"])
         try:
             try:
                 data, records, n_bookings = _attempt(browser, start, end)

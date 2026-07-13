@@ -21,7 +21,7 @@ config.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 with sync_playwright() as p:
     headless = os.environ.get("HEADLESS", "true").lower() == "true"
-    browser = p.chromium.launch(headless=headless)
+    browser = p.chromium.launch(headless=headless, args=["--disable-dev-shm-usage", "--no-sandbox"])
     context = browser.new_context()
     page = context.new_page()
     page.set_default_timeout(config.TIMEOUT_MS)

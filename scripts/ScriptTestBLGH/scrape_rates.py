@@ -172,7 +172,7 @@ def scrape(arrive: str, depart: str) -> list[dict]:
     results: list[dict] = []
 
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=HEADLESS)
+        browser = pw.chromium.launch(headless=HEADLESS, args=["--disable-dev-shm-usage", "--no-sandbox"])
         context = browser.new_context(
             viewport={"width": 1280, "height": 900},
             user_agent=(
