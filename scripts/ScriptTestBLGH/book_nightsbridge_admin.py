@@ -51,6 +51,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import os
 import re
 import sys
 import time
@@ -109,6 +110,14 @@ def _day_of(iso: str) -> int:
 
 
 def _shot(page, name: str) -> None:
+    # Off by default: this runs ~17x per booking, and each full-page PNG
+    # capture (page render + encode + disk write) is real memory/IO pressure
+    # on the worker's 512MB Render instance — pure debugging cost with no
+    # production value, since nothing ever reads /tmp/admin_booking_*.png on
+    # a server with no way to retrieve files off it. Opt in locally with
+    # DEBUG_SCREENSHOTS=true.
+    if os.environ.get("DEBUG_SCREENSHOTS", "false").lower() != "true":
+        return
     try:
         page.screenshot(path=f"/tmp/admin_booking_{name}.png")
     except Exception:
