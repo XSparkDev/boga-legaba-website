@@ -16,7 +16,7 @@ const CATEGORIES = [
     title: "Booking & Reservations",
     faqs: [
       ["How do I make a booking?", "Book directly through our NightsBridge engine on the Book Now page, message us on WhatsApp, or call reception. Direct bookings get the best available rate."],
-      ["Can I book via WhatsApp?", "Yes. Each property has a dedicated WhatsApp desk for quick quotes and booking assistance — use the floating WhatsApp button on any page."],
+      ["Can I book via WhatsApp?", "Yes. Each property has a dedicated WhatsApp desk for quick quotes and booking assistance, use the floating WhatsApp button on any page."],
       ["What is the cancellation policy?", "Cancellation terms are confirmed at the time of booking and vary by rate and season. Our team will outline the applicable policy with your confirmation."],
       ["Do you accept walk-ins?", "Subject to availability, yes. We recommend booking ahead, especially during busy conference and government periods."],
     ],
@@ -41,7 +41,7 @@ const CATEGORIES = [
     title: "Conference & Events",
     faqs: [
       ["How many people can the conference venue accommodate?", "Our Lantana conference facility seats up to 80 delegates depending on the setup style (theatre, boardroom, U-shape, classroom or cocktail)."],
-      ["Do you provide AV equipment?", "Yes — projector, screen, microphone, PA system and video conferencing are available. Specify your needs in the conference enquiry form."],
+      ["Do you provide AV equipment?", "Yes: projector, screen, microphone, PA system and video conferencing are available. Specify your needs in the conference enquiry form."],
       ["Can I combine conference and accommodation?", "Absolutely. Our residential package bundles the full-day conference with on-site rooms and meals at a combined rate."],
     ],
   },
@@ -59,7 +59,7 @@ const CATEGORIES = [
       ["Is Wi-Fi available?", "Yes, high-speed Wi-Fi is available throughout all properties at no extra charge."],
       ["Is there parking?", "Yes, secure on-site parking is available at each property."],
       ["Do you serve breakfast?", "Breakfast is available and can be included with your rate or arranged on request."],
-      ["Is the property pet-friendly?", "Please enquire ahead of booking — pet policies vary by property and room."],
+      ["Is the property pet-friendly?", "Please enquire ahead of booking, pet policies vary by property and room."],
     ],
   },
 ]

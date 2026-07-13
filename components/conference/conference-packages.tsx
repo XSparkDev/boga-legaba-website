@@ -72,7 +72,7 @@ export function ConferencePackages() {
             Find what meets your criteria
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Filter by package type, catering, AV, or accommodation — each filter narrows the results.
+            Filter by package type, catering, AV, or accommodation: each filter narrows the results.
           </p>
         </Reveal>
 
@@ -96,7 +96,7 @@ export function ConferencePackages() {
           </div>
 
           <MultiCriteriaSearch
-            placeholder="Filter packages — e.g. catering, accommodation, AV, lunch…"
+            placeholder="Filter packages: e.g. catering, accommodation, AV, lunch…"
             suggestions={CONFERENCE_SEARCH_SUGGESTIONS}
             criteria={criteria}
             onCriteriaChange={setCriteria}

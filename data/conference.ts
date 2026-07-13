@@ -37,7 +37,7 @@ export const CONFERENCE_OFFERINGS: ConferenceOffering[] = [
     catering: ["Morning Tea", "Afternoon Tea"],
     accommodation: false,
     amenities: ["Wi-Fi", "Parking", "Coordinator"],
-    priceLabel: "From R—",
+    priceLabel: "Price on request",
     highlights: ["Venue hire (4 hrs)", "Morning OR afternoon tea", "Projector & screen", "Wi-Fi & parking"],
   },
   {
@@ -53,7 +53,7 @@ export const CONFERENCE_OFFERINGS: ConferenceOffering[] = [
     accommodation: false,
     amenities: ["Wi-Fi", "Parking", "Coordinator"],
     featured: true,
-    priceLabel: "From R—",
+    priceLabel: "Price on request",
     highlights: ["Venue hire (8 hrs)", "Two teas + lunch", "Full AV package", "Dedicated coordinator"],
   },
   {
@@ -68,7 +68,7 @@ export const CONFERENCE_OFFERINGS: ConferenceOffering[] = [
     catering: ["Morning Tea", "Lunch", "Afternoon Tea", "Dinner", "Full Day Package"],
     accommodation: true,
     amenities: ["Wi-Fi", "Parking", "Coordinator", "Accommodation"],
-    priceLabel: "From R—",
+    priceLabel: "Price on request",
     highlights: ["Full day conference", "Overnight accommodation", "Breakfast & dinner", "Group rate per delegate"],
   },
   {

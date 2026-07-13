@@ -18,7 +18,7 @@ export function StayBookingCta() {
             Ready to book? Secure your room directly with our team.
           </h2>
           <p className="mt-3 flex items-center justify-center gap-2 font-body text-sm text-white/60">
-            <ShieldCheck className="size-4 text-gold" /> Best rates — no OTA commission fees.
+            <ShieldCheck className="size-4 text-gold" /> Best rates, no OTA commission fees.
           </p>
         </div>
 

@@ -7,7 +7,7 @@ import { GalleryGrid } from "@/components/gallery/gallery-grid"
 export const metadata: Metadata = {
   title: "Gallery | Boga Legaba Guest House & Conference Centre",
   description:
-    "See Boga Legaba — photo gallery of our Chababa, Interlaken A and Lantana properties, conference facilities and dining spaces in Mahikeng.",
+    "See Boga Legaba: photo gallery of our Chababa, Interlaken A and Lantana properties, conference facilities and dining spaces in Mahikeng.",
 }
 
 export default function GalleryPage() {

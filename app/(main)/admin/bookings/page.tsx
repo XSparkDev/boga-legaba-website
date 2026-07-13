@@ -28,7 +28,11 @@ export type BookingRow = {
   made_by_email: string | null
   made_by_phone: string | null
   notes: string | null
-  // extracted from raw JSON
+  // extracted from raw JSON — room_name is the specific physical unit (e.g.
+  // "Flutes"); room_type is the category (e.g. "Twin Room (Shower only)"),
+  // kept only as a fallback for older synced rows that predate NightsBridge
+  // returning a per-unit name on this endpoint.
+  room_name: string | null
   room_type: string | null
   adults: number | null
   avg_rate: number | null
@@ -48,6 +52,8 @@ export type WebsiteBooking = {
   reference: string
   guest_name: string | null
   guest_email: string | null
+  guest_phone: string | null     // pulled from context — no dedicated column
+  notes: string | null           // pulled from context — no dedicated column
   checkin: string | null
   checkout: string | null
   room_type_name: string | null
@@ -65,11 +71,18 @@ async function fetchWebsiteBookings(): Promise<WebsiteBooking[]> {
     const sb = createSupabaseAdminClient()
     const { data, error } = await sb
       .from("booking_job")
-      .select("reference, guest_name, guest_email, checkin, checkout, room_type_name, room_name, amount, status, booking_id, booking_status, error, created_at")
+      .select("reference, guest_name, guest_email, checkin, checkout, room_type_name, room_name, amount, status, booking_id, booking_status, error, created_at, context")
       .order("created_at", { ascending: false })
       .limit(100)
     if (error || !data) return []
-    return data as WebsiteBooking[]
+    return data.map((row) => {
+      const ctx = (row.context as Record<string, unknown>) ?? {}
+      return {
+        ...row,
+        guest_phone: (ctx.guestPhone as string | null) ?? null,
+        notes: (ctx.notes as string | null) ?? null,
+      }
+    }) as WebsiteBooking[]
   } catch {
     return []
   }
@@ -96,10 +109,20 @@ async function fetchBookings(): Promise<BookingRow[]> {
 
     if (error || !data) return []
 
+    // The raw NightsBridge booking JSON's per-stay entries reliably have
+    // bbroomid (services/nightsbridge-sync/storage.py does a required
+    // `stay["bbroomid"]` access when syncing) but NOT a consistent room-name
+    // field across API shapes — so resolve the specific room via the `room`
+    // table (kept in sync from NightsBridge, bbroomid -> room_name) instead
+    // of guessing at raw JSON key names.
+    const { data: roomRows } = await sb.from("room").select("bbroomid, room_name")
+    const roomNameById = new Map((roomRows ?? []).map((r) => [r.bbroomid as number, r.room_name as string]))
+
     return data.map((b) => {
       const raw = (b.raw as Record<string, unknown>) ?? {}
       const rooms = (raw.rooms as Record<string, unknown>[] | undefined) ?? []
       const firstRoom = rooms[0] ?? {}
+      const bbroomid = firstRoom.bbroomid != null ? Number(firstRoom.bbroomid) : null
       return {
         bookingid: b.bookingid,
         booking_ref: b.booking_ref,
@@ -111,6 +134,7 @@ async function fetchBookings(): Promise<BookingRow[]> {
         made_by_email: b.made_by_email,
         made_by_phone: b.made_by_phone,
         notes: b.notes,
+        room_name: (bbroomid != null ? roomNameById.get(bbroomid) : undefined) ?? (firstRoom.roomname as string | null) ?? null,
         room_type: (firstRoom.roomtypename as string | null) ?? null,
         adults: (firstRoom.noadults as number | null) ?? null,
         avg_rate: (firstRoom.avgrate as number | null) ?? null,

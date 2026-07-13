@@ -22,6 +22,7 @@ import {
   BarChart3,
   Shield,
   CalendarDays,
+  Image as ImageIcon,
 } from "lucide-react"
 import {
   fetchEstablishment,
@@ -410,6 +411,13 @@ export default async function AdminDashboardPage() {
               <CalendarDays className="size-3.5" />
               Bookings
             </Link>
+            <Link
+              href="/admin/rooms"
+              className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-[11px] text-white/70 hover:text-white transition-colors"
+            >
+              <ImageIcon className="size-3.5" />
+              Room Photos
+            </Link>
             <a
               href={NB_DASHBOARD}
               target="_blank"
@@ -435,7 +443,7 @@ export default async function AdminDashboardPage() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3">
             <StatCard
               label="Room types"
-              value={estData?.roomTypes.size ?? "—"}
+              value={estData?.roomTypes.size ?? "N/A"}
               sub="From NightsBridge"
               icon={BedDouble}
               color="bg-[#996948]/10 text-[#996948]"
@@ -729,12 +737,12 @@ export default async function AdminDashboardPage() {
             <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
               <div className="border-b border-gray-100 bg-gray-50 px-4 py-2.5">
                 <p className="font-mono text-[11px] uppercase tracking-wider text-gray-500">
-                  Rate cache — latest 20 rows ({sbStats.rateCacheCount} total)
+                  Rate cache: latest 20 rows ({sbStats.rateCacheCount} total)
                 </p>
               </div>
               {sbStats.rateCache.length === 0 ? (
                 <div className="px-4 py-6 text-center font-mono text-[11px] text-gray-400">
-                  No cached rates yet — they get written automatically on booking page visits
+                  No cached rates yet, they get written automatically on booking page visits
                 </div>
               ) : (
                 <div className="overflow-x-auto overscroll-x-contain">
@@ -753,10 +761,10 @@ export default async function AdminDashboardPage() {
                           <tr key={i} className="hover:bg-gray-50/60">
                             <td className="px-4 py-2 font-medium text-gray-800">{r.rtname}</td>
                             <td className="px-3 py-2 text-right text-[#996948]">
-                              {r.rate_single ? fmt(Number(r.rate_single)) : "—"}
+                              {r.rate_single ? fmt(Number(r.rate_single)) : "N/A"}
                             </td>
                             <td className="px-3 py-2 text-right text-[#996948]">
-                              {r.rate_double ? fmt(Number(r.rate_double)) : "—"}
+                              {r.rate_double ? fmt(Number(r.rate_double)) : "N/A"}
                             </td>
                             <td className="px-3 py-2 font-mono text-[10px] text-gray-400">
                               {r.arrive} → {r.depart}

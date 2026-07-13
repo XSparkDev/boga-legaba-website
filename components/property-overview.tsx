@@ -23,7 +23,7 @@ export function PropertyOverview() {
           </h2>
           <p className="mt-5 text-pretty text-base leading-[1.7] text-body-text font-body">
             Each property is physically located at a different address with its own character. Choose the one that fits
-            your stay — and always confirm your arrival address at booking.
+            your stay, and always confirm your arrival address at booking.
           </p>
         </Reveal>
 
@@ -40,7 +40,7 @@ export function PropertyOverview() {
                   <div className="relative overflow-hidden h-[280px]">
                     <SiteImage
                       src={img.url}
-                      alt={`${p.name} guest house exterior — ${img.alt}`}
+                      alt={`${p.name} guest house exterior: ${img.alt}`}
                       fill
                       sizes="(max-width: 1024px) 100vw, 33vw"
                       className="transition-transform duration-500 group-hover:scale-105"

@@ -92,7 +92,7 @@ export function CorporateForm() {
     return (
       <div className="flex flex-col items-center gap-4 rounded-2xl border border-gold/40 bg-gold/10 p-10 text-center">
         <CheckCircle2 className="size-12 text-gold" />
-        <h3 className="font-serif text-2xl text-foreground">Thank you — enquiry received.</h3>
+        <h3 className="font-serif text-2xl text-foreground">Thank you, enquiry received.</h3>
         <p className="max-w-md text-pretty leading-relaxed text-muted-foreground">
           Our team will respond within 2 business hours with rates and availability.
         </p>

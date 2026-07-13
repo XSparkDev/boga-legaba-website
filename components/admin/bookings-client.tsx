@@ -19,10 +19,12 @@ import {
   Shield,
   FileText,
   Building2,
+  Info,
 } from "lucide-react"
 import Link from "next/link"
 import type { BookingRow, WebsiteBooking } from "@/app/(main)/admin/bookings/page"
 import { BookingExtrasPanel } from "@/components/admin/booking-extras-panel"
+import { properties } from "@/data/rooms"
 
 // ---------------------------------------------------------------------------
 // Status config
@@ -95,23 +97,13 @@ const EMPTY_FORM: BookingFormState = {
   adults: "2", firstname: "", surname: "", phone: "", email: "", notes: "",
 }
 
-// Must match EXACTLY the category strings book_nightsbridge_admin.py's
-// resolve_units_for_room_type() builds from ROOM_CATALOG (configuration +
-// " Room (" + bathroom_type + ")") — that match is a strict lowercase string
-// equality, not fuzzy. The old list here ("Double Room (Shower)", "Executive
-// Suite", "Conference Room", etc.) never matched any real unit, so every
-// admin-created booking failed with "No unit for room type ... found in the
-// dropdown" regardless of which option was picked.
-const ROOM_TYPES = [
-  "Double Room (Bath only)",
-  "Double Room (Shower only)",
-  "Double Room (Bath & Shower)",
-  "Twin Room (Shower only)",
-  "Twin Room (Bath & Shower)",
-  "Triple Room (Shower only)",
-  "Family Room (Shower only)",
-  "Family Room (Bath & Shower)",
-]
+// The owner wants staff to pick the exact physical room a guest gets (e.g.
+// "Flutes"), not a room-type category — matches the site's own per-room
+// inventory in data/rooms.ts. book_nightsbridge_admin.py already supports
+// this: resolve_units_for_room_type() only matches category strings like
+// "Double Room (Shower only)"; anything else (a literal unit name) falls
+// through to its own "treat as a raw unit name" branch and is selected
+// directly in NightsBridge's room dropdown, so no Python change is needed.
 const MEAL_PLANS = ["Room Only", "Bed & Breakfast", "Dinner, Bed & Breakfast"]
 
 function AddBookingModal({ onClose }: { onClose: () => void }) {
@@ -152,7 +144,7 @@ function AddBookingModal({ onClose }: { onClose: () => void }) {
         setResult({ ok: false, message: data.error ?? "Booking failed" })
       }
     } catch {
-      setResult({ ok: false, message: "Network error — please try again" })
+      setResult({ ok: false, message: "Network error, please try again" })
     } finally {
       setSubmitting(false)
     }
@@ -207,10 +199,14 @@ function AddBookingModal({ onClose }: { onClose: () => void }) {
             {/* Room + Meal plan */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block font-mono text-[11px] text-gray-500">Room type *</label>
+                <label className="mb-1 block font-mono text-[11px] text-gray-500">Room *</label>
                 <select value={form.roomTypeName} onChange={set("roomTypeName")} required className={inputCls}>
                   <option value="">Select room…</option>
-                  {ROOM_TYPES.map(r => <option key={r}>{r}</option>)}
+                  {properties.map((p) => (
+                    <optgroup key={p.id} label={p.name}>
+                      {p.rooms.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
+                    </optgroup>
+                  ))}
                 </select>
               </div>
               <div>
@@ -330,6 +326,59 @@ function ActionButton({
 }
 
 // ---------------------------------------------------------------------------
+// Guest info — full contact details behind an info icon, per booking row
+// ---------------------------------------------------------------------------
+
+type GuestInfoField = { label: string; value: string | null }
+
+function GuestInfoButton({ title, fields }: { title: string; fields: GuestInfoField[] }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        title="View guest details"
+        className="flex size-7 items-center justify-center rounded-lg border border-gray-200 text-gray-400 transition-colors hover:border-[#996948]/40 hover:text-[#996948]"
+      >
+        <Info className="size-3.5" />
+      </button>
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 px-4 py-8 backdrop-blur-sm"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <p className="font-serif text-base font-bold text-gray-900">{title}</p>
+              <button onClick={() => setOpen(false)} className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100">
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="divide-y divide-gray-50 px-6 py-2">
+              {fields.map((f) => (
+                <div key={f.label} className="flex items-start justify-between gap-4 py-3">
+                  <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400">{f.label}</p>
+                  <p className="max-w-[65%] text-right text-sm text-gray-900 break-words">{f.value || "N/A"}</p>
+                </div>
+              ))}
+            </div>
+            <div className="p-6 pt-2">
+              <button onClick={() => setOpen(false)} className="w-full rounded-lg border border-gray-200 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Website bookings (pay-first pipeline) — payment badge + NightsBridge retry
 // ---------------------------------------------------------------------------
 
@@ -362,7 +411,7 @@ function isPaid(w: WebsiteBooking): boolean {
 }
 
 function PaymentBadge({ status }: { status: string | null }) {
-  const s = PAYMENT_STATUS[status ?? ""] ?? { label: status ?? "—", cls: "bg-gray-100 text-gray-500 border-gray-200" }
+  const s = PAYMENT_STATUS[status ?? ""] ?? { label: status ?? "N/A", cls: "bg-gray-100 text-gray-500 border-gray-200" }
   return (
     <span className={`inline-block rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold ${s.cls}`}>
       {s.label}
@@ -404,7 +453,7 @@ function RetryNightsBridgeButton({ reference }: { reference: string }) {
         // network blip — keep polling
       }
     }
-    setError("Still processing on NightsBridge — check back or refresh before retrying again.")
+    setError("Still processing on NightsBridge, check back or refresh before retrying again.")
     setPhase("idle")
   }
 
@@ -505,8 +554,8 @@ function WebsiteBookingsSection({ rows }: { rows: WebsiteBooking[] }) {
         <table className="w-full min-w-[860px] text-sm">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50">
-              {["Guest", "Dates", "Room", "Amount", "Payment", "NightsBridge", ""].map((h) => (
-                <th key={h} className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-gray-400">
+              {["", "Guest", "Dates", "Room", "Amount", "Payment", "NightsBridge", ""].map((h, i) => (
+                <th key={i} className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-gray-400">
                   {h}
                 </th>
               ))}
@@ -514,7 +563,7 @@ function WebsiteBookingsSection({ rows }: { rows: WebsiteBooking[] }) {
           </thead>
           <tbody className="divide-y divide-gray-50">
             {visible.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-6 text-center font-mono text-[11px] text-gray-400">No bookings in this view</td></tr>
+              <tr><td colSpan={8} className="px-4 py-6 text-center font-mono text-[11px] text-gray-400">No bookings in this view</td></tr>
             ) : visible.map((w) => {
               const onNB = w.status === "completed" && !!w.booking_id
               const nbFailed = w.status === "failed"
@@ -523,15 +572,32 @@ function WebsiteBookingsSection({ rows }: { rows: WebsiteBooking[] }) {
               return (
                 <tr key={w.reference} className="transition-colors hover:bg-gray-50/60">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900">{w.guest_name ?? "—"}</p>
+                    <GuestInfoButton
+                      title={w.guest_name ?? "Guest"}
+                      fields={[
+                        { label: "Name", value: w.guest_name },
+                        { label: "Email", value: w.guest_email },
+                        { label: "Phone", value: w.guest_phone },
+                        { label: "Room", value: w.room_name || w.room_type_name },
+                        { label: "Check-in", value: w.checkin ? fmtDate(w.checkin) : null },
+                        { label: "Check-out", value: w.checkout ? fmtDate(w.checkout) : null },
+                        { label: "Amount", value: w.amount ? `R ${Number(w.amount).toLocaleString("en-ZA", { minimumFractionDigits: 2 })}` : null },
+                        { label: "Reference", value: w.reference },
+                        { label: "Notes", value: w.notes },
+                        { label: "NightsBridge error", value: w.error },
+                      ]}
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-gray-900">{w.guest_name ?? "N/A"}</p>
                     <p className="font-mono text-[10px] text-gray-400">{w.guest_email ?? ""}</p>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 font-mono text-[11px] text-gray-600">
-                    {w.checkin ? fmtDate(w.checkin) : "—"} → {w.checkout ? fmtDate(w.checkout) : "—"}
+                    {w.checkin ? fmtDate(w.checkin) : "N/A"} → {w.checkout ? fmtDate(w.checkout) : "N/A"}
                   </td>
-                  <td className="px-4 py-3 text-gray-700">{w.room_name || w.room_type_name || "—"}</td>
+                  <td className="px-4 py-3 text-gray-700">{w.room_name || w.room_type_name || "N/A"}</td>
                   <td className="whitespace-nowrap px-4 py-3 font-mono text-[11px] text-gray-700">
-                    {w.amount ? `R ${Number(w.amount).toLocaleString("en-ZA", { minimumFractionDigits: 2 })}` : "—"}
+                    {w.amount ? `R ${Number(w.amount).toLocaleString("en-ZA", { minimumFractionDigits: 2 })}` : "N/A"}
                   </td>
                   <td className="px-4 py-3">
                     {abandoned
@@ -540,7 +606,7 @@ function WebsiteBookingsSection({ rows }: { rows: WebsiteBooking[] }) {
                   </td>
                   <td className="px-4 py-3">
                     {!paid ? (
-                      <span className="font-mono text-[10px] text-gray-300">—</span>
+                      <span className="font-mono text-[10px] text-gray-300">N/A</span>
                     ) : onNB ? (
                       <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-700">
                         <CheckCircle2 className="size-3" /> On NightsBridge{w.booking_id ? ` #${w.booking_id}` : ""}
@@ -699,8 +765,8 @@ export function BookingsClient({ bookings, websiteBookings }: { bookings: Bookin
               <table className="w-full min-w-[720px] text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
-                    {["Guest", "Check-In", "Check-Out", "Nights", "Room", "Adults", "Status", "Actions"].map(h => (
-                      <th key={h} className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-gray-400">
+                    {["", "Guest", "Check-In", "Check-Out", "Nights", "Room", "Adults", "Status", "Actions"].map((h, i) => (
+                      <th key={i} className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-gray-400">
                         {h}
                       </th>
                     ))}
@@ -719,8 +785,25 @@ export function BookingsClient({ bookings, websiteBookings }: { bookings: Bookin
                     return (
                       <tr key={b.bookingid} className={`transition-colors hover:bg-gray-50/60 ${isToday ? "bg-emerald-50/30" : ""}`}>
                         <td className="px-4 py-3">
+                          <GuestInfoButton
+                            title={b.made_by ?? "Guest"}
+                            fields={[
+                              { label: "Name", value: b.made_by },
+                              { label: "Email", value: b.made_by_email },
+                              { label: "Phone", value: b.made_by_phone },
+                              { label: "Room", value: b.room_name || b.room_type },
+                              { label: "Check-in", value: fmtDate(b.from_date) },
+                              { label: "Check-out", value: fmtDate(b.to_date) },
+                              { label: "Adults", value: b.adults != null ? String(b.adults) : null },
+                              { label: "Booking ref", value: b.booking_ref != null ? String(b.booking_ref) : null },
+                              { label: "Status", value: b.status_text },
+                              { label: "Notes", value: b.notes },
+                            ]}
+                          />
+                        </td>
+                        <td className="px-4 py-3">
                           <p className="flex items-center gap-1.5 font-medium text-gray-900">
-                            {b.made_by ?? "—"}
+                            {b.made_by ?? "N/A"}
                             {b.is_department && (
                               <span className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase text-indigo-700">
                                 <Building2 className="size-2.5" /> Dept
@@ -745,7 +828,7 @@ export function BookingsClient({ bookings, websiteBookings }: { bookings: Bookin
                         <td className="px-4 py-3 text-gray-700">{fmtDate(b.to_date)}</td>
                         <td className="px-4 py-3 font-mono text-sm text-gray-600">{nights}n</td>
                         <td className="px-4 py-3">
-                          <p className="text-sm text-gray-700">{b.room_type ?? "—"}</p>
+                          <p className="text-sm text-gray-700">{b.room_name ?? b.room_type ?? "N/A"}</p>
                           {b.avg_rate && (
                             <p className="font-mono text-[10px] text-[#996948]">
                               R {Math.round(b.avg_rate).toLocaleString("en-ZA")}/night
@@ -755,7 +838,7 @@ export function BookingsClient({ bookings, websiteBookings }: { bookings: Bookin
                         <td className="px-4 py-3 font-mono text-sm text-gray-600">
                           <span className="flex items-center gap-1">
                             <Users className="size-3 text-gray-400" />
-                            {b.adults ?? "—"}
+                            {b.adults ?? "N/A"}
                           </span>
                         </td>
                         <td className="px-4 py-3">

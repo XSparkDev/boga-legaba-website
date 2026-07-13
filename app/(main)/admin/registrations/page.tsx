@@ -70,11 +70,11 @@ export default async function RegistrationsPage() {
                       {r.email && <div>{r.email}</div>}
                       {r.phone && <div className="text-gray-400">{r.phone}</div>}
                     </td>
-                    <td className="px-3 py-2.5 font-mono text-gray-500">{r.booking_ref ?? "—"}</td>
-                    <td className="px-3 py-2.5 text-gray-600">{r.nationality ?? "—"}</td>
-                    <td className="px-3 py-2.5 font-mono text-gray-600">{r.id_or_passport ?? "—"}</td>
-                    <td className="px-3 py-2.5 font-mono text-gray-600">{r.vehicle_reg ?? "—"}</td>
-                    <td className="px-3 py-2.5 text-gray-600">{r.num_guests ?? "—"}</td>
+                    <td className="px-3 py-2.5 font-mono text-gray-500">{r.booking_ref ?? "N/A"}</td>
+                    <td className="px-3 py-2.5 text-gray-600">{r.nationality ?? "N/A"}</td>
+                    <td className="px-3 py-2.5 font-mono text-gray-600">{r.id_or_passport ?? "N/A"}</td>
+                    <td className="px-3 py-2.5 font-mono text-gray-600">{r.vehicle_reg ?? "N/A"}</td>
+                    <td className="px-3 py-2.5 text-gray-600">{r.num_guests ?? "N/A"}</td>
                   </tr>
                 ))}
               </tbody>

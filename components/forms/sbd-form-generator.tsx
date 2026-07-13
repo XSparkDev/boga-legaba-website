@@ -21,12 +21,12 @@ export type SbdFormData = {
 const sbdForms = [
   {
     id: "sbd4",
-    title: "SBD 4 — Declaration of Interest",
+    title: "SBD 4: Declaration of Interest",
     summary: "Standard declaration for government and public-sector accommodation bookings.",
   },
   {
     id: "sbd61",
-    title: "SBD 6.1 — Preference Points Claim",
+    title: "SBD 6.1: Preference Points Claim",
     summary: "Preference points declaration where applicable to your department.",
   },
 ] as const
@@ -42,7 +42,7 @@ function buildSbdDocument(form: SbdFormData, sbdId: string, title: string) {
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>${title} — ${form.entity || "Boga Legaba"}</title>
+  <title>${title} for ${form.entity || "Boga Legaba"}</title>
   <style>
     body { font-family: Georgia, serif; max-width: 760px; margin: 40px auto; color: #111; line-height: 1.5; }
     h1 { font-size: 22px; margin-bottom: 8px; }
@@ -67,19 +67,19 @@ function buildSbdDocument(form: SbdFormData, sbdId: string, title: string) {
 
   <h2>2. Department / entity details</h2>
   <table>
-    <tr><td class="label">Entity</td><td>${form.entity || "—"}</td></tr>
-    <tr><td class="label">Contact person</td><td>${form.contact || "—"}</td></tr>
-    <tr><td class="label">Email</td><td>${form.email || "—"}</td></tr>
-    <tr><td class="label">Phone</td><td>${form.phone || "—"}</td></tr>
-    <tr><td class="label">Billing contact</td><td>${form.billing || form.email || "—"}</td></tr>
+    <tr><td class="label">Entity</td><td>${form.entity || "N/A"}</td></tr>
+    <tr><td class="label">Contact person</td><td>${form.contact || "N/A"}</td></tr>
+    <tr><td class="label">Email</td><td>${form.email || "N/A"}</td></tr>
+    <tr><td class="label">Phone</td><td>${form.phone || "N/A"}</td></tr>
+    <tr><td class="label">Billing contact</td><td>${form.billing || form.email || "N/A"}</td></tr>
     <tr><td class="label">PO number</td><td>${form.po || "To be confirmed"}</td></tr>
   </table>
 
   <h2>3. Accommodation request</h2>
   <table>
-    <tr><td class="label">Check-in</td><td>${form.checkin || "—"}</td></tr>
-    <tr><td class="label">Check-out</td><td>${form.checkout || "—"}</td></tr>
-    <tr><td class="label">Rooms required</td><td>${form.roomsRequired || "—"}</td></tr>
+    <tr><td class="label">Check-in</td><td>${form.checkin || "N/A"}</td></tr>
+    <tr><td class="label">Check-out</td><td>${form.checkout || "N/A"}</td></tr>
+    <tr><td class="label">Rooms required</td><td>${form.roomsRequired || "N/A"}</td></tr>
     <tr><td class="label">Special requirements</td><td>${form.requirements || "None stated"}</td></tr>
   </table>
 

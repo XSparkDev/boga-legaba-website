@@ -11,7 +11,7 @@ import { fetchSpecials } from "@/lib/nightsbridge-api"
 export const metadata: Metadata = {
   title: "Specials & Offers | Boga Legaba Guest House, Mahikeng",
   description:
-    "Current offers and promotions at Boga Legaba in Mahikeng — extended stay discounts, conference + accommodation packages and government rate specials. Book direct.",
+    "Current offers and promotions at Boga Legaba in Mahikeng: extended stay discounts, conference + accommodation packages and government rate specials. Book direct.",
 }
 
 export const dynamic = "force-dynamic"
@@ -93,7 +93,7 @@ export default async function SpecialsPage() {
                   ) : null}
                   {s.validfrom && s.validto ? (
                     <p className="mt-3 font-mono text-[10px] text-white/40">
-                      Valid {fmtDate(s.validfrom)} — {fmtDate(s.validto)}
+                      Valid {fmtDate(s.validfrom)} to {fmtDate(s.validto)}
                     </p>
                   ) : null}
                   <Link
@@ -120,7 +120,7 @@ export default async function SpecialsPage() {
                     <div className="relative aspect-[16/10] overflow-hidden">
                       <SiteImage
                         src={img.url}
-                        alt={`${s.name} at Boga Legaba — ${img.alt}`}
+                        alt={`${s.name} at Boga Legaba: ${img.alt}`}
                         fill
                         sizes="(max-width: 1024px) 100vw, 33vw"
                         className="transition-transform duration-500 group-hover:scale-105"

@@ -39,7 +39,7 @@ export default function ConferencePage() {
             <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl">
               <SiteImage
                 src={getSiteImage("conference").url}
-                alt={`Conference room at Boga Legaba Lantana — ${getSiteImage("conference").alt}`}
+                alt={`Conference room at Boga Legaba Lantana: ${getSiteImage("conference").alt}`}
                 fill
                 sizes="(max-width: 1280px) 100vw, 1280px"
               />
@@ -81,7 +81,7 @@ export default function ConferencePage() {
                 {[
                   "Up to 80 delegates, fully equipped",
                   "Full AV, projector & PA system included",
-                  "On-site catering — half day to residential",
+                  "On-site catering, half day to residential",
                   "Accommodation for all delegates on-site",
                   "Central Mahikeng location, easy access",
                 ].map((point, i) => (

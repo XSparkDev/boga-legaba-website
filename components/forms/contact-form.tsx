@@ -56,7 +56,7 @@ export function ContactForm() {
     return (
       <div className="flex flex-col items-center gap-4 rounded-2xl border border-gold/40 bg-gold/10 p-10 text-center">
         <CheckCircle2 className="size-12 text-gold" />
-        <h3 className="font-serif text-2xl text-foreground">Message sent — thank you.</h3>
+        <h3 className="font-serif text-2xl text-foreground">Message sent. Thank you.</h3>
         <p className="max-w-md text-pretty leading-relaxed text-muted-foreground">
           We&apos;ll get back to you as soon as possible.
         </p>

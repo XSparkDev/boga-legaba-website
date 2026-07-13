@@ -68,7 +68,7 @@ export function InterestForm({
       <div className="flex items-center gap-3 rounded-xl border border-gold/40 bg-gold/10 p-5">
         <CheckCircle2 className="size-6 shrink-0 text-gold" />
         <p className="text-sm leading-relaxed text-foreground">
-          Thank you — you&apos;re on the list. We&apos;ll be in touch with updates.
+          Thank you, you&apos;re on the list. We&apos;ll be in touch with updates.
         </p>
       </div>
     )

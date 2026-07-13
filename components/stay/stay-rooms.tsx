@@ -195,7 +195,7 @@ export function StayRooms() {
 
         <div className="mt-8 rounded-2xl border border-border bg-card p-5 sm:p-6">
           <MultiCriteriaSearch
-            placeholder="Filter rooms — twin, double, Chababa, bath & shower…"
+            placeholder="Filter rooms: twin, double, Chababa, bath & shower…"
             suggestions={stayFilterSuggestions}
             criteria={criteria}
             onCriteriaChange={setCriteria}
