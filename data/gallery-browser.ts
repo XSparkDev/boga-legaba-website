@@ -14,12 +14,9 @@ export interface GalleryBrowserItem {
 
 const GALLERY_ITEMS: Omit<GalleryBrowserItem, "url" | "alt">[] = [
   { id: "chababa-reeds", label: "Chababa · Reeds Room", category: "Chababa", imageKey: "gallery.chababa-reeds", span: true },
-  { id: "chababa-blue", label: "Chababa · Blue Clouds", category: "Chababa", imageKey: "gallery.chababa-blue-clouds" },
   { id: "chababa-lounge", label: "Chababa · Lounge", category: "Chababa", imageKey: "gallery.chababa-lounge" },
-  { id: "interlaken-calabash", label: "Interlaken A · Calabash", category: "Interlaken A", imageKey: "gallery.interlaken-calabash" },
   { id: "interlaken-exterior", label: "Interlaken A · Exterior", category: "Interlaken A", imageKey: "gallery.interlaken-exterior", span: true },
   { id: "interlaken-segametsi", label: "Interlaken A · Segametsi", category: "Interlaken A", imageKey: "gallery.interlaken-segametsi" },
-  { id: "lantana-suite", label: "Lantana · Suite", category: "Lantana", imageKey: "gallery.lantana-suite" },
   { id: "lantana-garden", label: "Lantana · Garden", category: "Lantana", imageKey: "gallery.lantana-garden" },
   { id: "conference-theatre", label: "Conference · Theatre Setup", category: "Conference", imageKey: "gallery.conference-theatre", span: true },
   { id: "conference-boardroom", label: "Conference · Boardroom", category: "Conference", imageKey: "gallery.conference-boardroom" },

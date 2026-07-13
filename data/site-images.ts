@@ -189,16 +189,16 @@ export const siteImages = {
     alt: "a bed room with two beds and a lamp",
   },
   "specials.conference-accommodation": {
-    url: "https://images.unsplash.com/photo-1771154136777-44bc715a3bba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHwxfHxjb25mZXJlbmNlJTIwaG90ZWwlMjBhY2NvbW1vZGF0aW9uJTIwZGVsZWdhdGVzfGVufDB8MHx8fDE3ODA0ODgyNTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "Modern lounge area with comfortable seating and abstract carpet.",
+    url: "/Organized/Property%202/lantana%20exterior/Conference%20Room/IMG_2759-HDR.jpg",
+    alt: "Boga Legaba conference room at Lantana",
   },
   "specials.extended-stay": {
-    url: "https://images.unsplash.com/photo-1666813721996-42956e40788e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHw4fHxob3RlbCUyMGJlZHJvb20lMjBleHRlbmRlZCUyMHN0YXklMjBjb21mb3J0YWJsZXxlbnwwfDB8fHwxNzgwNDg4MjU2fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "a person reading a book on a bed",
+    url: "/Organized/Property%201/Letimela/IMG_2557-HDR.jpg",
+    alt: "Letimela room at Boga Legaba Chababa",
   },
   "specials.government-rate": {
-    url: "https://images.unsplash.com/photo-1763168421821-e7cb2efcc555?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHwyfHxidXNpbmVzcyUyMGhvdGVsJTIwcm9vbSUyMHByb2Zlc3Npb25hbCUyMGNsZWFufGVufDB8MHx8fDE3ODA0ODgyNTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "A dimly lit bedside lamp illuminates a rumpled white duvet.",
+    url: "/Organized/Property%201/Queens/IMG_2515-HDR.jpg",
+    alt: "Queens room at Boga Legaba Chababa",
   },
 } as const
 
