@@ -34,7 +34,7 @@ function LoginForm() {
         setError(data.error ?? "Invalid password")
       }
     } catch {
-      setError("Network error — check your connection")
+      setError("Network error, check your connection")
     } finally {
       setLoading(false)
     }

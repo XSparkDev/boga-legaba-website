@@ -115,7 +115,7 @@ def _book_room_once(params: dict) -> dict:
     payment_method  = params.get("paymentMethod", "bank_transfer")
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=True, args=["--disable-dev-shm-usage", "--no-sandbox"])
         context = browser.new_context(
             user_agent=(
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "

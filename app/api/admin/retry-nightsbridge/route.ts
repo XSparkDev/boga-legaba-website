@@ -43,6 +43,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Booking not found" }, { status: 404 })
   }
 
+  // Refuse to re-run an already-confirmed booking. The admin UI hides the
+  // Retry button once status is "completed", but that's a client-side guard
+  // only — nothing stopped this endpoint itself from being hit again (a race
+  // between two tabs, a double-click before the UI re-rendered, a stale page).
+  // A second Playwright run for the same reference tries to book the SAME
+  // room again, finds it already taken by the first successful run, and
+  // "fails" — silently overwriting status back to "failed" even though
+  // booking_id already holds a real, live NightsBridge confirmation. That's
+  // exactly the bug this guard closes: once booking_id is set, this endpoint
+  // is a no-op that reports the existing success instead of touching anything.
+  if (job.status === "completed" && job.booking_id) {
+    return NextResponse.json({
+      ok: true,
+      reference,
+      alreadyConfirmed: true,
+      bookingId: job.booking_id,
+    })
+  }
+
   // Rebuild the booking payload from the row's stored context (the full
   // PaymentContext saved at /api/booking/start time), forcing the reference.
   const ctx = { ...(job.context as Record<string, unknown>), reference } as PaymentContext

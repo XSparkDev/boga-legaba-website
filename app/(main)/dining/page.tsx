@@ -24,7 +24,7 @@ export default function DiningPage() {
     <main>
       <PageHeader
         eyebrow="Dining & Events · Lantana"
-        title="More Than a Room — Experiences at Lantana"
+        title="More Than a Room: Experiences at Lantana"
         subtitle="Coming soon: restaurant, bar, and private event bookings at our 10 Lantana property."
       />
 
@@ -34,7 +34,7 @@ export default function DiningPage() {
             <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl">
               <SiteImage
                 src={getSiteImage("dining").url}
-                alt={`Lantana dining and events space at Boga Legaba — ${getSiteImage("dining").alt}`}
+                alt={`Lantana dining and events space at Boga Legaba: ${getSiteImage("dining").alt}`}
                 fill
                 sizes="(max-width: 1280px) 100vw, 1280px"
               />

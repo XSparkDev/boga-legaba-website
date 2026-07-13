@@ -47,7 +47,7 @@ export default async function RegistrationsPage() {
             <p className="mt-2 text-xs text-gray-400">If this stays empty after submissions, confirm migration 010 has been applied.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-x-auto overscroll-x-contain rounded-xl border border-gray-200 bg-white shadow-sm">
             <table className="w-full min-w-[900px] text-xs">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50 text-left font-mono text-[10px] uppercase tracking-wider text-gray-400">
@@ -70,11 +70,11 @@ export default async function RegistrationsPage() {
                       {r.email && <div>{r.email}</div>}
                       {r.phone && <div className="text-gray-400">{r.phone}</div>}
                     </td>
-                    <td className="px-3 py-2.5 font-mono text-gray-500">{r.booking_ref ?? "—"}</td>
-                    <td className="px-3 py-2.5 text-gray-600">{r.nationality ?? "—"}</td>
-                    <td className="px-3 py-2.5 font-mono text-gray-600">{r.id_or_passport ?? "—"}</td>
-                    <td className="px-3 py-2.5 font-mono text-gray-600">{r.vehicle_reg ?? "—"}</td>
-                    <td className="px-3 py-2.5 text-gray-600">{r.num_guests ?? "—"}</td>
+                    <td className="px-3 py-2.5 font-mono text-gray-500">{r.booking_ref ?? "N/A"}</td>
+                    <td className="px-3 py-2.5 text-gray-600">{r.nationality ?? "N/A"}</td>
+                    <td className="px-3 py-2.5 font-mono text-gray-600">{r.id_or_passport ?? "N/A"}</td>
+                    <td className="px-3 py-2.5 font-mono text-gray-600">{r.vehicle_reg ?? "N/A"}</td>
+                    <td className="px-3 py-2.5 text-gray-600">{r.num_guests ?? "N/A"}</td>
                   </tr>
                 ))}
               </tbody>

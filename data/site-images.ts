@@ -9,56 +9,56 @@ export const siteImages = {
     alt: "green grass field under blue sky during daytime",
   },
   conference: {
-    url: "https://images.unsplash.com/photo-1686223679703-c2cc8d2c8177?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHw2fHxjb25mZXJlbmNlJTIwcm9vbSUyMG1lZXRpbmclMjB0aGVhdHJlJTIwc2V0dXAlMjBwcm9mZXNzaW9uYWx8ZW58MHwwfHx8MTc4MDQ4ODI1NHww&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "a row of empty wooden chairs in a room",
+    url: "/Organized/Property%202/lantana%20exterior/Conference%20Room/IMG_2759-HDR.jpg",
+    alt: "Boga Legaba conference room at Lantana",
   },
   dining: {
-    url: "https://images.unsplash.com/photo-1703565426315-4209c2e88eea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHw3fHxob3RlbCUyMHJlc3RhdXJhbnQlMjBkaW5pbmclMjByb29tJTIwZWxlZ2FudHxlbnwwfDB8fHwxNzgwNDg4MjU1fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "a dining room with a lot of tables and chairs",
+    url: "/Organized/Property%202/lantana%20exterior/Dining.jpg",
+    alt: "Boga Legaba dining area at Lantana",
   },
   "gallery.chababa-blue-clouds": {
     url: "https://images.unsplash.com/photo-1723470915706-2b01ee267bb0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHw0fHxob3RlbCUyMHR3aW4lMjByb29tJTIwZW5zdWl0ZSUyMGJyaWdodHxlbnwwfDB8fHwxNzgwNDg4Mjc3fDA&ixlib=rb-4.1.0&q=80&w=1080",
     alt: "A bathroom with a sink, toilet, and shower",
   },
   "gallery.chababa-lounge": {
-    url: "https://images.unsplash.com/photo-1780245991648-10f3358102c6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHw1fHxndWVzdGhvdXNlJTIwbG91bmdlJTIwc2l0dGluZyUyMGFyZWElMjB3YXJtfGVufDB8MHx8fDE3ODA0ODgyNzh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "Elegant living room with red sofa, armchair, fireplace, and mirror.",
+    url: "/Organized/Property%201/Chababa/Lounge.jpg",
+    alt: "Chababa guest lounge at Boga Legaba",
   },
   "gallery.chababa-reeds": {
-    url: "https://images.unsplash.com/photo-1578898886225-c7c894047899?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHwyfHxob3RlbCUyMGJlZHJvb20lMjBkb3VibGUlMjBpbnRlcmlvcnxlbnwwfHx8fDE3ODA0ODg0NjJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "bed beside window",
+    url: "/Organized/Property%201/Reeds/IMG_2491-HDR.jpg",
+    alt: "Reeds room at Boga Legaba Chababa",
   },
   "gallery.conference-boardroom": {
-    url: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHw0fHxib2FyZHJvb20lMjBtZWV0aW5nJTIwdGFibGUlMjBjb3Jwb3JhdGV8ZW58MHwwfHx8MTc4MDQ4ODMxOHww&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "photo of dining table and chairs inside room",
+    url: "/Organized/Property%202/lantana%20exterior/Conference%20Room/IMG_2774-HDR.jpg",
+    alt: "Boardroom setup in the Boga Legaba conference room",
   },
   "gallery.conference-theatre": {
-    url: "https://images.unsplash.com/photo-1759477274012-263d469f0e16?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHwzfHxjb25mZXJlbmNlJTIwYXVkaXRvcml1bSUyMHRoZWF0cmUlMjBzZWF0aW5nfGVufDB8MHx8fDE3ODA0ODgzMTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "Empty auditorium with rows of red seats and stage.",
+    url: "/Organized/Property%202/lantana%20exterior/Conference%20Room/IMG_2759-HDR.jpg",
+    alt: "Theatre-style setup in the Boga Legaba conference room",
   },
   "gallery.dining-bar": {
-    url: "https://images.unsplash.com/photo-1730406929160-9c6e6f13e277?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHw2fHxob3RlbCUyMGJhciUyMGxvdW5nZSUyMGludGVyaW9yfGVufDB8MHx8fDE3ODA0ODgzMjF8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "A large room with a bunch of chairs in it",
+    url: "/Organized/Property%202/lantana%20exterior/Dining.jpg",
+    alt: "Boga Legaba dining and bar area at Lantana",
   },
   "gallery.dining-restaurant": {
-    url: "https://images.unsplash.com/photo-1546940071-03b96ed021c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHw1fHxyZXN0YXVyYW50JTIwZGluaW5nJTIwdGFibGVzJTIwaG90ZWx8ZW58MHwwfHx8MTc4MDQ4ODMxOXww&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "gray throw pillow",
+    url: "/Organized/Property%202/lantana%20exterior/Dining.jpg",
+    alt: "Boga Legaba dining and restaurant area at Lantana",
   },
   "gallery.interlaken-calabash": {
     url: "https://images.unsplash.com/photo-1445991842772-097fea258e7b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHwzfHxob3RlbCUyMGJlZHJvb20lMjBkb3VibGUlMjBiZWR8ZW58MHx8fHwxNzgwNDg4NDYzfDA&ixlib=rb-4.1.0&q=80&w=1080",
     alt: "gray and black throw pillow on bed",
   },
   "gallery.interlaken-exterior": {
-    url: "https://images.unsplash.com/photo-1777830801639-30d7b7cadc20?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHw3fHxndWVzdCUyMGhvdXNlJTIwZ2FyZGVuJTIwZXh0ZXJpb3IlMjBwYXRod2F5fGVufDB8MHx8fDE3ODA0ODgyOTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "A building entrance with illuminated trees and pathway at dusk",
+    url: "/Organized/Property%201/Interlaken/IMG_2482-HDR.jpg",
+    alt: "Interlaken A exterior at Boga Legaba",
   },
   "gallery.interlaken-segametsi": {
-    url: "https://images.unsplash.com/photo-1578898887932-dce23a595ad4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHw0fHxob3RlbCUyMGZhbWlseSUyMHJvb20lMjBiZWRyb29tfGVufDB8fHx8MTc4MDQ4ODQ2NXww&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "black sconce beside white bed",
+    url: "/Organized/Property%201/Segametsi/IMG_2576-HDR.jpg",
+    alt: "Segametsi room at Boga Legaba Interlaken A",
   },
   "gallery.lantana-garden": {
-    url: "https://images.unsplash.com/photo-1654271961824-5331d1ac73e4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHwyfHxob3RlbCUyMGdhcmRlbiUyMGNvdXJ0eWFyZCUyMGxhbmRzY2FwaW5nfGVufDB8MHx8fDE3ODA0ODgzMTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "a building with a lot of plants in front of it",
+    url: "/Organized/Property%202/lantana%20exterior/IMG_2659-HDR.jpg",
+    alt: "Lantana garden and grounds at Boga Legaba",
   },
   "gallery.lantana-suite": {
     url: "https://images.unsplash.com/photo-1773228888203-11d0a7c1aff0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHwxfHxleGVjdXRpdmUlMjBob3RlbCUyMHN1aXRlJTIwYmVkcm9vbXxlbnwwfDB8fHwxNzgwNDg4MzE0fDA&ixlib=rb-4.1.0&q=80&w=1080",
@@ -69,16 +69,16 @@ export const siteImages = {
     alt: "Boga Legaba guest house exterior at evening",
   },
   "property.chababa": {
-    url: "https://images.unsplash.com/photo-1574931697692-f937f1a4134f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHwzfHxib3V0aXF1ZSUyMGd1ZXN0aG91c2UlMjBidWlsZGluZyUyMGV4dGVyaW9yJTIwYWZyaWNhfGVufDB8MHx8fDE3ODA0ODgyNTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "brown and white house",
+    url: "/Organized/Property%201/Chababa/IMG_2446-HDR.jpg",
+    alt: "Chababa property exterior at Boga Legaba",
   },
   "property.interlaken-a": {
-    url: "https://images.unsplash.com/photo-1694771170485-e01443be2643?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHw0fHxyZXNpZGVudGlhbCUyMGxvZGdlJTIwZXh0ZXJpb3IlMjBzb3V0aCUyMGFmcmljYXxlbnwwfDB8fHwxNzgwNDg4MjUxfDA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "a house with a fountain in front of it",
+    url: "/Organized/Property%201/Interlaken/IMG_2455-HDR.jpg",
+    alt: "Interlaken A property exterior at Boga Legaba",
   },
   "property.lantana": {
-    url: "https://images.unsplash.com/photo-1610151378901-497723a0812f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHw1fHxjb25mZXJlbmNlJTIwaG90ZWwlMjBidWlsZGluZyUyMGV4dGVyaW9yJTIwbW9kZXJufGVufDB8MHx8fDE3ODA0ODgyNTN8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "white concrete building during daytime",
+    url: "/Organized/Property%202/lantana%20exterior/IMG_2656-HDR.jpg",
+    alt: "Lantana property exterior at Boga Legaba",
   },
   "room.chababa.beads": {
     url: "https://images.unsplash.com/photo-1631819313347-a5dca24a04fa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHw5fHxsdXh1cnklMjBob3RlbCUyMGRvdWJsZSUyMGJlZHJvb20lMjBlbnN1aXRlfGVufDB8fHx8MTc4MDQ4ODQ2N3ww&ixlib=rb-4.1.0&q=80&w=1080",
@@ -189,16 +189,16 @@ export const siteImages = {
     alt: "a bed room with two beds and a lamp",
   },
   "specials.conference-accommodation": {
-    url: "https://images.unsplash.com/photo-1771154136777-44bc715a3bba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHwxfHxjb25mZXJlbmNlJTIwaG90ZWwlMjBhY2NvbW1vZGF0aW9uJTIwZGVsZWdhdGVzfGVufDB8MHx8fDE3ODA0ODgyNTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "Modern lounge area with comfortable seating and abstract carpet.",
+    url: "/Organized/Property%202/lantana%20exterior/Conference%20Room/IMG_2759-HDR.jpg",
+    alt: "Boga Legaba conference room at Lantana",
   },
   "specials.extended-stay": {
-    url: "https://images.unsplash.com/photo-1666813721996-42956e40788e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHw4fHxob3RlbCUyMGJlZHJvb20lMjBleHRlbmRlZCUyMHN0YXklMjBjb21mb3J0YWJsZXxlbnwwfDB8fHwxNzgwNDg4MjU2fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "a person reading a book on a bed",
+    url: "/Organized/Property%201/Letimela/IMG_2557-HDR.jpg",
+    alt: "Letimela room at Boga Legaba Chababa",
   },
   "specials.government-rate": {
-    url: "https://images.unsplash.com/photo-1763168421821-e7cb2efcc555?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHwyfHxidXNpbmVzcyUyMGhvdGVsJTIwcm9vbSUyMHByb2Zlc3Npb25hbCUyMGNsZWFufGVufDB8MHx8fDE3ODA0ODgyNTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    alt: "A dimly lit bedside lamp illuminates a rumpled white duvet.",
+    url: "/Organized/Property%201/Queens/IMG_2515-HDR.jpg",
+    alt: "Queens room at Boga Legaba Chababa",
   },
 } as const
 

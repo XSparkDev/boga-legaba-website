@@ -24,7 +24,7 @@ export function SyncTransactionsButton() {
       }
     } catch (e) {
       setState("error")
-      setMsg("Network error — check console.")
+      setMsg("Network error, check console.")
     }
   }
 

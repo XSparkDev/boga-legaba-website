@@ -146,7 +146,7 @@ export function NbAuditDashboard({ report }: Props) {
           onChange={(e) => setRoomFilter(e.target.value)}
           className="mb-4 w-full max-w-md rounded-lg border border-border bg-background px-3 py-2 text-sm"
         />
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto overscroll-x-contain">
           <table className="w-full min-w-[720px] text-left font-mono text-[11px]">
             <thead>
               <tr className="border-b border-border text-muted-foreground">
@@ -172,7 +172,7 @@ export function NbAuditDashboard({ report }: Props) {
                     <td className="py-2 pr-3 text-taupe">{r.bbroomid}</td>
                     <td className="py-2 pr-3 font-medium text-foreground">{r.room_name}</td>
                     <td className="py-2 pr-3">{r.property_name}</td>
-                    <td className="py-2 pr-3">{r.bbrtid ?? "—"}</td>
+                    <td className="py-2 pr-3">{r.bbrtid ?? "N/A"}</td>
                     <td className="py-2 pr-3">{r.configuration}</td>
                     <td className="py-2 pr-3">{r.bathroom_type}</td>
                     <td className="py-2 pr-3">
@@ -186,7 +186,7 @@ export function NbAuditDashboard({ report }: Props) {
                       </span>
                     </td>
                     <td className="py-2 text-muted-foreground">
-                      {rt?.rtname ?? "—"}
+                      {rt?.rtname ?? "N/A"}
                       {rt?.max_occupancy ? ` · sleeps ${rt.max_occupancy}` : ""}
                       {rt?.rtdesc ? (
                         <span className="mt-1 block max-w-xs truncate text-[10px]">{rt.rtdesc}</span>
@@ -219,7 +219,7 @@ export function NbAuditDashboard({ report }: Props) {
         {report.latestSnapshot ? (
           <JsonBlock value={report.latestSnapshot} />
         ) : (
-          <p className="text-sm text-muted-foreground">No nb_api_snapshot rows — run sync after migration.</p>
+          <p className="text-sm text-muted-foreground">No nb_api_snapshot rows, run sync after migration.</p>
         )}
       </Section>
 

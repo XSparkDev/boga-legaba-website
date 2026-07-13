@@ -202,7 +202,7 @@ export function AnalyticsCharts({
           </div>
         ) : (
           <div className="flex h-40 items-center justify-center text-center font-mono text-[11px] text-gray-400">
-            No cached rates yet — they populate as the booking page is used
+            No cached rates yet, they populate as the booking page is used
           </div>
         )}
       </CardShell>

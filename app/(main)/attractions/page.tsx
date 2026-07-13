@@ -10,7 +10,7 @@ import { fetchEstablishment } from "@/lib/nightsbridge-api"
 export const metadata: Metadata = {
   title: "Mahikeng Attractions | Local Guide | Boga Legaba",
   description:
-    "Your local guide to Mahikeng (Mafikeng), North West Province. Game reserve, government buildings, shopping, restaurants, historical sites and airport — all near Boga Legaba.",
+    "Your local guide to Mahikeng (Mafikeng), North West Province. Game reserve, government buildings, shopping, restaurants, historical sites and airport, all near Boga Legaba.",
 }
 
 export const dynamic = "force-dynamic"
@@ -40,7 +40,7 @@ export default async function AttractionsPage() {
     <main>
       <PageHeader
         eyebrow="Local Guide"
-        title="Exploring Mahikeng — Your Local Guide"
+        title="Exploring Mahikeng: Your Local Guide"
         subtitle="Make the most of your stay in Mahikeng, North West Province. Here's what's close to Boga Legaba."
       />
 
@@ -136,7 +136,7 @@ export default async function AttractionsPage() {
             <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl">
               <SiteImage
                 src={getSiteImage("attractions.map").url}
-                alt={`Mahikeng and North West Province landscape near Boga Legaba — ${getSiteImage("attractions.map").alt}`}
+                alt={`Mahikeng and North West Province landscape near Boga Legaba: ${getSiteImage("attractions.map").alt}`}
                 fill
                 sizes="(max-width: 1280px) 100vw, 1280px"
               />

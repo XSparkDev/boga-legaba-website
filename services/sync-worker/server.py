@@ -402,7 +402,24 @@ def _run_booking_to_db(params: dict, book_script: "Path", reference: str) -> Non
             err = "Booking could not be confirmed — NightsBridge returned no booking number. Please try again or contact us."
             _write_booking_job(reference, {"status": "failed", "error": err})
         else:
-            err = result.get("error") or (proc.stderr or "").strip() or "Booking failed"
+            err = result.get("error") or (proc.stderr or "").strip()
+            if not err:
+                # Both stdout and stderr came back empty — the script never
+                # reached its own print(json.dumps(...)), which every one of
+                # its own return paths does. That combination only happens if
+                # the process was killed outright (a negative returncode is
+                # "killed by signal N" — -9 is SIGKILL, e.g. an OOM kill) or
+                # exited without ever printing (some other crash before main()
+                # runs). Surface the exact signal/exit code instead of a blind
+                # "Booking failed" so the next occurrence is diagnosable from
+                # booking_job.error alone, no log-diving required.
+                err = (
+                    f"Booking failed with no output — subprocess exited with "
+                    f"returncode={proc.returncode} "
+                    f"(negative = killed by signal {-proc.returncode if proc.returncode < 0 else 'n/a'}), "
+                    f"stdout_len={len(proc.stdout or '')}, stderr_len={len(proc.stderr or '')}"
+                )
+                print(f"[worker] booking_job[{reference}] EMPTY-OUTPUT FAILURE: {err}")
             _write_booking_job(reference, {"status": "failed", "error": err[:800]})
     except subprocess.TimeoutExpired:
         _write_booking_job(reference, {"status": "failed", "error": "Booking timed out"})

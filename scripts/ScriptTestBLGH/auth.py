@@ -9,6 +9,7 @@ log in again.
 
 import os
 import re
+import sys
 from typing import Optional
 
 import config
@@ -42,7 +43,7 @@ def _perform_login(page) -> None:
             "Copy .env.example to .env and fill them in."
         )
 
-    print("Logging in...")
+    print("Logging in...", file=sys.stderr)
     # domcontentloaded, NOT networkidle: NightsBridge's Angular app keeps
     # background requests running, so networkidle never settles and burns the
     # full timeout. page.fill() below auto-waits for the inputs to be
@@ -63,7 +64,7 @@ def _perform_login(page) -> None:
             "Login did not complete. Check your credentials, or the site may have "
             "added a step (2FA / property picker / an error message)."
         )
-    print("Login successful.")
+    print("Login successful.", file=sys.stderr)
 
 
 def get_authenticated_context(browser):
@@ -79,9 +80,9 @@ def get_authenticated_context(browser):
         # adds seconds of dead time on this always-busy SPA.
         page.goto(config.DASHBOARD_URL, wait_until="domcontentloaded", timeout=config.TIMEOUT_MS)
         if _is_logged_in(page):
-            print("Reusing saved session.")
+            print("Reusing saved session.", file=sys.stderr)
             return context, page
-        print("Saved session expired - logging in again.")
+        print("Saved session expired - logging in again.", file=sys.stderr)
     else:
         context = browser.new_context()
         page = context.new_page()

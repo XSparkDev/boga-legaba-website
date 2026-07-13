@@ -93,7 +93,7 @@ export function GalleryGrid() {
         </div>
 
         <MultiCriteriaSearch
-          placeholder="Add filters — room name, property, conference, dining…"
+          placeholder="Add filters: room name, property, conference, dining…"
           suggestions={galleryFilterSuggestions}
           criteria={criteria}
           onCriteriaChange={setCriteria}
@@ -123,7 +123,7 @@ export function GalleryGrid() {
             >
               <SiteImage
                 src={item.url}
-                alt={`${item.label} — ${item.alt}`}
+                alt={`${item.label}: ${item.alt}`}
                 className="h-full min-h-[200px] transition-transform duration-500 group-hover:scale-105"
               />
             </button>
@@ -180,7 +180,7 @@ export function GalleryGrid() {
             <div className="relative aspect-[3/2] w-full overflow-hidden rounded-xl">
               <SiteImage
                 src={active.url}
-                alt={`${active.label} — ${active.alt}`}
+                alt={`${active.label}: ${active.alt}`}
                 fill
                 sizes="(max-width: 768px) 100vw, 768px"
               />

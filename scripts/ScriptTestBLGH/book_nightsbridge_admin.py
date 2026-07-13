@@ -51,6 +51,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import os
 import re
 import sys
 import time
@@ -109,6 +110,14 @@ def _day_of(iso: str) -> int:
 
 
 def _shot(page, name: str) -> None:
+    # Off by default: this runs ~17x per booking, and each full-page PNG
+    # capture (page render + encode + disk write) is real memory/IO pressure
+    # on the worker's 512MB Render instance — pure debugging cost with no
+    # production value, since nothing ever reads /tmp/admin_booking_*.png on
+    # a server with no way to retrieve files off it. Opt in locally with
+    # DEBUG_SCREENSHOTS=true.
+    if os.environ.get("DEBUG_SCREENSHOTS", "false").lower() != "true":
+        return
     try:
         page.screenshot(path=f"/tmp/admin_booking_{name}.png")
     except Exception:
@@ -119,7 +128,29 @@ def _shot(page, name: str) -> None:
 # Step 1: Calendar -> Add Booking
 # ---------------------------------------------------------------------------
 
-def _open_add_booking(page) -> bool:
+def _is_login_page(page) -> bool:
+    """True if we've been bounced to the NightsBridge login form.
+
+    Needed because the dashboard SPA can render its logged-in nav chrome
+    (including the "Go to Calendar" link that auth._is_logged_in() checks)
+    from cached client-side state before the server actually validates the
+    session — so a saved session can look valid at login-check time and still
+    get bounced to /login on the very next real navigation. Detected by URL
+    host, not DOM text, since the login form's own copy can change."""
+    if "login.nightsbridge.com" in page.url:
+        return True
+    try:
+        return page.locator("input[type='password']").count() > 0 and page.locator(
+            "a:has-text('Go to Calendar')"
+        ).count() == 0
+    except Exception:
+        return False
+
+
+def _open_add_booking(page) -> bool | str:
+    """Returns True (opened), False (couldn't open — real UI failure), or
+    "relogin" (bounced to the login page — the caller should re-authenticate
+    and call this again once)."""
     try:
         page.click("a:has-text('Go to Calendar')", timeout=10_000)
     except Exception:
@@ -133,13 +164,16 @@ def _open_add_booking(page) -> bool:
         pass
     time.sleep(1)
 
+    if _is_login_page(page):
+        return "relogin"
+
     try:
         page.click("button.addBookingBtn", timeout=10_000)
     except Exception:
         try:
             page.click("button:has-text('Add Booking')", timeout=5_000)
         except Exception:
-            return False
+            return "relogin" if _is_login_page(page) else False
     # Wait for the ACTUAL arrival-date input to be present — the exact element
     # the next step drives. We match it by its Angular formcontrolname
     # ('fromdate'), NOT placeholder: NightsBridge now renders THREE inputs with
@@ -150,7 +184,9 @@ def _open_add_booking(page) -> bool:
         page.wait_for_selector("[formcontrolname='fromdate'] input", timeout=12_000, state="attached")
         return True
     except Exception:
-        return page.evaluate("() => document.querySelector('cui-date-selector') !== null")
+        if page.evaluate("() => document.querySelector('cui-date-selector') !== null"):
+            return True
+        return "relogin" if _is_login_page(page) else False
 
 
 # ---------------------------------------------------------------------------
@@ -493,10 +529,45 @@ def book_room(params: dict) -> dict:
     with sync_playwright() as p:
         import os
         headless = os.environ.get("HEADLESS", "true").lower() == "true"
-        browser = p.chromium.launch(headless=headless)
+        # --disable-dev-shm-usage: Docker's default /dev/shm is only 64MB, far
+        # too small for Chromium's shared memory needs — without this flag the
+        # browser can crash near-instantly on launch inside a container, with
+        # no Python exception and no captured stderr (the OS just kills it),
+        # which is exactly what an "ok": False with an empty error looks like
+        # upstream. --no-sandbox is required because the worker container runs
+        # as root, where Chromium's sandbox refuses to start at all.
+        #
+        # The worker's Render instance is a 512MB Starter box — that flag alone
+        # only avoids one specific crash mode (shm too small), it doesn't lower
+        # Chromium's actual memory use, so it can still get OOM-killed under
+        # cgroup pressure (same silent, no-stderr failure). The rest of these
+        # flags are the standard low-memory Chromium recipe for exactly this
+        # constraint: no GPU/software-rasterizer process, no extensions/sync/
+        # translate/background-networking machinery, occluded-window/backgrounding
+        # timers off (so a headless page doesn't get throttled into weird
+        # states), and a capped V8 heap.
+        browser = p.chromium.launch(
+            headless=headless,
+            args=[
+                "--disable-dev-shm-usage",
+                "--no-sandbox",
+                "--disable-gpu",
+                "--disable-software-rasterizer",
+                "--disable-extensions",
+                "--disable-background-networking",
+                "--disable-sync",
+                "--disable-translate",
+                "--disable-backgrounding-occluded-windows",
+                "--disable-renderer-backgrounding",
+                "--metrics-recording-only",
+                "--mute-audio",
+                "--no-first-run",
+                "--js-flags=--max-old-space-size=192",
+            ],
+        )
         page = None
         try:
-            print(f"[admin-booking] ref={reference} logging in (admin)...")
+            print(f"[admin-booking] ref={reference} logging in (admin)...", file=sys.stderr)
             context, page = auth.get_authenticated_context(browser)
 
             candidate_units = resolve_units_for_room_type(room_type)
@@ -504,28 +575,39 @@ def book_room(params: dict) -> dict:
                 # Not a category name — try it directly as a raw unit name
                 # (useful for standalone/manual testing).
                 candidate_units = [room_type]
-            print(f"[admin-booking] ref={reference} room type '{room_type}' resolves to candidate units: {candidate_units}")
+            print(f"[admin-booking] ref={reference} room type '{room_type}' resolves to candidate units: {candidate_units}", file=sys.stderr)
 
-            print(f"[admin-booking] ref={reference} opening Add Booking...")
-            if not _open_add_booking(page):
+            print(f"[admin-booking] ref={reference} opening Add Booking...", file=sys.stderr)
+            opened = _open_add_booking(page)
+            if opened == "relogin":
+                # The dashboard's saved-session check can false-positive (the
+                # SPA renders logged-in nav from cached client state before the
+                # server actually validates it), so we only discover the
+                # session is really dead here, on the first real navigation.
+                # Re-authenticate fresh and give it exactly one more try.
+                print(f"[admin-booking] ref={reference} bounced to login mid-flow — re-authenticating...", file=sys.stderr)
+                auth._perform_login(page)
+                context.storage_state(path=str(auth.config.STATE_FILE))
+                opened = _open_add_booking(page)
+            if opened is not True:
                 _shot(page, "01_add_booking_open_failed")
                 return {"ok": False, "error": "Could not open the Add Booking form"}
             _shot(page, "01_add_booking_open")
 
-            print(f"[admin-booking] ref={reference} setting arrival date {checkin}...")
+            print(f"[admin-booking] ref={reference} setting arrival date {checkin}...", file=sys.stderr)
             arrival_input = page.locator("[formcontrolname='fromdate'] input")
             if not _set_date_field(page, arrival_input, checkin, "Arrival Date"):
                 _shot(page, "02_arrival_failed")
                 return {"ok": False, "error": f"Could not set Arrival Date to {checkin}"}
 
-            print(f"[admin-booking] ref={reference} setting departure date {checkout}...")
+            print(f"[admin-booking] ref={reference} setting departure date {checkout}...", file=sys.stderr)
             departure_input = page.locator("[formcontrolname='todate'] input")
             if not _set_date_field(page, departure_input, checkout, "Departure Date"):
                 _shot(page, "02_departure_failed")
                 return {"ok": False, "error": f"Could not set Departure Date to {checkout}"}
 
             nights = _read_nights(page)
-            print(f"[admin-booking] ref={reference} Nights auto-calculated: {nights}")
+            print(f"[admin-booking] ref={reference} Nights auto-calculated: {nights}", file=sys.stderr)
             if not nights or nights <= 0:
                 _shot(page, "02_nights_not_calculated")
                 return {"ok": False, "error": f"Dates did not register — Nights read as {nights!r}, expected > 0"}
@@ -541,7 +623,7 @@ def book_room(params: dict) -> dict:
                              f"Candidates tried: {candidate_units}. Dropdown had: {visible_units}.",
                 }
 
-            print(f"[admin-booking] ref={reference} selecting unit '{chosen_unit}'...")
+            print(f"[admin-booking] ref={reference} selecting unit '{chosen_unit}'...", file=sys.stderr)
             if not _select_room_unit(page, chosen_unit):
                 _shot(page, "03_room_select_failed")
                 return {"ok": False, "error": f"Unit '{chosen_unit}' was listed but selecting it failed"}
@@ -550,33 +632,33 @@ def book_room(params: dict) -> dict:
 
             _remove_extra_room_cards(page, chosen_unit)
             card_count = _count_room_cards(page)
-            print(f"[admin-booking] ref={reference} room cards present after cleanup: {card_count}")
+            print(f"[admin-booking] ref={reference} room cards present after cleanup: {card_count}", file=sys.stderr)
 
             rate_plan_label = _resolve_rate_plan_label(meal_plan)
-            print(f"[admin-booking] ref={reference} setting Rate Plan '{rate_plan_label}'...")
+            print(f"[admin-booking] ref={reference} setting Rate Plan '{rate_plan_label}'...", file=sys.stderr)
             if not _select_rate_plan(page, rate_plan_label):
                 _shot(page, "04_rate_plan_failed")
                 return {"ok": False, "error": f"Could not set Rate Plan to '{rate_plan_label}'"}
 
-            print(f"[admin-booking] ref={reference} setting occupancy (adults={adults}, child1={children1}, child2={children2})...")
+            print(f"[admin-booking] ref={reference} setting occupancy (adults={adults}, child1={children1}, child2={children2})...", file=sys.stderr)
             _set_occupancy(page, adults, children1, children2)
 
-            print(f"[admin-booking] ref={reference} filling guest details...")
+            print(f"[admin-booking] ref={reference} filling guest details...", file=sys.stderr)
             guest_results = _fill_guest_details(page, firstname, surname, phone, email, company)
             _shot(page, "04_form_filled")
 
-            print(f"[admin-booking] ref={reference} running pre-submit checklist...")
+            print(f"[admin-booking] ref={reference} running pre-submit checklist...", file=sys.stderr)
             ok, reason = _pre_submit_checklist(page, chosen_unit, guest_results)
             if not ok:
                 _shot(page, "05_pre_submit_check_failed")
                 return {"ok": False, "error": f"Pre-submit check failed: {reason}"}
 
-            print(f"[admin-booking] ref={reference} pre-submit checklist passed — submitting...")
+            print(f"[admin-booking] ref={reference} pre-submit checklist passed — submitting...", file=sys.stderr)
             if not _submit_booking(page):
                 _shot(page, "06_submit_click_failed")
                 return {"ok": False, "error": "Could not find/click the Add Booking submit button"}
 
-            print(f"[admin-booking] ref={reference} verifying via booking-summary page...")
+            print(f"[admin-booking] ref={reference} verifying via booking-summary page...", file=sys.stderr)
             result = _verify_booking_summary(page, chosen_unit, firstname, surname)
             if not result.get("ok"):
                 _shot(page, "07_verification_failed")
@@ -590,7 +672,7 @@ def book_room(params: dict) -> dict:
             # not the category, wherever the room is displayed to the guest.
             result["roomName"] = chosen_unit
             _shot(page, "07_verified")
-            print(f"[admin-booking] ref={reference} VERIFIED — NBID={result['nbid']} bookingId={result.get('bookingId')} room={chosen_unit}")
+            print(f"[admin-booking] ref={reference} VERIFIED — NBID={result['nbid']} bookingId={result.get('bookingId')} room={chosen_unit}", file=sys.stderr)
             return result
 
         except Exception as exc:

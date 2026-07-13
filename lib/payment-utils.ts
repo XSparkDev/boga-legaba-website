@@ -97,7 +97,7 @@ export async function initiatePaystackPayment(args: InitiatePaymentArgs): Promis
 // ── Formatters ────────────────────────────────────────────────────────────────
 
 export function fmtDate(iso: string) {
-  if (!iso) return "—"
+  if (!iso) return "N/A"
   const d = new Date(iso)
   return isNaN(d.getTime())
     ? iso
@@ -120,7 +120,7 @@ function resolveGuestName(ctx: { guestName?: string; firstname?: string; surname
   const firstname = (ctx.firstname ?? splitFirst ?? "").trim()
   const surname = (ctx.surname ?? splitRest.join(" ") ?? "").trim()
   const full = rawName || `${firstname} ${surname}`.trim() || "Guest"
-  return { firstname: firstname || "—", surname: surname || "—", full }
+  return { firstname: firstname || "N/A", surname: surname || "N/A", full }
 }
 
 /**
@@ -130,7 +130,7 @@ function resolveGuestName(ctx: { guestName?: string; firstname?: string; surname
  * always see this, not the raw category, wherever the room is displayed.
  */
 function resolveRoomLabel(roomName?: string, roomTypeName?: string): string {
-  return roomName || roomTypeName || "—"
+  return roomName || roomTypeName || "N/A"
 }
 
 // ── Core payment processor ────────────────────────────────────────────────────
@@ -316,7 +316,7 @@ export function buildGuestConfirmEmail(ctx: PaymentContext) {
       </tr>
       <tr>
         <td colspan="2" style="background:${c.black};padding:14px 20px;text-align:center;">
-          <p style="margin:0;color:${c.muted};font-size:10px;letter-spacing:1px;">Paystack Reference &nbsp;&middot;&nbsp; <span style="color:${c.gold};">${ctx.reference || ctx.bookingRef || "—"}</span></p>
+          <p style="margin:0;color:${c.muted};font-size:10px;letter-spacing:1px;">Paystack Reference &nbsp;&middot;&nbsp; <span style="color:${c.gold};">${ctx.reference || ctx.bookingRef || "N/A"}</span></p>
         </td>
       </tr>
     </table>
@@ -391,7 +391,7 @@ export function buildGuestConfirmEmail(ctx: PaymentContext) {
   const registrationHref = `${EMAIL_BRAND.websiteHref}/register?ref=${encodeURIComponent(ctx.bookingRef || "")}`
   const registrationCta =
     emailCallout(
-      `<strong style="color:${c.bodyText};">One more step — complete your guest registration.</strong><br>` +
+      `<strong style="color:${c.bodyText};">One more step: complete your guest registration.</strong><br>` +
         `Please fill in your digital check-in details before you arrive so we have everything ready for you.`,
       { tone: "warning" },
     ) + emailButton("Complete Guest Registration", registrationHref)
@@ -405,7 +405,7 @@ export function buildGuestConfirmEmail(ctx: PaymentContext) {
       emailHero({ eyebrow: "Payment Successful", heading: `Your stay is confirmed,<br><span style="color:${c.gold};">${firstname}</span>` }) +
       `<tr><td style="background:${c.sand};padding:32px 40px;text-align:center;">
         <p style="margin:0 0 10px;color:${c.muted};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;">Booking Reference</p>
-        <p style="margin:0;color:${c.black};font-size:38px;font-weight:700;letter-spacing:4px;font-family:'Playfair Display',Georgia,serif;">${ctx.bookingRef || "—"}</p>
+        <p style="margin:0;color:${c.black};font-size:38px;font-weight:700;letter-spacing:4px;font-family:'Playfair Display',Georgia,serif;">${ctx.bookingRef || "N/A"}</p>
         <p style="margin:10px 0 0;color:${c.muted};font-size:11px;line-height:1.6;">Quote this number if you contact us about your stay</p>
       </td></tr>
       <tr><td style="background:${c.black};padding:28px 40px;text-align:center;">
@@ -463,7 +463,7 @@ export function buildGuestPendingEmail({
             { tone: "warning" },
           )
         : emailCallout(
-            "<strong>&#9888; Payment link unavailable</strong><br>We couldn't generate a payment link automatically — please contact us via WhatsApp and quote your booking reference to arrange payment.",
+            "<strong>&#9888; Payment link unavailable</strong><br>We couldn't generate a payment link automatically. Please contact us via WhatsApp and quote your booking reference to arrange payment.",
             { tone: "warning" },
           )) +
       (paymentUrl ? emailButton("Complete Payment", paymentUrl) : emailButton("WhatsApp Us", EMAIL_BRAND.whatsappHref)),
@@ -481,9 +481,9 @@ export function buildAdminPaymentEmail(ctx: PaymentContext, booked: boolean = tr
   const rows: InfoRow[] = [
     { label: "First Name", value: firstname },
     { label: "Surname", value: surname },
-    { label: "Email", value: ctx.guestEmail || "—" },
-    { label: "Phone", value: ctx.guestPhone || "—" },
-    { label: "Booking Reference", value: ctx.bookingRef || "—" },
+    { label: "Email", value: ctx.guestEmail || "N/A" },
+    { label: "Phone", value: ctx.guestPhone || "N/A" },
+    { label: "Booking Reference", value: ctx.bookingRef || "N/A" },
     { label: "Room", value: resolveRoomLabel(ctx.roomName, ctx.roomTypeName) },
     { label: "Check-in", value: fmtDate(ctx.checkin) },
     { label: "Check-out", value: fmtDate(ctx.checkout) },
@@ -492,7 +492,7 @@ export function buildAdminPaymentEmail(ctx: PaymentContext, booked: boolean = tr
 
   const statusNote = booked
     ? `NightsBridge booking status has been automatically updated to <strong style="color:${EMAIL_COLORS.bodyText};">Confirmed</strong>. Log into NightsBridge to view or manage this booking.`
-    : `<strong style="color:${EMAIL_COLORS.danger};">This booking was NOT created on NightsBridge</strong> — see the separate follow-up alert for details and next steps.`
+    : `<strong style="color:${EMAIL_COLORS.danger};">This booking was NOT created on NightsBridge</strong>, see the separate follow-up alert for details and next steps.`
 
   return emailShell({
     title: "New Payment Received",

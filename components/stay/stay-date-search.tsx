@@ -40,7 +40,7 @@ export function StayDateSearch({
             <CalendarRange className="size-3.5" /> Check availability
           </p>
           <p className="mt-1 font-body text-sm text-muted-foreground">
-            Pick your dates to see which rooms are free — synced from NightsBridge.
+            Pick your dates to see which rooms are free, synced from NightsBridge.
           </p>
         </div>
         {searched && availableCount != null ? (

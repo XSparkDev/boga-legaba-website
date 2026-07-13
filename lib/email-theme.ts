@@ -106,7 +106,7 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;"
       &nbsp;&middot;&nbsp;
       <a href="mailto:${EMAIL_BRAND.email}" style="color:${c.muted};text-decoration:none;">${EMAIL_BRAND.email}</a>
     </p>
-    <p style="color:#5A5048;margin:10px 0 0;font-size:10px;line-height:1.7;">${footerNote ?? "This is an automated message — please do not reply directly to this email."}<br>
+    <p style="color:#5A5048;margin:10px 0 0;font-size:10px;line-height:1.7;">${footerNote ?? "This is an automated message. Please do not reply directly to this email."}<br>
     <a href="${EMAIL_BRAND.websiteHref}" style="color:${c.gold};text-decoration:none;">${EMAIL_BRAND.website}</a></p>
   </td></tr>
 

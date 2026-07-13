@@ -1,10 +1,9 @@
 import Link from "next/link"
 import type { Property, Room } from "@/data/rooms"
-import { MessageCircle } from "lucide-react"
+import { ImageOff, MessageCircle } from "lucide-react"
 
 const NB_BBID = 21091
 import { SiteImage } from "@/components/site-image"
-import { getRoomImage } from "@/lib/site-images"
 import { formatZarPerNight, type RoomAvailabilitySummary } from "@/lib/room-availability"
 import type { SyncedRoom } from "@/lib/synced-rooms"
 import { LiveDataBadge } from "@/components/stay/live-data-badge"
@@ -16,7 +15,13 @@ interface RoomCardProps {
   availability?: RoomAvailabilitySummary
   checkIn?: string
   checkOut?: string
-  /** Primary image URL from media_asset */
+  /** Real photo of this exact room, admin-uploaded via room_images — takes
+   * priority over everything else since it's guaranteed to be the actual
+   * room, not a generic NightsBridge room-type stock shot. */
+  realImageUrl?: string | null
+  realImageTitle?: string | null
+  /** Primary image URL from media_asset (NightsBridge-synced, generic per
+   * room type, used only when no real photo has been uploaded yet). */
   imageUrl?: string | null
   imageAlt?: string | null
   imageFromSupabase?: boolean
@@ -43,17 +48,19 @@ export function RoomCard({
   availability,
   checkIn,
   checkOut,
+  realImageUrl,
+  realImageTitle,
   imageUrl,
   imageAlt,
   imageFromSupabase,
   liveFromSupabase,
 }: RoomCardProps) {
   const colorVar = COLOR_VARS[property.id] ?? property.colorHex
-  const fallback = getRoomImage(property.id, room.name, property.name)
-  const img = {
-    url: imageUrl || fallback.url,
-    alt: imageAlt || fallback.alt,
-  }
+  const img = realImageUrl
+    ? { url: realImageUrl, alt: realImageTitle || `${room.name} at ${property.name}` }
+    : imageUrl
+      ? { url: imageUrl, alt: imageAlt || `${room.name} at ${property.name}` }
+      : null
   const synced = room as SyncedRoom
   const bbroomid = synced.bbroomid
   const bbid = synced.bbid ?? NB_BBID
@@ -90,7 +97,16 @@ export function RoomCard({
       data-ga4-label={`${property.name} – ${room.name}`}
     >
       <div className="relative md:w-[40%] h-[200px] md:h-auto md:min-h-[220px] flex-shrink-0 overflow-hidden">
-        <SiteImage src={img.url} alt={img.alt} fill sizes="(max-width: 768px) 100vw, 40vw" />
+        {img ? (
+          <SiteImage src={img.url} alt={img.alt} fill sizes="(max-width: 768px) 100vw, 40vw" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-[#000000]">
+            <div className="text-center">
+              <ImageOff className="mx-auto mb-2 size-8 text-[#996948]/40" />
+              <p className="font-body text-[11px] text-white/30">No image available</p>
+            </div>
+          </div>
+        )}
         {availability ? (
           <div className="absolute left-3 top-3 z-10 flex flex-col gap-1.5">
             <div

@@ -2,7 +2,7 @@ import { Reveal } from "@/components/reveal"
 
 const FEATURES = [
   { icon: "⊞", title: "Multiple Properties", desc: "Choose from 27 rooms across 3 distinct locations to suit your stay." },
-  { icon: "◉", title: "Direct Bookings", desc: "Book instantly via NightsBridge — no agent fees, best available rates." },
+  { icon: "◉", title: "Direct Bookings", desc: "Book instantly via NightsBridge, no agent fees, best available rates." },
   { icon: "◈", title: "Corporate Ready", desc: "Structured procurement workflows for government & business clients." },
   { icon: "◎", title: "Central Location", desc: "Easy access in Mahikeng, near government and business hubs." },
 ]
@@ -18,7 +18,7 @@ export function WhySection() {
               Built for the way South Africans travel and do business.
             </h2>
             <p className="font-body text-base text-body-text leading-relaxed">
-              We understand that business travel in South Africa means needing things done right — fast responses,
+              We understand that business travel in South Africa means needing things done right: fast responses,
               proper invoices, reliable accommodation, and a venue that works as hard as you do.
             </p>
           </Reveal>
