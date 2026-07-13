@@ -45,3 +45,25 @@ export async function getRoomImagesByRoomName(roomName: string): Promise<RoomIma
     return []
   }
 }
+
+/**
+ * Every room's images in one call, grouped by bbroomid — used by the /stay
+ * room-list page so it doesn't fire one request per room card (~24+ rooms).
+ */
+export async function getAllRoomImagesGrouped(): Promise<Record<number, RoomImage[]>> {
+  try {
+    const sb = createSupabaseAdminClient()
+    const { data, error } = await sb
+      .from("room_images")
+      .select("id, bbroomid, image_url, title, display_order, created_at")
+      .order("display_order", { ascending: true })
+    if (error || !data) return {}
+    const grouped: Record<number, RoomImage[]> = {}
+    for (const row of data as RoomImage[]) {
+      ;(grouped[row.bbroomid] ??= []).push(row)
+    }
+    return grouped
+  } catch {
+    return {}
+  }
+}

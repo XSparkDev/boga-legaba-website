@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getRoomImagesByBbroomid, getRoomImagesByRoomName } from "@/lib/room-images"
+import { getAllRoomImagesGrouped, getRoomImagesByBbroomid, getRoomImagesByRoomName } from "@/lib/room-images"
 
 export const dynamic = "force-dynamic"
 
 /**
  * Public read — the booking flow calls this once a guest selects a room, to
- * auto-display that room's photos. Accepts either ?bbroomid=123 or
- * ?roomName=Flutes (the guest-facing flow only knows room names).
+ * auto-display that room's photos. Accepts ?bbroomid=123, ?roomName=Flutes,
+ * or no params at all (returns every room's images grouped by bbroomid —
+ * used by the /stay room list so it isn't one request per room card).
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -27,5 +28,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: true, images })
   }
 
-  return NextResponse.json({ ok: false, error: "bbroomid or roomName is required" }, { status: 400 })
+  const byBbroomid = await getAllRoomImagesGrouped()
+  return NextResponse.json({ ok: true, byBbroomid })
 }

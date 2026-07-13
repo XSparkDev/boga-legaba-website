@@ -78,12 +78,13 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true, image: row })
 }
 
-// PATCH { id, title?, display_order? } — edit a caption or reorder one image.
+// PATCH { id, title?, display_order?, bbroomid? } — edit a caption, reorder,
+// or move an image to a different room.
 export async function PATCH(request: NextRequest) {
   if (!(await isAuthenticated())) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
   }
-  const body = await request.json().catch(() => null) as { id?: string; title?: string; display_order?: number } | null
+  const body = await request.json().catch(() => null) as { id?: string; title?: string; display_order?: number; bbroomid?: number } | null
   if (!body?.id) {
     return NextResponse.json({ ok: false, error: "id is required" }, { status: 400 })
   }
@@ -91,6 +92,7 @@ export async function PATCH(request: NextRequest) {
   const patch: Record<string, unknown> = {}
   if (typeof body.title === "string") patch.title = body.title.trim() || null
   if (typeof body.display_order === "number") patch.display_order = body.display_order
+  if (typeof body.bbroomid === "number") patch.bbroomid = body.bbroomid
   if (Object.keys(patch).length === 0) {
     return NextResponse.json({ ok: false, error: "Nothing to update" }, { status: 400 })
   }

@@ -8,6 +8,7 @@ import { MultiCriteriaSearch } from "@/components/search/multi-criteria-search"
 import { StayDateSearch } from "@/components/stay/stay-date-search"
 import { useAvailability } from "@/hooks/useAvailability"
 import { useMediaAssets } from "@/hooks/useMediaAssets"
+import { useRoomImages } from "@/hooks/useRoomImages"
 import { useSyncedRooms } from "@/hooks/useSyncedRooms"
 import { matchesAllCriteria } from "@/lib/match-criteria"
 import { defaultCheckInOut } from "@/lib/room-availability"
@@ -45,6 +46,7 @@ export function StayRooms() {
   const { data, loading, error } = useSyncedRooms()
   const availability = useAvailability()
   const media = useMediaAssets()
+  const roomImages = useRoomImages()
   const catalog: SyncedProperty[] =
     data?.properties?.length
       ? data.properties
@@ -240,11 +242,15 @@ export function StayRooms() {
                   const synced = room as SyncedRoom
                   const asset = media.byRoomId.get(synced.bbroomid)
                   const imageFromSupabase = asset?.source === "nightsbridge" && Boolean(asset.source_url)
+                  const realPhotos = roomImages.byBbroomid.get(synced.bbroomid)
+                  const realPhoto = realPhotos?.[0]
                   return (
                   <RoomCard
                     key={`${property.id}-${room.name}`}
                     room={room}
                     property={property}
+                    realImageUrl={realPhoto?.image_url}
+                    realImageTitle={realPhoto?.title}
                     imageUrl={asset?.source_url}
                     imageAlt={asset?.alt_text}
                     imageFromSupabase={imageFromSupabase}

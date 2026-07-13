@@ -41,7 +41,7 @@ export function RoomImagesClient({ rooms }: { rooms: AdminRoom[] }) {
                 </button>
                 {expanded === room.bbroomid && (
                   <div className="border-t border-gray-100 px-4 py-4">
-                    <RoomGallery bbroomid={room.bbroomid} />
+                    <RoomGallery bbroomid={room.bbroomid} allRooms={rooms} />
                   </div>
                 )}
               </div>
@@ -53,7 +53,7 @@ export function RoomImagesClient({ rooms }: { rooms: AdminRoom[] }) {
   )
 }
 
-function RoomGallery({ bbroomid }: { bbroomid: number }) {
+function RoomGallery({ bbroomid, allRooms }: { bbroomid: number; allRooms: AdminRoom[] }) {
   const [images, setImages] = useState<RoomImage[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -137,6 +137,18 @@ function RoomGallery({ bbroomid }: { bbroomid: number }) {
     await fetch(`/api/admin/room-images?id=${id}`, { method: "DELETE" })
   }
 
+  async function moveToRoom(id: string, targetBbroomid: number) {
+    if (targetBbroomid === bbroomid) return
+    // The image leaves THIS room's gallery once moved — drop it locally
+    // rather than waiting on a refetch.
+    setImages((prev) => prev?.filter((img) => img.id !== id) ?? null)
+    await fetch("/api/admin/room-images", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, bbroomid: targetBbroomid }),
+    })
+  }
+
   return (
     <div>
       <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-[11px] font-semibold text-gray-700 hover:bg-gray-100">
@@ -165,6 +177,19 @@ function RoomGallery({ bbroomid }: { bbroomid: number }) {
                   onBlur={(e) => e.target.value !== (img.title ?? "") && updateTitle(img.id, e.target.value)}
                   className="w-full rounded border border-gray-200 px-1.5 py-1 text-xs"
                 />
+                <select
+                  defaultValue=""
+                  onChange={(e) => {
+                    const target = Number(e.target.value)
+                    if (target) moveToRoom(img.id, target)
+                  }}
+                  className="w-full rounded border border-gray-200 px-1.5 py-1 text-[11px] text-gray-500"
+                >
+                  <option value="">Move to room…</option>
+                  {allRooms.filter((r) => r.bbroomid !== bbroomid).map((r) => (
+                    <option key={r.bbroomid} value={r.bbroomid}>{r.propertyName} · {r.name}</option>
+                  ))}
+                </select>
                 <div className="flex items-center justify-between">
                   <div className="flex gap-1">
                     <button onClick={() => move(i, -1)} disabled={i === 0} className="rounded p-1 text-gray-400 hover:bg-gray-100 disabled:opacity-30">

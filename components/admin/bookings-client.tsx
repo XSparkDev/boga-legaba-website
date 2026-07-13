@@ -467,10 +467,16 @@ function RetryNightsBridgeButton({ reference }: { reference: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reference }),
       })
-      const data = (await res.json()) as { ok: boolean; error?: string }
+      const data = (await res.json()) as { ok: boolean; error?: string; alreadyConfirmed?: boolean }
       if (!data.ok) {
         setError(data.error ?? "Retry failed")
         setPhase("idle")
+        return
+      }
+      if (data.alreadyConfirmed) {
+        // Nothing was triggered — the booking was already confirmed on
+        // NightsBridge before this click landed. No job to poll for.
+        setPhase("done")
         return
       }
       setPhase("polling")
