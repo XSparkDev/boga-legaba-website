@@ -527,9 +527,34 @@ def book_room(params: dict) -> dict:
         # which is exactly what an "ok": False with an empty error looks like
         # upstream. --no-sandbox is required because the worker container runs
         # as root, where Chromium's sandbox refuses to start at all.
+        #
+        # The worker's Render instance is a 512MB Starter box — that flag alone
+        # only avoids one specific crash mode (shm too small), it doesn't lower
+        # Chromium's actual memory use, so it can still get OOM-killed under
+        # cgroup pressure (same silent, no-stderr failure). The rest of these
+        # flags are the standard low-memory Chromium recipe for exactly this
+        # constraint: no GPU/software-rasterizer process, no extensions/sync/
+        # translate/background-networking machinery, occluded-window/backgrounding
+        # timers off (so a headless page doesn't get throttled into weird
+        # states), and a capped V8 heap.
         browser = p.chromium.launch(
             headless=headless,
-            args=["--disable-dev-shm-usage", "--no-sandbox"],
+            args=[
+                "--disable-dev-shm-usage",
+                "--no-sandbox",
+                "--disable-gpu",
+                "--disable-software-rasterizer",
+                "--disable-extensions",
+                "--disable-background-networking",
+                "--disable-sync",
+                "--disable-translate",
+                "--disable-backgrounding-occluded-windows",
+                "--disable-renderer-backgrounding",
+                "--metrics-recording-only",
+                "--mute-audio",
+                "--no-first-run",
+                "--js-flags=--max-old-space-size=192",
+            ],
         )
         page = None
         try:
