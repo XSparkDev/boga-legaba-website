@@ -95,9 +95,22 @@ const EMPTY_FORM: BookingFormState = {
   adults: "2", firstname: "", surname: "", phone: "", email: "", notes: "",
 }
 
+// Must match EXACTLY the category strings book_nightsbridge_admin.py's
+// resolve_units_for_room_type() builds from ROOM_CATALOG (configuration +
+// " Room (" + bathroom_type + ")") — that match is a strict lowercase string
+// equality, not fuzzy. The old list here ("Double Room (Shower)", "Executive
+// Suite", "Conference Room", etc.) never matched any real unit, so every
+// admin-created booking failed with "No unit for room type ... found in the
+// dropdown" regardless of which option was picked.
 const ROOM_TYPES = [
-  "Twin Room (Shower)", "Twin Room (Bath)", "Double Room (Shower)", "Double Room (Bath)",
-  "Family Room", "Executive Suite", "Conference Room",
+  "Double Room (Bath only)",
+  "Double Room (Shower only)",
+  "Double Room (Bath & Shower)",
+  "Twin Room (Shower only)",
+  "Twin Room (Bath & Shower)",
+  "Triple Room (Shower only)",
+  "Family Room (Shower only)",
+  "Family Room (Bath & Shower)",
 ]
 const MEAL_PLANS = ["Room Only", "Bed & Breakfast", "Dinner, Bed & Breakfast"]
 

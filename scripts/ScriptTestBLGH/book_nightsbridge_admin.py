@@ -119,7 +119,29 @@ def _shot(page, name: str) -> None:
 # Step 1: Calendar -> Add Booking
 # ---------------------------------------------------------------------------
 
-def _open_add_booking(page) -> bool:
+def _is_login_page(page) -> bool:
+    """True if we've been bounced to the NightsBridge login form.
+
+    Needed because the dashboard SPA can render its logged-in nav chrome
+    (including the "Go to Calendar" link that auth._is_logged_in() checks)
+    from cached client-side state before the server actually validates the
+    session — so a saved session can look valid at login-check time and still
+    get bounced to /login on the very next real navigation. Detected by URL
+    host, not DOM text, since the login form's own copy can change."""
+    if "login.nightsbridge.com" in page.url:
+        return True
+    try:
+        return page.locator("input[type='password']").count() > 0 and page.locator(
+            "a:has-text('Go to Calendar')"
+        ).count() == 0
+    except Exception:
+        return False
+
+
+def _open_add_booking(page) -> bool | str:
+    """Returns True (opened), False (couldn't open — real UI failure), or
+    "relogin" (bounced to the login page — the caller should re-authenticate
+    and call this again once)."""
     try:
         page.click("a:has-text('Go to Calendar')", timeout=10_000)
     except Exception:
@@ -133,13 +155,16 @@ def _open_add_booking(page) -> bool:
         pass
     time.sleep(1)
 
+    if _is_login_page(page):
+        return "relogin"
+
     try:
         page.click("button.addBookingBtn", timeout=10_000)
     except Exception:
         try:
             page.click("button:has-text('Add Booking')", timeout=5_000)
         except Exception:
-            return False
+            return "relogin" if _is_login_page(page) else False
     # Wait for the ACTUAL arrival-date input to be present — the exact element
     # the next step drives. We match it by its Angular formcontrolname
     # ('fromdate'), NOT placeholder: NightsBridge now renders THREE inputs with
@@ -150,7 +175,9 @@ def _open_add_booking(page) -> bool:
         page.wait_for_selector("[formcontrolname='fromdate'] input", timeout=12_000, state="attached")
         return True
     except Exception:
-        return page.evaluate("() => document.querySelector('cui-date-selector') !== null")
+        if page.evaluate("() => document.querySelector('cui-date-selector') !== null"):
+            return True
+        return "relogin" if _is_login_page(page) else False
 
 
 # ---------------------------------------------------------------------------
@@ -517,7 +544,18 @@ def book_room(params: dict) -> dict:
             print(f"[admin-booking] ref={reference} room type '{room_type}' resolves to candidate units: {candidate_units}")
 
             print(f"[admin-booking] ref={reference} opening Add Booking...")
-            if not _open_add_booking(page):
+            opened = _open_add_booking(page)
+            if opened == "relogin":
+                # The dashboard's saved-session check can false-positive (the
+                # SPA renders logged-in nav from cached client state before the
+                # server actually validates it), so we only discover the
+                # session is really dead here, on the first real navigation.
+                # Re-authenticate fresh and give it exactly one more try.
+                print(f"[admin-booking] ref={reference} bounced to login mid-flow — re-authenticating...")
+                auth._perform_login(page)
+                context.storage_state(path=str(auth.config.STATE_FILE))
+                opened = _open_add_booking(page)
+            if opened is not True:
                 _shot(page, "01_add_booking_open_failed")
                 return {"ok": False, "error": "Could not open the Add Booking form"}
             _shot(page, "01_add_booking_open")
