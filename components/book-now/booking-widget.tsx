@@ -74,6 +74,18 @@ export function BookingWidget({
     }
   }, [])
 
+  // Keep the widget in view across step changes. Submitting collapses the tall
+  // form into the short "Reserving…" spinner (or the error box), which shrinks
+  // the page by ~1000px while the scroll position stays put — leaving the new
+  // panel above the viewport so it LOOKS like the page jumped down. Re-centering
+  // the panel keeps the guest looking at it instead of stranded further down.
+  const panelRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (step === "paying" || step === "error") {
+      panelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+    }
+  }, [step])
+
   // Form fields — every field NightsBridge collects
   const [adults, setAdults] = useState(2)
   const [children1, setChildren1] = useState(0)  // Age 0–5 (free)
@@ -89,6 +101,80 @@ export function BookingWidget({
   const [notes, setNotes] = useState("")
   const [emailMismatch, setEmailMismatch] = useState(false)
   const [occupancyError, setOccupancyError] = useState("")
+
+  // ── Draft persistence: don't lose typed details on an accidental refresh ────
+  // Saved to sessionStorage (survives a refresh, auto-clears when the tab is
+  // closed — so a guest's contact details aren't left behind on a shared
+  // computer). Scoped to this exact room + dates so a draft only ever restores
+  // in the same booking context, never on a different room. Every storage call
+  // is best-effort: if storage is unavailable (private mode / blocked), the
+  // form works exactly as before.
+  const DRAFT_KEY = `bl-booking-draft:${bbid}:${roomTypeName}:${arrive}:${depart}`
+  const draftHydratedRef = useRef(false)
+
+  // Restore once on mount. Read in an effect (not during render) because
+  // sessionStorage doesn't exist during SSR — this keeps it hydration-safe.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY)
+      if (raw) {
+        const d = JSON.parse(raw) as Record<string, unknown>
+        if (typeof d.adults === "number") setAdults(d.adults)
+        if (typeof d.children1 === "number") setChildren1(d.children1)
+        if (typeof d.children2 === "number") setChildren2(d.children2)
+        if (typeof d.firstname === "string") setFirstname(d.firstname)
+        if (typeof d.surname === "string") setSurname(d.surname)
+        if (typeof d.phone === "string") setPhone(d.phone)
+        if (typeof d.email === "string") setEmail(d.email)
+        if (typeof d.emailVerify === "string") setEmailVerify(d.emailVerify)
+        if (typeof d.arrivalTime === "string") setArrivalTime(d.arrivalTime)
+        if (typeof d.airline === "string") setAirline(d.airline)
+        if (typeof d.flightno === "string") setFlightno(d.flightno)
+        if (typeof d.notes === "string") setNotes(d.notes)
+        if (d.mealplanid != null) {
+          const plan = sorted.find((p) => p.mealplanid === d.mealplanid)
+          if (plan) setSelectedPlan(plan)
+        }
+        // Reopen the form if the guest had it open — but never restore into the
+        // "paying"/"error" states, which no longer reflect reality after a reload.
+        if (d.formOpen) setStep("form")
+      }
+    } catch {
+      // Corrupt or blocked storage — start fresh, never break the form.
+    }
+    draftHydratedRef.current = true
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Save on every change — but only AFTER the restore above has run, so the
+  // initial default values can never overwrite a saved draft (effect ordering).
+  useEffect(() => {
+    if (!draftHydratedRef.current) return
+    try {
+      sessionStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({
+          adults, children1, children2, firstname, surname, phone, email, emailVerify,
+          arrivalTime, airline, flightno, notes,
+          mealplanid: selectedPlan?.mealplanid ?? null,
+          formOpen: step === "form",
+        }),
+      )
+    } catch {
+      // Storage full / blocked — saving is best-effort, never fatal.
+    }
+  }, [DRAFT_KEY, adults, children1, children2, firstname, surname, phone, email, emailVerify, arrivalTime, airline, flightno, notes, selectedPlan, step])
+
+  // Clear the saved draft once a booking is successfully handed off to payment,
+  // so returning via the back button can't re-submit the same details and
+  // create a duplicate booking.
+  function clearDraft() {
+    try {
+      sessionStorage.removeItem(DRAFT_KEY)
+    } catch {
+      /* best-effort */
+    }
+  }
 
   const nbUrl = `https://book.nightsbridge.com/${bbid}?arrive=${arrive}&depart=${depart}`
 
@@ -179,6 +265,7 @@ export function BookingWidget({
       const data = (await res.json()) as { ok: boolean; reference?: string; paymentUrl?: string; error?: string }
       if (data.ok && data.paymentUrl) {
         // Happy path: straight to checkout.
+        clearDraft()
         window.location.href = data.paymentUrl
       } else if (data.ok && data.reference) {
         // Rare: Paystack pre-generation returned no URL. The booking is already
@@ -214,6 +301,7 @@ export function BookingWidget({
     // Only fall back to generating a fresh session here if that failed, so we
     // still never create two sessions for the same booking unnecessarily.
     if (d.paymentUrl) {
+      clearDraft()
       window.location.href = d.paymentUrl
       return
     }
@@ -235,6 +323,7 @@ export function BookingWidget({
       })
       const payment = (await res.json().catch(() => ({}))) as { ok?: boolean; authorization_url?: string; error?: string }
       if (payment.ok && payment.authorization_url) {
+        clearDraft()
         window.location.href = payment.authorization_url
       } else {
         setErrorMsg(payment.error ?? "Your room is booked, but we couldn't start payment. Please contact us on WhatsApp.")
@@ -299,6 +388,7 @@ export function BookingWidget({
   if (step === "paying") {
     return (
       <div
+        ref={panelRef}
         className="flex flex-col items-center justify-center gap-3 rounded-xl py-10"
         style={{ background: "#F7F7F6", border: "1px solid #D6D6D5" }}
       >
@@ -314,7 +404,7 @@ export function BookingWidget({
   // ── Error ─────────────────────────────────────────────────────────────────
   if (step === "error") {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-5">
+      <div ref={panelRef} className="rounded-xl border border-red-200 bg-red-50 p-5">
         <div className="flex items-start gap-3">
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-red-500" />
           <div>

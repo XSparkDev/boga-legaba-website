@@ -1,5 +1,5 @@
 import { Reveal } from "@/components/reveal"
-import { getGoogleReviews } from "@/lib/google-reviews"
+import { getGuestReviews, OVERALL_RATING, OVERALL_REVIEW_COUNT } from "@/lib/google-reviews"
 
 function Stars({ rating }: { rating: number }) {
   const full = Math.round(rating)
@@ -12,16 +12,13 @@ function Stars({ rating }: { rating: number }) {
 }
 
 /**
- * Google reviews on the home page. Server component: fetches (cached) reviews
- * at render time. If there are none — API not yet enabled, cache empty — it
- * renders nothing so the page never shows an empty/broken section.
+ * Guest reviews on the home page. Server component: reads (rating >= 3)
+ * reviews from the DB at render time. If there are none, it renders nothing
+ * so the page never shows an empty/broken section.
  */
 export async function ReviewsSection() {
-  const data = await getGoogleReviews()
-  if (!data.reviews.length) return null
-
-  // Show at most 6, longest-text first so the strongest reviews lead.
-  const reviews = [...data.reviews].slice(0, 6)
+  const reviews = await getGuestReviews()
+  if (!reviews.length) return null
 
   return (
     <section className="section-padding bg-white">
@@ -33,17 +30,11 @@ export async function ReviewsSection() {
               What our guests say
             </h2>
             <div className="flex items-center justify-center gap-3 font-body text-body-text">
-              {data.rating != null && (
-                <>
-                  <span className="text-2xl font-semibold text-[#000000]">{data.rating.toFixed(1)}</span>
-                  <Stars rating={data.rating} />
-                </>
-              )}
-              {data.totalRatings != null && (
-                <span className="text-sm text-taupe">
-                  from {data.totalRatings.toLocaleString("en-ZA")} Google reviews
-                </span>
-              )}
+              <span className="text-2xl font-semibold text-[#000000]">{OVERALL_RATING.toFixed(1)}</span>
+              <Stars rating={OVERALL_RATING} />
+              <span className="text-sm text-taupe">
+                from {OVERALL_REVIEW_COUNT.toLocaleString("en-ZA")} reviews
+              </span>
             </div>
           </div>
         </Reveal>
@@ -60,14 +51,9 @@ export async function ReviewsSection() {
                   “{r.text}”
                 </blockquote>
                 <figcaption className="mt-4 flex items-center gap-3 border-t border-[#000000]/10 pt-4">
-                  {r.authorPhoto ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={r.authorPhoto} alt="" className="size-8 rounded-full object-cover" referrerPolicy="no-referrer" />
-                  ) : (
-                    <div className="flex size-8 items-center justify-center rounded-full bg-[#000000] text-xs font-semibold text-gold">
-                      {r.author.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  <div className="flex size-8 items-center justify-center rounded-full bg-[#000000] text-xs font-semibold text-gold">
+                    {r.author.charAt(0).toUpperCase()}
+                  </div>
                   <span className="font-body text-sm font-medium text-[#000000]">{r.author}</span>
                 </figcaption>
               </figure>

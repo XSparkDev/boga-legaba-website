@@ -81,15 +81,39 @@ _RATE_PLAN_ALIASES = {
 }
 
 
+def _normalize_room_type(s: str) -> str:
+    """Canonicalise a room-type label so the website's naming and the admin
+    catalog's naming compare equal.
+
+    They differ ONLY in bathroom wording: NightsBridge's PUBLIC rates page —
+    which is where the website's roomTypeName originates (rate_cache.rtname) —
+    says "(Shower)" / "(Bath)", while ROOM_CATALOG (matching the admin
+    dropdown's room-card titles) says "(Shower only)" / "(Bath only)". The
+    "(Bath & Shower)" variants already match verbatim. Without this, every
+    single-bathroom room type (5 of the 8 the site offers) fails to resolve to
+    any unit and the booking dies with "No unit for room type ... found in the
+    dropdown". Verified against all 8 live rate_cache.rtname values vs every
+    catalog-built type; the normalization is exact and collision-free ("bath",
+    "shower", and "bath & shower" stay distinct)."""
+    s = s.strip().lower()
+    s = s.replace(" and ", " & ")
+    s = re.sub(r"\bonly\b", "", s)   # "shower only" -> "shower"
+    s = re.sub(r"\s+", " ", s)        # collapse the whitespace "only" left behind
+    s = s.replace("( ", "(").replace(" )", ")")
+    return s.strip()
+
+
 def resolve_units_for_room_type(room_type_name: str) -> list[str]:
     """Reverse ROOM_CATALOG: given a website roomTypeName like 'Double Room
     (Bath & Shower)', return every individual unit name that belongs to that
     category, in catalog order. Confirmed live: selecting a unit produces a
-    room-card title of exactly f"{unit} - {configuration} Room ({bathroom_type})"."""
-    wanted = room_type_name.strip().lower()
+    room-card title of exactly f"{unit} - {configuration} Room ({bathroom_type})".
+    Comparison is normalized (see _normalize_room_type) so the public-rates
+    "(Shower)" spelling matches the catalog's "(Shower only)"."""
+    wanted = _normalize_room_type(room_type_name)
     matches = []
     for unit, meta in ROOM_CATALOG.items():
-        built = f"{meta.get('configuration', '')} Room ({meta.get('bathroom_type', '')})".strip().lower()
+        built = _normalize_room_type(f"{meta.get('configuration', '')} Room ({meta.get('bathroom_type', '')})")
         if built == wanted:
             matches.append(unit)
     return matches
