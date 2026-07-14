@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { UtensilsCrossed, Wine, TreePalm, PartyPopper } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
 import { SiteImage } from "@/components/site-image"
-import { getSiteImage } from "@/lib/site-images"
+import { resolveSiteImage } from "@/lib/site-images-live"
 import { InterestForm } from "@/components/forms/interest-form"
 import { Reveal } from "@/components/reveal"
 
@@ -19,7 +19,8 @@ const SECTIONS = [
   { Icon: Wine, title: "Bar", body: "A welcoming bar for after-work drinks, nightcaps and social evenings." },
 ]
 
-export default function DiningPage() {
+export default async function DiningPage() {
+  const diningImage = await resolveSiteImage("dining")
   return (
     <main>
       <PageHeader
@@ -33,8 +34,8 @@ export default function DiningPage() {
           <Reveal>
             <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl">
               <SiteImage
-                src={getSiteImage("dining").url}
-                alt={`Lantana dining and events space at Boga Legaba: ${getSiteImage("dining").alt}`}
+                src={diningImage.url}
+                alt={`Lantana dining and events space at Boga Legaba: ${diningImage.alt}`}
                 fill
                 sizes="(max-width: 1280px) 100vw, 1280px"
               />

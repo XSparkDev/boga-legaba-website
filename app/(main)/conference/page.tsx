@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { Users, Projector, UtensilsCrossed, BedDouble, Wifi, ParkingCircle, LayoutGrid, MessageCircle, Check } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
 import { SiteImage } from "@/components/site-image"
-import { getSiteImage } from "@/lib/site-images"
+import { resolveSiteImage } from "@/lib/site-images-live"
 import { ConferencePackages } from "@/components/conference/conference-packages"
 import { ConferenceForm } from "@/components/forms/conference-form"
 import { Reveal } from "@/components/reveal"
@@ -23,7 +23,8 @@ const FEATURES = [
   { Icon: LayoutGrid, label: "Setup Styles", note: "Theatre to boardroom" },
 ]
 
-export default function ConferencePage() {
+export default async function ConferencePage() {
+  const conferenceImage = await resolveSiteImage("conference")
   return (
     <main>
       <PageHeader
@@ -38,8 +39,8 @@ export default function ConferencePage() {
           <Reveal>
             <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl">
               <SiteImage
-                src={getSiteImage("conference").url}
-                alt={`Conference room at Boga Legaba Lantana: ${getSiteImage("conference").alt}`}
+                src={conferenceImage.url}
+                alt={`Conference room at Boga Legaba Lantana: ${conferenceImage.alt}`}
                 fill
                 sizes="(max-width: 1280px) 100vw, 1280px"
               />
