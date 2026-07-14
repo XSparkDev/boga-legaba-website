@@ -10,13 +10,19 @@ import {
   galleryFilterSuggestions,
   galleryItemSearchText,
   getGalleryBrowserItems,
+  type GalleryBrowserItem,
   type GalleryCategory,
 } from "@/data/gallery-browser"
 import { matchesAllCriteria } from "@/lib/match-criteria"
 import { cn } from "@/lib/utils"
 
-export function GalleryGrid() {
-  const items = useMemo(() => getGalleryBrowserItems(), [])
+/**
+ * `initialItems` are resolved on the server with admin overrides applied (see
+ * app/(main)/gallery/page.tsx). Falls back to the static items when not passed,
+ * so the component still works standalone.
+ */
+export function GalleryGrid({ initialItems }: { initialItems?: GalleryBrowserItem[] }) {
+  const items = useMemo(() => initialItems ?? getGalleryBrowserItems(), [initialItems])
   const [category, setCategory] = useState<GalleryCategory>("All")
   const [criteria, setCriteria] = useState<string[]>([])
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)

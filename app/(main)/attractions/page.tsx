@@ -4,7 +4,7 @@ import { AttractionsBookingCta } from "@/components/attractions-booking-cta"
 import { PageHeader } from "@/components/page-header"
 import { SiteImage } from "@/components/site-image"
 import { Reveal } from "@/components/reveal"
-import { getSiteImage } from "@/lib/site-images"
+import { resolveSiteImage } from "@/lib/site-images-live"
 import { fetchEstablishment } from "@/lib/nightsbridge-api"
 
 export const metadata: Metadata = {
@@ -27,6 +27,7 @@ const ATTRACTIONS = [
 export default async function AttractionsPage() {
   // Fetch live area data from NightsBridge
   const estData = await fetchEstablishment(21091)
+  const mapImage = await resolveSiteImage("attractions.map")
 
   // Parse attractions list from NB (newline + "*" delimited)
   const nbAttractions = estData?.attractions
@@ -135,8 +136,8 @@ export default async function AttractionsPage() {
           <Reveal className="mt-12">
             <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl">
               <SiteImage
-                src={getSiteImage("attractions.map").url}
-                alt={`Mahikeng and North West Province landscape near Boga Legaba: ${getSiteImage("attractions.map").alt}`}
+                src={mapImage.url}
+                alt={`Mahikeng and North West Province landscape near Boga Legaba: ${mapImage.alt}`}
                 fill
                 sizes="(max-width: 1280px) 100vw, 1280px"
               />

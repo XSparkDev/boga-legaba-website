@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/page-header"
 import { SiteImage } from "@/components/site-image"
 import { InterestForm } from "@/components/forms/interest-form"
 import { Reveal } from "@/components/reveal"
-import { getSiteImage } from "@/lib/site-images"
+import { getSiteImageOverrides, resolveSiteImageFrom } from "@/lib/site-images-live"
 import { fetchSpecials } from "@/lib/nightsbridge-api"
 
 export const metadata: Metadata = {
@@ -46,6 +46,7 @@ function fmtDate(iso: string) {
 export default async function SpecialsPage() {
   // Fetch live specials from NightsBridge
   const liveSpecials = await fetchSpecials(21091)
+  const imageOverrides = await getSiteImageOverrides()
 
   return (
     <main>
@@ -113,7 +114,7 @@ export default async function SpecialsPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-6 lg:grid-cols-3">
             {STATIC_SPECIALS.map((s, i) => {
-              const img = getSiteImage(s.imageKey)
+              const img = resolveSiteImageFrom(imageOverrides, s.imageKey)
               return (
                 <Reveal as="article" key={s.name} delay={i * 90}>
                   <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-[#996948]/40">

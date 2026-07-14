@@ -52,6 +52,21 @@ export function getGalleryBrowserItems(): GalleryBrowserItem[] {
   })
 }
 
+/**
+ * Same as getGalleryBrowserItems() but resolves each item's image through a
+ * caller-supplied resolver instead of the static file — used server-side to
+ * apply admin overrides (see app/(main)/gallery/page.tsx). Kept dependency-free
+ * (no server imports) so this module stays safe to import from the client grid.
+ */
+export function buildGalleryBrowserItems(
+  resolve: (key: string) => { url: string; alt: string },
+): GalleryBrowserItem[] {
+  return GALLERY_ITEMS.map((item) => {
+    const img = resolve(item.imageKey)
+    return { ...item, url: img.url, alt: img.alt }
+  })
+}
+
 export function galleryItemSearchText(item: GalleryBrowserItem) {
   return [item.label, item.category, item.alt, item.imageKey.replace(/\./g, " ")].join(" ")
 }

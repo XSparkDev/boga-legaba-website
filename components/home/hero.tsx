@@ -6,9 +6,8 @@ import { NightsBridgeModal } from "@/components/NightsBridgeModal"
 import { SiteLogo } from "@/components/site-logo"
 import { HeroSlideshow } from "@/components/home/hero-slideshow"
 import { useBookingModal } from "@/hooks/useBookingModal"
-import { getSiteImage } from "@/lib/site-images"
 
-const HERO_IMAGES = [
+const HERO_IMAGES_FALLBACK = [
   "/boga_hero_/hero-1.jpg",
   "/boga_hero_/hero-2.jpg",
   "/boga_hero_/hero-3.jpg",
@@ -16,13 +15,19 @@ const HERO_IMAGES = [
   "/boga_hero_/hero-5.jpg",
 ]
 
-export function HomeHero() {
-  const hero = getSiteImage("hero")
+/**
+ * `images`/`alt` are resolved on the server (admin-editable hero slots — see
+ * app/(main)/page.tsx). They fall back to the built-in images when not passed,
+ * so this component is still safe to render on its own.
+ */
+export function HomeHero({ images, alt }: { images?: string[]; alt?: string }) {
+  const heroImages = images && images.length > 0 ? images : HERO_IMAGES_FALLBACK
+  const heroAlt = alt || "Boga Legaba guest house"
   const { isOpen, openModal, closeModal } = useBookingModal()
 
   return (
     <section className="grain relative flex min-h-[100svh] flex-col overflow-x-clip">
-      <HeroSlideshow images={HERO_IMAGES} alt={hero.alt} />
+      <HeroSlideshow images={heroImages} alt={heroAlt} />
       {/* Flat semi-transparent overlay for text legibility — brand guide: flat
           color blocks, no gradients. */}
       <div className="absolute inset-0 bg-black/55" />

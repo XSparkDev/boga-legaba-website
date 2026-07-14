@@ -2,7 +2,7 @@ import Link from "next/link"
 import { properties } from "@/data/rooms"
 import { Reveal } from "@/components/reveal"
 import { SiteImage } from "@/components/site-image"
-import { getSiteImage } from "@/lib/site-images"
+import { getSiteImageOverrides, resolveSiteImageFrom } from "@/lib/site-images-live"
 
 const PROPERTY_IMAGE_KEYS: Record<string, string> = {
   chababa: "property.chababa",
@@ -10,8 +10,9 @@ const PROPERTY_IMAGE_KEYS: Record<string, string> = {
   lantana: "property.lantana",
 }
 
-export function PropertyOverview() {
+export async function PropertyOverview() {
   const featured = properties.filter((p) => p.id !== "transnet")
+  const imageOverrides = await getSiteImageOverrides()
 
   return (
     <section className="section-padding bg-warm-white">
@@ -29,7 +30,7 @@ export function PropertyOverview() {
 
         <div className="mt-14 grid gap-6 lg:grid-cols-3">
           {featured.map((p, i) => {
-            const img = getSiteImage(PROPERTY_IMAGE_KEYS[p.id] ?? "hero")
+            const img = resolveSiteImageFrom(imageOverrides, PROPERTY_IMAGE_KEYS[p.id] ?? "property.chababa")
             return (
               <Reveal as="article" key={p.id} delay={i * 100}>
                 <Link

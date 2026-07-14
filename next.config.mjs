@@ -11,6 +11,12 @@ const nextConfig = {
         hostname: "images.unsplash.com",
         pathname: "/**",
       },
+      {
+        // Admin-uploaded site images live in Supabase Storage.
+        protocol: "https",
+        hostname: "tserpdstcpcdivujpswq.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
     ],
   },
   outputFileTracingExcludes: {

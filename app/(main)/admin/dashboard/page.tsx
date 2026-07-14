@@ -418,6 +418,13 @@ export default async function AdminDashboardPage() {
               <ImageIcon className="size-3.5" />
               Room Photos
             </Link>
+            <Link
+              href="/admin/reviews"
+              className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-[11px] text-white/70 hover:text-white transition-colors"
+            >
+              <Star className="size-3.5" />
+              Reviews
+            </Link>
             <a
               href={NB_DASHBOARD}
               target="_blank"

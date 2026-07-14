@@ -5,10 +5,11 @@ import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { properties } from "@/data/rooms"
-import { RoomImagesClient, type AdminRoom } from "@/components/admin/room-images-client"
+import { type AdminRoom } from "@/components/admin/room-images-client"
+import { AdminImagesTabs } from "@/components/admin/admin-images-tabs"
 
 export const metadata: Metadata = {
-  title: "Room Photos | Boga Legaba Admin",
+  title: "Images | Boga Legaba Admin",
   robots: { index: false, follow: false },
 }
 
@@ -52,15 +53,12 @@ export default async function RoomsPage() {
           <Link href="/admin/dashboard" className="flex items-center gap-1 font-mono text-[11px] text-white/60 hover:text-white">
             <ChevronLeft className="size-3.5" /> Dashboard
           </Link>
-          <span className="font-serif text-base font-bold text-white">Room Photos</span>
+          <span className="font-serif text-base font-bold text-white">Images</span>
           <span className="ml-auto font-mono text-[11px] text-white/40">{rooms.length} rooms</span>
         </div>
       </div>
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-        <p className="mb-6 font-mono text-[11px] text-gray-400">
-          Upload photos for each room. Guests see these automatically once they select that room during booking.
-        </p>
-        <RoomImagesClient rooms={rooms} />
+        <AdminImagesTabs rooms={rooms} />
       </div>
     </div>
   )
