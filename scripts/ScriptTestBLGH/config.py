@@ -32,7 +32,14 @@ CALENDAR_LINK = "a:has-text('Go to Calendar')"
 # API parameters
 # ---------------------------------------------------------------------------
 COUNTRY_LOCATION_ID = 179          # seen in the live BookingCalendarRQ request
-DEFAULT_DAYS_AHEAD = 60            # how far forward to fetch if no DATE_TO given
+# How far forward to fetch if no DATE_TO given. This is the horizon the
+# per-physical-room availability_cache covers. It MUST be at least as far as a
+# guest can pick on the site's date picker — otherwise dates beyond it have no
+# accurate cache and fall back to a coarse room-TYPE check, which can wrongly
+# show a specific already-booked room as available (7 of 9 room types here have
+# multiple physical rooms). Kept a full year ahead so every bookable date is
+# covered by the accurate cache.
+DEFAULT_DAYS_AHEAD = 365           # how far forward to fetch if no DATE_TO given
 
 # Booking status letter -> human description (from the API's BootstrapRQ).
 STATUS_CODES = {

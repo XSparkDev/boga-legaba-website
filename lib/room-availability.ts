@@ -113,3 +113,17 @@ export function defaultCheckInOut(): { checkIn: string; checkOut: string } {
 export function minCheckInDate(): string {
   return formatDate(new Date())
 }
+
+/**
+ * Latest date a guest may pick. Kept just inside the availability_cache
+ * horizon (the sync fetches ~365 days ahead — see scripts/ScriptTestBLGH/
+ * config.py DEFAULT_DAYS_AHEAD) so every selectable date has ACCURATE
+ * per-physical-room availability. Without this, a date beyond the cache would
+ * fall back to a coarse room-TYPE check that can show an already-booked room
+ * as available. The 15-day buffer absorbs sync timing at the edge.
+ */
+export function maxBookingDate(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 350)
+  return formatDate(d)
+}
