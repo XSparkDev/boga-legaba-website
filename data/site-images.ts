@@ -9,8 +9,8 @@ export const siteImages = {
     alt: "green grass field under blue sky during daytime",
   },
   conference: {
-    url: "/Organized/Property%202/lantana%20exterior/Conference%20Room/IMG_2759-HDR.jpg",
-    alt: "Boga Legaba conference room at Lantana",
+    url: "/Organized/Property%202/lantana%20exterior/IMG_2780-HDR.jpg",
+    alt: "Boga Legaba conference and function room at Lantana",
   },
   dining: {
     url: "/Organized/Property%202/lantana%20exterior/Dining.jpg",
@@ -32,13 +32,13 @@ export const siteImages = {
     url: "/Organized/Property%202/lantana%20exterior/Conference%20Room/IMG_2774-HDR.jpg",
     alt: "Boardroom setup in the Boga Legaba conference room",
   },
-  "gallery.conference-theatre": {
-    url: "/Organized/Property%202/lantana%20exterior/Conference%20Room/IMG_2759-HDR.jpg",
-    alt: "Theatre-style setup in the Boga Legaba conference room",
+  "gallery.lantana-spa": {
+    url: "/Organized/Property%202/Beauty%20and%20Bubbles%20SPA/IMG_2758-HDR.jpg",
+    alt: "Beauty & Bubbles spa at Boga Legaba Lantana",
   },
-  "gallery.dining-bar": {
-    url: "/Organized/Property%202/lantana%20exterior/Dining.jpg",
-    alt: "Boga Legaba dining and bar area at Lantana",
+  "gallery.lantana-pool": {
+    url: "/Organized/Property%202/lantana%20exterior/IMG_2803-HDR.jpg",
+    alt: "Poolside courtyard at Boga Legaba Lantana",
   },
   "gallery.dining-restaurant": {
     url: "/Organized/Property%202/lantana%20exterior/Dining.jpg",
@@ -189,7 +189,7 @@ export const siteImages = {
     alt: "a bed room with two beds and a lamp",
   },
   "specials.conference-accommodation": {
-    url: "/Organized/Property%202/lantana%20exterior/Conference%20Room/IMG_2759-HDR.jpg",
+    url: "/Organized/Property%202/lantana%20exterior/IMG_2780-HDR.jpg",
     alt: "Boga Legaba conference room at Lantana",
   },
   "specials.extended-stay": {

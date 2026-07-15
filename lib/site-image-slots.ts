@@ -85,10 +85,10 @@ export const SITE_IMAGE_SLOTS: SiteImageSlot[] = [
   slot("gallery.interlaken-exterior", "Gallery · Interlaken A Exterior", "Gallery"),
   slot("gallery.interlaken-segametsi", "Gallery · Interlaken A Segametsi", "Gallery"),
   slot("gallery.lantana-garden", "Gallery · Lantana Garden", "Gallery"),
-  slot("gallery.conference-theatre", "Gallery · Conference Theatre Setup", "Gallery"),
-  slot("gallery.conference-boardroom", "Gallery · Conference Boardroom", "Gallery"),
+  slot("gallery.lantana-spa", "Gallery · Lantana Beauty & Bubbles Spa", "Gallery"),
+  slot("gallery.conference-boardroom", "Gallery · Conference Venue", "Gallery"),
   slot("gallery.dining-restaurant", "Gallery · Dining Restaurant", "Gallery"),
-  slot("gallery.dining-bar", "Gallery · Dining Bar", "Gallery"),
+  slot("gallery.lantana-pool", "Gallery · Lantana Poolside", "Gallery"),
 ]
 
 export const SITE_IMAGE_PAGES: SiteImagePage[] = [
