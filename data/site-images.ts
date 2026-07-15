@@ -13,8 +13,8 @@ export const siteImages = {
     alt: "Boga Legaba conference and function room at Lantana",
   },
   dining: {
-    url: "/Organized/Property%202/lantana%20exterior/Dining.jpg",
-    alt: "Boga Legaba dining area at Lantana",
+    url: "/Organized/Property%201/Interlaken/IMG_2614-HDR.jpg",
+    alt: "Boga Legaba dining space with table seating",
   },
   "gallery.chababa-blue-clouds": {
     url: "https://images.unsplash.com/photo-1723470915706-2b01ee267bb0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjgyOTZ8MHwxfHNlYXJjaHw0fHxob3RlbCUyMHR3aW4lMjByb29tJTIwZW5zdWl0ZSUyMGJyaWdodHxlbnwwfDB8fHwxNzgwNDg4Mjc3fDA&ixlib=rb-4.1.0&q=80&w=1080",

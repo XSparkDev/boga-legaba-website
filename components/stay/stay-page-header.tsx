@@ -1,19 +1,19 @@
+import Image from "next/image"
 import { Reveal } from "@/components/reveal"
 
 export function StayPageHeader() {
   return (
     <section className="relative overflow-hidden pb-14 pt-28 text-white lg:pb-20 lg:pt-36">
-      {/* Background hero image */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      {/* Background hero image — next/image with `priority` so it is preloaded
+          and served in an optimized, compressed format. */}
+      <Image
         src="/Organized/Property%201/Interlaken/IMG_2455-HDR.jpg"
         alt=""
         aria-hidden
-        width={1920}
-        height={1080}
-        loading="eager"
-        decoding="async"
-        className="absolute inset-0 h-full w-full object-cover object-center"
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-center"
       />
       {/* Flat semi-transparent overlay for text legibility — brand guide: flat
           color blocks, no gradients. Kept dark so the hero reads in dark mode. */}

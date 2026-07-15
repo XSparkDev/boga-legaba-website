@@ -130,6 +130,7 @@ export function GalleryGrid({ initialItems }: { initialItems?: GalleryBrowserIte
               <SiteImage
                 src={item.url}
                 alt={`${item.label}: ${item.alt}`}
+                sizes="(max-width: 420px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 className="h-full min-h-[200px] transition-transform duration-500 group-hover:scale-105"
               />
             </button>
