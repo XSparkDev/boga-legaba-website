@@ -482,8 +482,10 @@ export function buildAdminPaymentEmail(ctx: PaymentContext, booked: boolean = tr
     { label: "Amount Paid", value: amount, emphasis: true },
   ]
 
+  const adminBookingsHref = `${EMAIL_BRAND.websiteHref}/admin/bookings`
+
   const statusNote = booked
-    ? `NightsBridge booking status has been automatically updated to <strong style="color:${EMAIL_COLORS.bodyText};">Confirmed</strong>. Log into NightsBridge to view or manage this booking.`
+    ? `Please check the <strong style="color:${EMAIL_COLORS.bodyText};">admin page</strong> to confirm this guest was successfully registered on NightsBridge. If not, open Bookings and click <strong style="color:${EMAIL_COLORS.bodyText};">Retry</strong>.`
     : `<strong style="color:${EMAIL_COLORS.danger};">This booking was NOT created on NightsBridge</strong>, see the separate follow-up alert for details and next steps.`
 
   return emailShell({
@@ -496,7 +498,8 @@ export function buildAdminPaymentEmail(ctx: PaymentContext, booked: boolean = tr
         <p style="margin:4px 0 0;color:${EMAIL_COLORS.muted};font-size:12px;">${now}</p>
       </td></tr>` +
       emailInfoTable(rows, { title: "Guest & Booking Information" }) +
-      emailCallout(statusNote, { tone: booked ? "neutral" : "danger" }),
+      emailCallout(statusNote, { tone: booked ? "neutral" : "danger" }) +
+      emailButton("Open Admin Bookings", adminBookingsHref),
     footerNote: "Automated admin notification · Do not reply to this email.",
   })
 }
