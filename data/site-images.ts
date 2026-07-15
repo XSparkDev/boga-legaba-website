@@ -9,8 +9,8 @@ export const siteImages = {
     alt: "green grass field under blue sky during daytime",
   },
   conference: {
-    url: "/Organized/Property%202/lantana%20exterior/IMG_2780-HDR.jpg",
-    alt: "Boga Legaba conference and function room at Lantana",
+    url: "/Organized/Property%202/lantana%20exterior/Conference%20Room/IMG_2774-HDR.jpg",
+    alt: "Boga Legaba conference venue at Lantana",
   },
   dining: {
     url: "/Organized/Property%201/Interlaken/IMG_2614-HDR.jpg",
@@ -29,8 +29,8 @@ export const siteImages = {
     alt: "Reeds room at Boga Legaba Chababa",
   },
   "gallery.conference-boardroom": {
-    url: "/Organized/Property%202/lantana%20exterior/Conference%20Room/IMG_2774-HDR.jpg",
-    alt: "Boardroom setup in the Boga Legaba conference room",
+    url: "/Organized/Property%202/lantana%20exterior/IMG_2780-HDR.jpg",
+    alt: "Function room set up for a conference at Boga Legaba",
   },
   "gallery.lantana-spa": {
     url: "/Organized/Property%202/Beauty%20and%20Bubbles%20SPA/IMG_2758-HDR.jpg",

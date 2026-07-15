@@ -4,10 +4,10 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    // Next serves resized, modern-format (AVIF/WebP) versions of every
-    // next/image on demand — compresses the heavy HDR source photos so pages
-    // load faster. Originals in /public are left untouched.
-    formats: ["image/avif", "image/webp"],
+    // Production host does not serve Next's /_next/image optimizer endpoint,
+    // so image optimization MUST stay off — enabling it makes every image
+    // 404. Compression is handled by shrinking the source files instead.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
