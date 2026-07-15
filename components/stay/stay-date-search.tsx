@@ -2,7 +2,7 @@
 
 import { CalendarRange, Loader2, X } from "lucide-react"
 import { inputClass } from "@/components/forms/form-ui"
-import { minCheckInDate } from "@/lib/room-availability"
+import { minCheckInDate, maxBookingDate } from "@/lib/room-availability"
 import { cn } from "@/lib/utils"
 
 type StayDateSearchProps = {
@@ -60,6 +60,7 @@ export function StayDateSearch({
             type="date"
             className={inputClass}
             min={minCheckInDate()}
+            max={maxBookingDate()}
             value={checkIn}
             onChange={(e) => onCheckInChange(e.target.value)}
           />
@@ -73,6 +74,7 @@ export function StayDateSearch({
             type="date"
             className={inputClass}
             min={minOut}
+            max={maxBookingDate()}
             value={checkOut}
             onChange={(e) => onCheckOutChange(e.target.value)}
           />
