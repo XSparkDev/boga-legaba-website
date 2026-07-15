@@ -388,14 +388,6 @@ export function buildGuestConfirmEmail(ctx: PaymentContext) {
     </table>
   </td></tr>`
 
-  const registrationHref = `${EMAIL_BRAND.websiteHref}/register?ref=${encodeURIComponent(ctx.bookingRef || "")}`
-  const registrationCta =
-    emailCallout(
-      `<strong style="color:${c.bodyText};">One more step: complete your guest registration.</strong><br>` +
-        `Please fill in your digital check-in details before you arrive so we have everything ready for you.`,
-      { tone: "warning" },
-    ) + emailButton("Complete Guest Registration", registrationHref)
-
   return emailShell({
     title: "Payment Confirmed – Boga Legaba",
     preheader: `Your stay is confirmed. Booking reference ${ctx.bookingRef || ""} · ${amount} paid.`,
@@ -413,7 +405,7 @@ export function buildGuestConfirmEmail(ctx: PaymentContext) {
         <p style="margin:0;color:${c.gold};font-size:44px;font-weight:700;font-family:'Playfair Display',Georgia,serif;letter-spacing:1px;">${amount}</p>
         <p style="margin:10px 0 0;color:${c.muted};font-size:11px;">Paid securely via Paystack &middot; VAT included</p>
       </td></tr>` +
-      stayDetails + registrationCta + gettingThere + contactUs + goodToKnow,
+      stayDetails + gettingThere + contactUs + goodToKnow,
   })
 }
 

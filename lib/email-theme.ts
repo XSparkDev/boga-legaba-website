@@ -71,7 +71,19 @@ export function emailShell(opts: {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- Force light mode: without these, Gmail/Apple Mail auto-dark-mode can
+     invert the white plate behind the logo to black, making it look dim or
+     hidden against the dark header. -->
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
 <title>${title}</title>
+<style>
+  :root { color-scheme: light; supported-color-schemes: light; }
+  img { -ms-interpolation-mode: bicubic; }
+  @media (prefers-color-scheme: dark) {
+    .bl-logo-plate { background: #ffffff !important; }
+  }
+</style>
 </head>
 <body style="margin:0;padding:0;background:${c.sand};font-family:${FONT_BODY};">
 ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${preheader}</div>` : ""}
@@ -82,7 +94,7 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;"
   <!-- HEADER -->
   <tr><td style="background:${c.black};padding:32px 40px;text-align:center;">
     <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto 14px;">
-      <tr><td style="background:${c.white};border-radius:8px;padding:12px 20px;line-height:0;">
+      <tr><td class="bl-logo-plate" bgcolor="${c.white}" style="background:${c.white};border-radius:8px;padding:12px 20px;line-height:0;">
         <img src="${EMAIL_BRAND.logoUrl}" width="160" height="${Math.round(160 * (EMAIL_BRAND.logoHeight / EMAIL_BRAND.logoWidth))}" alt="${EMAIL_BRAND.fullName}" style="display:block;width:160px;height:auto;max-width:100%;border:0;outline:none;">
       </td></tr>
     </table>

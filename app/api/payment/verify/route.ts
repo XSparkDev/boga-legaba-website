@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { sendPaymentConfirmedEmails, type PaymentContext } from "@/lib/payment-utils"
 import { transitionBookingStatus } from "@/lib/booking-status"
+import { getBookingJob } from "@/lib/booking-job"
 
 export const dynamic = "force-dynamic"
 
@@ -62,6 +63,18 @@ export async function GET(request: NextRequest) {
   }
 
   const internalReference = meta.internalReference || ""
+
+  // The exact physical unit (e.g. "Beads", "Blue Clouds") isn't known yet when
+  // Paystack's session was created — it's assigned by NightsBridge and written
+  // to booking_job.room_name once the background booking job finishes, usually
+  // well before the guest completes checkout. Prefer it here; fall back to
+  // whatever (if anything) made it into Paystack's metadata.
+  let roomName = meta.roomName || undefined
+  if (internalReference) {
+    const { job } = await getBookingJob(internalReference)
+    roomName = job?.room_name || roomName
+  }
+
   const ctx: PaymentContext = {
     reference: internalReference || reference,
     bookingRef: meta.bookingRef ?? "",
@@ -71,7 +84,7 @@ export async function GET(request: NextRequest) {
     checkin: meta.checkin ?? "",
     checkout: meta.checkout ?? "",
     roomTypeName: meta.roomTypeName ?? "",
-    roomName: meta.roomName || undefined,
+    roomName,
     amountPaid,
   }
 

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getBookingJob, savePaystackUrl } from "@/lib/booking-job"
 import { releaseHold } from "@/lib/booking-holds"
-import { buildGuestPendingEmail, initiatePaystackPayment } from "@/lib/payment-utils"
+import { initiatePaystackPayment } from "@/lib/payment-utils"
 import { transitionBookingStatus, type BookingStatus } from "@/lib/booking-status"
-import { Resend } from "resend"
 
 export const dynamic = "force-dynamic"
 
@@ -137,30 +136,9 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      const resendKey = process.env.RESEND_API_KEY
-      if (resendKey && resendKey !== "re_REPLACE_ME" && job.guest_email) {
-        try {
-          const resend = new Resend(resendKey)
-          const from = process.env.RESEND_FROM_EMAIL ?? "Boga Legaba <onboarding@resend.dev>"
-          await resend.emails.send({
-            from,
-            to: job.guest_email,
-            subject: "Your room is reserved – complete payment – Boga Legaba",
-            html: buildGuestPendingEmail({
-              guestName: job.guest_name ?? "",
-              bookingRef: job.booking_id ?? "",
-              checkin: job.checkin ?? "",
-              checkout: job.checkout ?? "",
-              roomTypeName: job.room_type_name ?? "",
-              roomName: job.room_name ?? "",
-              estimatedTotal: job.amount ? `R ${Number(job.amount).toLocaleString("en-ZA", { minimumFractionDigits: 2 })}` : "",
-              paymentUrl,
-            }),
-          })
-        } catch (err) {
-          console.error("[booking/status] Guest pending email error:", err)
-        }
-      }
+      // No pre-payment "reserved – complete payment" email here either — the
+      // guest gets exactly ONE email, "Payment Confirmed", once payment
+      // actually succeeds (see /api/payment/verify + webhook).
 
       await transitionBookingStatus(reference, "AWAITING_PAYMENT", { from: ["CONFIRMATION_EMAIL_SENT"] })
       bookingStatus = "AWAITING_PAYMENT"

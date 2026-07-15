@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkRoomTypeAvailableLive } from "@/lib/nightsbridge-api"
 import { hasActiveHold, createHold } from "@/lib/booking-holds"
 import { ensurePendingBookingJob, savePaystackUrl, getBookingJob } from "@/lib/booking-job"
-import { triggerAsyncBooking, initiatePaystackPayment, buildGuestPendingEmail, type PaymentContext } from "@/lib/payment-utils"
+import { triggerAsyncBooking, initiatePaystackPayment, type PaymentContext } from "@/lib/payment-utils"
 import { transitionBookingStatus } from "@/lib/booking-status"
-import { Resend } from "resend"
 
 export const dynamic = "force-dynamic"
 
@@ -159,30 +158,9 @@ export async function POST(request: NextRequest) {
   // Onto the payment track immediately — independent of the NightsBridge track.
   await transitionBookingStatus(reference, "AWAITING_PAYMENT", { from: ["PENDING"] })
 
-  // "Complete payment" email — non-blocking so it never delays the redirect.
-  if (paymentUrl) {
-    const resendKey = process.env.RESEND_API_KEY
-    if (resendKey && resendKey !== "re_REPLACE_ME" && ctx.guestEmail) {
-      const resend = new Resend(resendKey)
-      const from = process.env.RESEND_FROM_EMAIL ?? "Boga Legaba <onboarding@resend.dev>"
-      resend.emails
-        .send({
-          from,
-          to: ctx.guestEmail,
-          subject: "Complete your payment – Boga Legaba",
-          html: buildGuestPendingEmail({
-            guestName: ctx.guestName,
-            bookingRef: reference,
-            checkin,
-            checkout,
-            roomTypeName,
-            estimatedTotal: amountRands > 0 ? `R ${amountRands.toLocaleString("en-ZA", { minimumFractionDigits: 2 })}` : "",
-            paymentUrl,
-          }),
-        })
-        .catch((err) => console.error(`[booking/start] reference=${reference} pending email error:`, err))
-    }
-  }
+  // No "complete your payment" pre-payment email — the guest already has
+  // Paystack checkout open. They get exactly ONE email, "Payment Confirmed",
+  // once the payment actually succeeds (see /api/payment/verify + webhook).
 
   console.log(`[booking/start] reference=${reference} SUCCESS — payment ready (paymentUrl=${paymentUrl ? "yes" : "no"}), NightsBridge running in background`)
   return NextResponse.json({ ok: true, reference, paymentUrl })

@@ -22,6 +22,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createHmac } from "crypto"
 import { sendPaymentConfirmedEmails, type PaymentContext } from "@/lib/payment-utils"
 import { transitionBookingStatus } from "@/lib/booking-status"
+import { getBookingJob } from "@/lib/booking-job"
 
 export const dynamic = "force-dynamic"
 
@@ -80,6 +81,13 @@ export async function POST(request: NextRequest) {
       reason: `Paystack charge.success ref=${paystackReference}`,
     })
     if (claimed.ok) {
+      // Prefer the exact physical unit (e.g. "Beads") written to
+      // booking_job.room_name by the NightsBridge worker once its background
+      // job finishes, over whatever (if anything) made it into Paystack's
+      // metadata — see the matching comment in /api/payment/verify.
+      const { job } = await getBookingJob(internalReference)
+      const roomName = job?.room_name || meta.roomName || undefined
+
       const ctx: PaymentContext = {
         reference: internalReference,
         bookingRef: meta.bookingRef ?? "",
@@ -89,7 +97,7 @@ export async function POST(request: NextRequest) {
         checkin: meta.checkin ?? "",
         checkout: meta.checkout ?? "",
         roomTypeName: meta.roomTypeName ?? "",
-        roomName: meta.roomName || undefined,
+        roomName,
         amountPaid,
       }
       await sendPaymentConfirmedEmails(ctx)
