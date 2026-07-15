@@ -18,10 +18,10 @@ const GALLERY_ITEMS: Omit<GalleryBrowserItem, "url" | "alt">[] = [
   { id: "interlaken-exterior", label: "Interlaken A · Exterior", category: "Interlaken A", imageKey: "gallery.interlaken-exterior", span: true },
   { id: "interlaken-segametsi", label: "Interlaken A · Segametsi", category: "Interlaken A", imageKey: "gallery.interlaken-segametsi" },
   { id: "lantana-garden", label: "Lantana · Garden", category: "Lantana", imageKey: "gallery.lantana-garden" },
-  { id: "conference-theatre", label: "Conference · Theatre Setup", category: "Conference", imageKey: "gallery.conference-theatre", span: true },
-  { id: "conference-boardroom", label: "Conference · Boardroom", category: "Conference", imageKey: "gallery.conference-boardroom" },
+  { id: "lantana-spa", label: "Lantana · Beauty & Bubbles Spa", category: "Lantana", imageKey: "gallery.lantana-spa", span: true },
+  { id: "conference-venue", label: "Conference · Venue", category: "Conference", imageKey: "gallery.conference-boardroom" },
   { id: "dining-restaurant", label: "Dining · Restaurant", category: "Dining", imageKey: "gallery.dining-restaurant" },
-  { id: "dining-bar", label: "Dining · Bar", category: "Dining", imageKey: "gallery.dining-bar" },
+  { id: "lantana-pool", label: "Lantana · Poolside", category: "Lantana", imageKey: "gallery.lantana-pool" },
 ]
 
 export const galleryCategories: GalleryCategory[] = [
@@ -40,8 +40,8 @@ export const galleryFilterSuggestions = [
   "Conference",
   "Dining",
   "Room",
-  "Boardroom",
-  "Theatre",
+  "Spa",
+  "Poolside",
   "Mahikeng",
 ]
 

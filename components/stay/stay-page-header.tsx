@@ -6,7 +6,7 @@ export function StayPageHeader() {
       {/* Background hero image */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/hero-exterior.png"
+        src="/Organized/Property%201/Interlaken/IMG_2455-HDR.jpg"
         alt=""
         aria-hidden
         width={1920}
@@ -16,8 +16,8 @@ export function StayPageHeader() {
         className="absolute inset-0 h-full w-full object-cover object-center"
       />
       {/* Flat semi-transparent overlay for text legibility — brand guide: flat
-          color blocks, no gradients. */}
-      <div className="absolute inset-0 bg-black/60" />
+          color blocks, no gradients. Kept dark so the hero reads in dark mode. */}
+      <div className="absolute inset-0 bg-black/75" />
 
       <div className="grain-overlay relative z-[1] mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal>
