@@ -123,20 +123,6 @@ function SuccessContent() {
             </p>
           </div>
 
-          {/* Registration CTA */}
-          <div className="mx-6 mb-5 px-4 py-3.5 rounded-xl text-center" style={{ background: "#FEF9EE", border: "1px solid #EDD9A3" }}>
-            <p style={{ margin: "0 0 10px", fontSize: "12.5px", color: "#3D3532", lineHeight: 1.6 }}>
-              <strong>One more step</strong> — complete your guest registration before you arrive.
-            </p>
-            <a
-              href={`/register${bookingRef ? `?ref=${encodeURIComponent(bookingRef)}` : ""}`}
-              className="inline-flex w-full items-center justify-center rounded-xl py-3 text-sm font-semibold transition-all"
-              style={{ background: "#0A0A0A", color: "#C9A84C", letterSpacing: "0.04em" }}
-            >
-              Complete Guest Registration
-            </a>
-          </div>
-
           {/* CTA */}
           <div className="px-6 pb-7">
             <a
