@@ -25,6 +25,18 @@ const nextConfig = {
   outputFileTracingExcludes: {
     "*": ["./services/nightsbridge-sync/.venv/**", "./services/nightsbridge-sync/output/**"],
   },
+  // Let browsers cache the photo files so repeat visits don't re-download them.
+  // Only adds a Cache-Control header to already-served static images — it can't
+  // stop an image from loading. stale-while-revalidate keeps them fresh.
+  async headers() {
+    const cache = [
+      { key: "Cache-Control", value: "public, max-age=2592000, stale-while-revalidate=86400" },
+    ]
+    return [
+      { source: "/Organized/:path*", headers: cache },
+      { source: "/boga_hero_/:path*", headers: cache },
+    ]
+  },
 }
 
 export default nextConfig
