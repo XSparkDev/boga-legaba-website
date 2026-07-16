@@ -17,6 +17,7 @@ export default function CorporatePage() {
         eyebrow="Corporate & Government"
         title="Structured Booking Process for Corporate & Government Clients"
         subtitle="We understand procurement requirements. Our booking process is designed to make your administration easy."
+        bgImage="/Organized/Property%202/lantana%20exterior/IMG_2780-HDR.jpg"
       />
 
       <section className="bg-background py-16 lg:py-24">

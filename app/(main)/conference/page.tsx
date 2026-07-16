@@ -1,8 +1,6 @@
 import type { Metadata } from "next"
 import { Users, Projector, UtensilsCrossed, BedDouble, Wifi, ParkingCircle, LayoutGrid, MessageCircle, Check } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
-import { SiteImage } from "@/components/site-image"
-import { resolveSiteImage } from "@/lib/site-images-live"
 import { ConferencePackages } from "@/components/conference/conference-packages"
 import { ConferenceForm } from "@/components/forms/conference-form"
 import { Reveal } from "@/components/reveal"
@@ -23,30 +21,20 @@ const FEATURES = [
   { Icon: LayoutGrid, label: "Setup Styles", note: "Theatre to boardroom" },
 ]
 
-export default async function ConferencePage() {
-  const conferenceImage = await resolveSiteImage("conference")
+export default function ConferencePage() {
   return (
     <main>
       <PageHeader
         eyebrow="Conference Venue"
         title="Host Your Next Event at Boga Legaba"
         subtitle="Up to 80 delegates. Full AV. Catering. A central Mahikeng location built for productive business gatherings."
+        bgImage="/Organized/Property%202/lantana%20exterior/Conference%20Room/IMG_2774-HDR.jpg"
       />
 
-      {/* Image + features */}
+      {/* Features */}
       <section className="bg-background py-16 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Reveal>
-            <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl">
-              <SiteImage
-                src={conferenceImage.url}
-                alt={`Conference room at Boga Legaba Lantana: ${conferenceImage.alt}`}
-                fill
-                sizes="(max-width: 1280px) 100vw, 1280px"
-              />
-            </div>
-          </Reveal>
-          <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {FEATURES.map(({ Icon, label, note }, i) => (
               <Reveal as="div" key={label} delay={i * 60}>
                 <div className="flex h-full flex-col gap-2 rounded-xl border border-border bg-card p-5">

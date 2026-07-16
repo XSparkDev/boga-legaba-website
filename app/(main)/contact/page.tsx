@@ -19,6 +19,7 @@ export default function ContactPage() {
         eyebrow="Get In Touch"
         title="We're here to help"
         subtitle="Reach out for bookings, conference enquiries, or corporate arrangements. Our team responds quickly across phone, email, and WhatsApp."
+        bgImage="/Organized/Property%201/Interlaken/Reception.jpg"
       />
 
       <section className="bg-[#FFFFFF] py-20 lg:py-28">

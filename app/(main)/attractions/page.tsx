@@ -43,6 +43,7 @@ export default async function AttractionsPage() {
         eyebrow="Local Guide"
         title="Exploring Mahikeng: Your Local Guide"
         subtitle="Make the most of your stay in Mahikeng, North West Province. Here's what's close to Boga Legaba."
+        bgImage="/Organized/Property%201/Interlaken/IMG_2485-HDR.jpg"
       />
 
       {/* Live from NightsBridge: area info + attractions */}

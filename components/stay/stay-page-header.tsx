@@ -7,7 +7,7 @@ export function StayPageHeader() {
       {/* Background hero image — next/image with `priority` so it is preloaded
           and served in an optimized, compressed format. */}
       <Image
-        src="/Organized/Property%201/Interlaken/IMG_2455-HDR.jpg"
+        src="/Organized/Property%201/Interlaken/IMG_2485-HDR.jpg"
         alt=""
         aria-hidden
         fill

@@ -27,6 +27,7 @@ export default async function DiningPage() {
         eyebrow="Dining & Events · Lantana"
         title="More Than a Room: Experiences at Lantana"
         subtitle="Coming soon: restaurant, bar, and private event bookings at our 10 Lantana property."
+        bgImage="/Organized/Property%201/Interlaken/IMG_2620-HDR.jpg"
       />
 
       <section className="bg-background py-16 lg:py-24">

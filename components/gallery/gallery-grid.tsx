@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ArrowDown, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { Reveal } from "@/components/reveal"
 import { SiteImage } from "@/components/site-image"
@@ -26,6 +26,8 @@ export function GalleryGrid({ initialItems }: { initialItems?: GalleryBrowserIte
   const [category, setCategory] = useState<GalleryCategory>("All")
   const [criteria, setCriteria] = useState<string[]>([])
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  // Touch-swipe tracking for the mobile lightbox.
+  const touchStartX = useRef<number | null>(null)
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
@@ -163,7 +165,7 @@ export function GalleryGrid({ initialItems }: { initialItems?: GalleryBrowserIte
                 goTo(lightboxIndex - 1)
               }}
               aria-label="Previous image"
-              className="absolute left-4 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/25 sm:left-6"
+              className="absolute left-4 top-1/2 hidden size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/25 sm:inline-flex sm:left-6"
             >
               <ChevronLeft className="size-6" />
             </button>
@@ -177,20 +179,67 @@ export function GalleryGrid({ initialItems }: { initialItems?: GalleryBrowserIte
                 goTo(lightboxIndex + 1)
               }}
               aria-label="Next image"
-              className="absolute right-4 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/25 sm:right-6"
+              className="absolute right-4 top-1/2 hidden size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/25 sm:inline-flex sm:right-6"
             >
               <ChevronRight className="size-6" />
             </button>
           ) : null}
 
           <div className="w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
-            <div className="relative aspect-[3/2] w-full overflow-hidden rounded-xl">
+            <div
+              className="relative aspect-[3/2] w-full overflow-hidden rounded-xl"
+              onTouchStart={(e) => {
+                touchStartX.current = e.touches[0]?.clientX ?? null
+              }}
+              onTouchEnd={(e) => {
+                if (touchStartX.current === null || lightboxIndex === null) return
+                const dx = (e.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current
+                const THRESHOLD = 40
+                if (dx > THRESHOLD) goTo(lightboxIndex - 1) // swipe right → previous
+                else if (dx < -THRESHOLD) goTo(lightboxIndex + 1) // swipe left → next
+                touchStartX.current = null
+              }}
+            >
               <SiteImage
                 src={active.url}
                 alt={`${active.label}: ${active.alt}`}
                 fill
                 sizes="(max-width: 768px) 100vw, 768px"
               />
+
+              {/* Mobile only: tap the left/right half of the photo to move,
+                  with a floating arrow icon sitting ON the image. Hidden on sm+
+                  where the edge arrows + keyboard already handle navigation. */}
+              {lightboxIndex !== null && lightboxIndex > 0 ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    goTo(lightboxIndex - 1)
+                  }}
+                  aria-label="Previous image"
+                  className="absolute inset-y-0 left-0 flex w-1/2 items-center justify-start pl-3 sm:hidden"
+                >
+                  <span className="inline-flex size-10 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm">
+                    <ChevronLeft className="size-6" />
+                  </span>
+                </button>
+              ) : null}
+              {lightboxIndex !== null && lightboxIndex < filtered.length - 1 ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    goTo(lightboxIndex + 1)
+                  }}
+                  aria-label="Next image"
+                  className="absolute inset-y-0 right-0 flex w-1/2 items-center justify-end pr-3 sm:hidden"
+                >
+                  <span className="inline-flex size-10 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm">
+                    <ChevronRight className="size-6" />
+                  </span>
+                </button>
+              ) : null}
             </div>
             <p className="mt-3 text-center font-mono text-xs uppercase tracking-widest text-white/70">
               {active.label}
