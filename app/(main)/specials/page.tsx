@@ -54,6 +54,7 @@ export default async function SpecialsPage() {
         eyebrow="Direct Booking Offers"
         title="Current Offers & Promotions"
         subtitle="Book directly with Boga Legaba to access our best available rates and exclusive packages."
+        bgImage="/Organized/Property%201/Interlaken/Reception2.jpg"
       />
 
       {/* Live NightsBridge specials (shown only when present) */}

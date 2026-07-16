@@ -67,7 +67,7 @@ const CATEGORIES = [
 export default function FaqsPage() {
   return (
     <main>
-      <PageHeader eyebrow="FAQs" title="Everything You Need to Know" subtitle="Quick answers to the questions our guests ask most." />
+      <PageHeader eyebrow="FAQs" title="Everything You Need to Know" subtitle="Quick answers to the questions our guests ask most." bgImage="/Organized/Property%202/Beauty%20and%20Bubbles%20SPA/IMG_2758-HDR.jpg" />
 
       <section className="bg-background py-16 lg:py-24">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">

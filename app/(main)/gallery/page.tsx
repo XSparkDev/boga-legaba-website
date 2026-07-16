@@ -20,7 +20,7 @@ export default async function GalleryPage() {
 
   return (
     <main>
-      <PageHeader eyebrow="Gallery" title="See Boga Legaba" subtitle="A closer look at our rooms, properties, conference venue and spaces." />
+      <PageHeader eyebrow="Gallery" title="See Boga Legaba" subtitle="A closer look at our rooms, properties, conference venue and spaces." bgImage="/Organized/Property%202/Motswakgomo/IMG_2668-HDR.jpg" />
 
       <section className="bg-background py-16 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

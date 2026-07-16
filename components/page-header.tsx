@@ -4,12 +4,31 @@ interface PageHeaderProps {
   eyebrow?: string
   title: string
   subtitle?: string
+  /** Optional darkened hero background photo. Size/layout/text stay identical
+   *  to the flat-black header — this only puts a dark image behind, matching
+   *  the Stay page hero. */
+  bgImage?: string
 }
 
-export function PageHeader({ eyebrow, title, subtitle }: PageHeaderProps) {
+export function PageHeader({ eyebrow, title, subtitle, bgImage }: PageHeaderProps) {
   return (
     <section className="relative overflow-hidden bg-black pb-14 pt-28 text-white lg:pb-20 lg:pt-36">
-      <div className="grain-overlay relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      {bgImage ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={bgImage}
+            alt=""
+            aria-hidden
+            loading="eager"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+          {/* Flat dark overlay for legibility — kept dark like the Stay hero. */}
+          <div className="absolute inset-0 bg-black/75" />
+        </>
+      ) : null}
+      <div className="grain-overlay relative z-[1] mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal>
           {eyebrow ? (
             <p className="font-body text-xs uppercase tracking-[0.25em] text-gold">{eyebrow}</p>

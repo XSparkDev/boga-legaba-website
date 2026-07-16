@@ -347,7 +347,12 @@ def _run_booking_to_db(params: dict, book_script: "Path", reference: str) -> Non
     and to offer a retry."""
     print(f"[worker] booking_job[{reference}] background thread STARTED (room={params.get('roomTypeName')})")
     global _running
-    got_lock = _lock.acquire(timeout=70)
+    # Wait comfortably longer than a full sync (now ~75-80s with the 1-year
+    # availability window) so a booking that lands during a sync WAITS for it
+    # to finish and then runs ALONE, instead of running a second Chromium +
+    # a second NightsBridge login concurrently (session clash / OOM -> the
+    # booking fails and needs an admin retry). 300s >> sync duration.
+    got_lock = _lock.acquire(timeout=300)
     print(f"[worker] booking_job[{reference}] lock acquired={got_lock} — running subprocess now")
     if got_lock:
         _running = True
@@ -581,7 +586,7 @@ class Handler(BaseHTTPRequestHandler):
         # If we can't get the lock in time we proceed anyway — never fail a paid
         # booking just because a sync is busy.
         global _running
-        got_lock = _lock.acquire(timeout=70)
+        got_lock = _lock.acquire(timeout=300)  # wait out a full sync (~75-80s), then run alone
         if got_lock:
             _running = True
         try:
