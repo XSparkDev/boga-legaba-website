@@ -5,7 +5,7 @@ import { PageHeader } from '@v2/components/page-header'
 import { Reveal } from '@v2/components/reveal'
 
 export const metadata: Metadata = {
-  title: 'Explore Mahikeng — Attractions Near Your Guest House',
+  title: 'Explore Mahikeng: Attractions Near Your Guest House',
   description:
     'Things to do near our guest house in Mahikeng: game reserve, government buildings, shopping, restaurants, history and the airport. Plan your stay in North West Province.',
 }

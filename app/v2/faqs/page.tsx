@@ -11,7 +11,7 @@ import {
 export const metadata: Metadata = {
   title: 'FAQs',
   description:
-    'Frequently asked questions about staying at Boga Legaba Guest House Mahikeng — booking, check-in, parking, conference and corporate rates.',
+    'Frequently asked questions about staying at Boga Legaba Guest House Mahikeng: booking, check-in, parking, conference and corporate rates.',
 }
 
 const faqs = [
@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     q: 'What time is check-in and check-out?',
-    a: 'Standard check-in is from 14:00 and check-out by 10:00. Early check-in or late check-out may be arranged subject to availability — contact reception.',
+    a: 'Standard check-in is from 14:00 and check-out by 10:00. Early check-in or late check-out may be arranged subject to availability. Contact reception.',
   },
   {
     q: 'Is parking available?',
@@ -37,7 +37,7 @@ const faqs = [
   },
   {
     q: 'Which property should I choose?',
-    a: 'Chababa (10 rooms) and Interlaken A (6 rooms) are on Interlaken Avenue in Riviera Park. Lantana (7 rooms) is on Lantana Street. All share one booking team — browse Stay to compare rooms.',
+    a: 'Chababa (10 rooms) and Interlaken A (6 rooms) are on Interlaken Avenue in Riviera Park. Lantana (7 rooms) is on Lantana Street. All share one booking team. Browse Stay to compare rooms.',
   },
 ]
 

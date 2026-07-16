@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
   // Note: never echo apiKey — only report WHICH var is missing, not its value.
   if (!apiKey || !placeId) {
     return NextResponse.json(
-      { error: "Reviews sync not configured — set GOOGLE_PLACES_API_KEY and GOOGLE_PLACE_ID." },
+      { error: "Reviews sync not configured, set GOOGLE_PLACES_API_KEY and GOOGLE_PLACE_ID." },
       { status: 503 },
     )
   }

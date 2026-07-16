@@ -9,7 +9,7 @@ import { WhatsAppIcon } from '@v2/components/whatsapp-icon'
 import { PHONE, waLink } from '@v2/data/site'
 
 export const metadata: Metadata = {
-  title: 'Conference Venue in Mahikeng — Up to 80 Delegates',
+  title: 'Conference Venue in Mahikeng: Up to 80 Delegates',
   description:
     'A conference venue in Mahikeng for up to 80 delegates with full AV, catering and on-site accommodation. Enquire about your next corporate or government event.',
 }
@@ -24,7 +24,7 @@ const capacity = [
 
 const checkpoints = [
   'Flexible room setups for any agenda',
-  'Full AV — projector, screen, sound',
+  'Full AV: projector, screen, sound',
   'In-house and bespoke catering',
   'On-site accommodation for delegates',
   'Dedicated event coordinator',

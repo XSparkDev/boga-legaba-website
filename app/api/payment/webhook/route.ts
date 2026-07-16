@@ -20,7 +20,8 @@
  */
 import { NextRequest, NextResponse } from "next/server"
 import { createHmac } from "crypto"
-import { sendPaymentConfirmedEmails, type PaymentContext } from "@/lib/payment-utils"
+import { sendAdminPaymentEmail, type PaymentContext } from "@/lib/payment-utils"
+import { settleGuestConfirmation } from "@/lib/booking-emails"
 import { transitionBookingStatus } from "@/lib/booking-status"
 import { getBookingJob } from "@/lib/booking-job"
 
@@ -100,12 +101,20 @@ export async function POST(request: NextRequest) {
         roomName,
         amountPaid,
       }
-      await sendPaymentConfirmedEmails(ctx)
+      // Boga is notified IMMEDIATELY on payment success — never gated on the
+      // NightsBridge booking, so they can act (e.g. Retry) if it hasn't landed.
+      await sendAdminPaymentEmail(ctx)
       await transitionBookingStatus(internalReference, "BOGA_NOTIFIED", { from: ["PAYMENT_CONFIRMED"] })
-      console.log(`[webhook] internalRef=${internalReference} guest-confirmation + admin notification emails sent`)
+      console.log(`[webhook] internalRef=${internalReference} admin notification email sent`)
     } else {
-      console.log(`[webhook] internalRef=${internalReference} PAYMENT_CONFIRMED transition rejected (${claimed.reason}) — already processed by webhook retry or /api/payment/verify, skipping`)
+      console.log(`[webhook] internalRef=${internalReference} PAYMENT_CONFIRMED transition rejected (${claimed.reason}) — already processed by webhook retry or /api/payment/verify, skipping admin email`)
     }
+
+    // Guest email is held until the NightsBridge booking has resolved. Attempt
+    // it now; if not yet resolved, the worker's completion ping / a later poll
+    // sends it. Idempotent (atomic BOGA_NOTIFIED -> GUEST_CONFIRMED claim).
+    const g = await settleGuestConfirmation(internalReference)
+    console.log(`[webhook] internalRef=${internalReference} guest email: ${g.reason}`)
   }
 
   // ── Failed / declined payment ──────────────────────────────────────────────

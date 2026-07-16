@@ -16,6 +16,15 @@ export const BOOKING_STATUSES = [
   "AWAITING_PAYMENT",
   "PAYMENT_CONFIRMED",
   "BOGA_NOTIFIED",
+  // The guest's own "Payment Confirmed" email has been sent. This is now a
+  // SEPARATE, later stage than BOGA_NOTIFIED (the admin/Boga notification):
+  // Boga is notified the instant payment succeeds, but the guest's email is
+  // deliberately held back until their NightsBridge booking has RESOLVED
+  // (completed → shows the exact room name, or failed → Boga retries), so the
+  // guest is only ever told "confirmed" once their booking is really settled.
+  // The BOGA_NOTIFIED -> GUEST_CONFIRMED transition is itself the atomic
+  // once-only claim for sending that guest email. Terminal.
+  "GUEST_CONFIRMED",
   // Guest reached checkout but the payment did not succeed — Paystack sent a
   // charge.failed (declined card, insufficient funds, etc.). DISTINCT from the
   // generic FAILED so the admin can see "tried to book but payment failed".
@@ -32,7 +41,7 @@ export type BookingStatus = (typeof BOOKING_STATUSES)[number]
  * skipping a stage or moving backward — a transition not listed here is
  * rejected even if the caller asks for it, so the audit trail stays honest.
  * FAILED is reachable from every non-terminal stage (a booking can fail at
- * any point); BOGA_NOTIFIED and FAILED are terminal.
+ * any point); GUEST_CONFIRMED and FAILED are terminal.
  */
 const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   // PAY-FIRST FLOW: PENDING can now jump straight to AWAITING_PAYMENT. The
@@ -50,7 +59,10 @@ const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   // PAYMENT_CONFIRMED, or back to AWAITING_PAYMENT if they re-open checkout.
   PAYMENT_FAILED: ["PAYMENT_CONFIRMED", "AWAITING_PAYMENT", "FAILED"],
   PAYMENT_CONFIRMED: ["BOGA_NOTIFIED", "FAILED"],
-  BOGA_NOTIFIED: [],
+  // Boga has been notified; the guest email is sent next, but only once the
+  // NightsBridge booking has resolved (see settleGuestConfirmation).
+  BOGA_NOTIFIED: ["GUEST_CONFIRMED"],
+  GUEST_CONFIRMED: [],
   FAILED: [],
 }
 

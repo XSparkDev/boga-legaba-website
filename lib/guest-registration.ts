@@ -97,19 +97,19 @@ export function buildRegistrationGuestEmail(input: RegistrationInput): string {
 export function buildRegistrationStaffEmail(input: RegistrationInput): string {
   const rows: InfoRow[] = [
     { label: "Full Name", value: input.full_name },
-    { label: "Email", value: input.email || "—" },
-    { label: "Phone", value: input.phone || "—" },
-    { label: "Booking Reference", value: input.booking_ref || "—" },
-    { label: "Home Address", value: input.home_address || "—" },
-    { label: "Nationality", value: input.nationality || "—" },
-    { label: "ID / Passport", value: input.id_or_passport || "—" },
-    { label: "Date of Birth", value: input.date_of_birth || "—" },
-    { label: "Vehicle Registration", value: input.vehicle_reg || "—" },
-    { label: "Number of Guests", value: input.num_guests != null ? String(input.num_guests) : "—" },
-    { label: "Names of All Guests", value: input.guest_names || "—" },
-    { label: "Emergency Contact", value: input.emergency_contact_name || "—" },
-    { label: "Emergency Contact Phone", value: input.emergency_contact_phone || "—" },
-    { label: "Purpose of Visit", value: input.purpose || "—" },
+    { label: "Email", value: input.email || "N/A" },
+    { label: "Phone", value: input.phone || "N/A" },
+    { label: "Booking Reference", value: input.booking_ref || "N/A" },
+    { label: "Home Address", value: input.home_address || "N/A" },
+    { label: "Nationality", value: input.nationality || "N/A" },
+    { label: "ID / Passport", value: input.id_or_passport || "N/A" },
+    { label: "Date of Birth", value: input.date_of_birth || "N/A" },
+    { label: "Vehicle Registration", value: input.vehicle_reg || "N/A" },
+    { label: "Number of Guests", value: input.num_guests != null ? String(input.num_guests) : "N/A" },
+    { label: "Names of All Guests", value: input.guest_names || "N/A" },
+    { label: "Emergency Contact", value: input.emergency_contact_name || "N/A" },
+    { label: "Emergency Contact Phone", value: input.emergency_contact_phone || "N/A" },
+    { label: "Purpose of Visit", value: input.purpose || "N/A" },
   ]
 
   return emailShell({

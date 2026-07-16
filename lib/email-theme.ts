@@ -25,12 +25,20 @@ export const EMAIL_BRAND = {
   website: "www.bogalegaba.co.za",
   websiteHref: "https://www.bogalegaba.co.za",
   whatsappHref: "https://wa.me/27828757018",
-  // The actual site logo (public/logo.png, used by components/site-logo.tsx)
-  // hosted at its live, stable URL — not a recreation. It's a dark/black mark
-  // on a transparent background (the site inverts it to white via CSS filter
-  // for its own dark nav bar; email clients can't apply that filter reliably,
-  // so emails place it on a light plate instead — see emailShell()).
-  logoUrl: "https://www.bogalegaba.co.za/logo.png",
+  // WHITE version of the site logo (public/logo-email.png — the same mark as
+  // public/logo.png, pre-inverted to white). Emails sit it directly on the
+  // dark header, so it stays visible no matter what a client's dark mode does
+  // (unlike a dark logo on a white plate, which vanishes when dark mode
+  // inverts the plate — the old "logo looks darkened" bug).
+  //
+  // The URL is configurable because the bare apex/www domain does not reliably
+  // serve the app's static files. Set EMAIL_LOGO_URL to a guaranteed-public
+  // URL (e.g. a Supabase Storage public object) for the most robust result;
+  // otherwise it falls back to <site>/logo-email.png using NEXT_PUBLIC_SITE_URL.
+  logoUrl:
+    process.env.EMAIL_LOGO_URL ||
+    ((process.env.NEXT_PUBLIC_SITE_URL || "https://www.bogalegaba.co.za").replace(/\/+$/, "") +
+      "/logo-email.png"),
   logoWidth: 900,
   logoHeight: 394,
 }
@@ -71,18 +79,15 @@ export function emailShell(opts: {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<!-- Force light mode: without these, Gmail/Apple Mail auto-dark-mode can
-     invert the white plate behind the logo to black, making it look dim or
-     hidden against the dark header. -->
+<!-- Keep the email in light mode. The logo itself is now a WHITE mark placed
+     directly on the dark header, so it stays visible regardless — but this
+     still stops clients from muddying the body/plates. -->
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
 <title>${title}</title>
 <style>
   :root { color-scheme: light; supported-color-schemes: light; }
   img { -ms-interpolation-mode: bicubic; }
-  @media (prefers-color-scheme: dark) {
-    .bl-logo-plate { background: #ffffff !important; }
-  }
 </style>
 </head>
 <body style="margin:0;padding:0;background:${c.sand};font-family:${FONT_BODY};">
@@ -93,11 +98,7 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;"
 
   <!-- HEADER -->
   <tr><td style="background:${c.black};padding:32px 40px;text-align:center;">
-    <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto 14px;">
-      <tr><td class="bl-logo-plate" bgcolor="${c.white}" style="background:${c.white};border-radius:8px;padding:12px 20px;line-height:0;">
-        <img src="${EMAIL_BRAND.logoUrl}" width="160" height="${Math.round(160 * (EMAIL_BRAND.logoHeight / EMAIL_BRAND.logoWidth))}" alt="${EMAIL_BRAND.fullName}" style="display:block;width:160px;height:auto;max-width:100%;border:0;outline:none;">
-      </td></tr>
-    </table>
+    <img src="${EMAIL_BRAND.logoUrl}" width="180" height="${Math.round(180 * (EMAIL_BRAND.logoHeight / EMAIL_BRAND.logoWidth))}" alt="${EMAIL_BRAND.fullName}" style="display:block;margin:0 auto 14px;width:180px;height:auto;max-width:60%;border:0;outline:none;">
     <p style="color:${c.muted};margin:0;font-size:9px;letter-spacing:3px;text-transform:uppercase;">Guest House &amp; Conference Centre</p>
     ${eyebrow ? `<p style="color:${c.muted};margin:10px 0 0;font-size:10px;letter-spacing:2px;text-transform:uppercase;">${eyebrow}</p>` : ""}
   </td></tr>

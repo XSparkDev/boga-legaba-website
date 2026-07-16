@@ -29,7 +29,7 @@ export default async function AdminReviewsPage() {
         <p className="mb-2 font-serif text-lg font-bold text-gray-900">Homepage guest reviews</p>
         <p className="mb-6 max-w-xl font-mono text-[11px] leading-relaxed text-gray-400">
           The homepage shows a curated set of reviews by default. Use the button below to pull the latest reviews
-          from Google on demand. This never runs automatically — it only syncs when you click it.
+          from Google on demand. This never runs automatically. It only syncs when you click it.
         </p>
 
         <RefreshReviewsButton />

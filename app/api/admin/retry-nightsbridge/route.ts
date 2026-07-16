@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
   const ctx = { ...(job.context as Record<string, unknown>), reference } as PaymentContext
   if (!ctx.roomTypeName || !ctx.checkin || !ctx.checkout) {
     return NextResponse.json(
-      { ok: false, error: "Stored booking is missing room/dates — cannot retry automatically. Book it manually on NightsBridge." },
+      { ok: false, error: "Stored booking is missing room/dates, cannot retry automatically. Book it manually on NightsBridge." },
       { status: 422 },
     )
   }

@@ -5,7 +5,7 @@ import { GalleryBrowser } from '@v2/components/gallery/gallery-browser'
 export const metadata: Metadata = {
   title: 'Gallery',
   description:
-    'Photo gallery of Boga Legaba Guest House Mahikeng — rooms, properties, conference and dining.',
+    'Photo gallery of Boga Legaba Guest House Mahikeng: rooms, properties, conference and dining.',
 }
 
 export default function GalleryPage() {

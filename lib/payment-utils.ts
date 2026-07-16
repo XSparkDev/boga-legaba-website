@@ -235,48 +235,57 @@ export async function triggerAsyncBooking(ctx: PaymentContext): Promise<boolean>
   }
 }
 
+function _resendClient(): { resend: Resend; from: string } | null {
+  const resendKey = process.env.RESEND_API_KEY
+  const from      = process.env.RESEND_FROM_EMAIL ?? "Boga Legaba <onboarding@resend.dev>"
+  if (!resendKey || resendKey === "re_REPLACE_ME") return null
+  return { resend: new Resend(resendKey), from }
+}
+
 /**
- * BOOK-FIRST FLOW: the NightsBridge booking is now created BEFORE payment is
- * ever requested (see /api/booking/start + /api/booking/status). By the time
- * Paystack confirms a successful payment, the room is already reserved — so
- * this just sends the final "Payment Confirmed" email to the guest and a
- * notification to admin. It never creates or retries a booking.
- *
- * If the guest's payment fails or they abandon checkout, the booking is left
- * as-is (the guest already received NightsBridge's own reservation email) —
- * per business decision, nothing is auto-cancelled or refunded.
+ * Notify Boga (admin) that a payment succeeded. Sent the INSTANT Paystack
+ * confirms payment — deliberately NOT gated on the NightsBridge booking, so
+ * Boga always hears about a paid booking immediately, even if the automated
+ * NightsBridge registration is still running or failed. The email itself tells
+ * them to open the admin page and click Retry if the booking isn't on
+ * NightsBridge yet — which only works if it arrives promptly, hence the
+ * decoupling from the guest email (see sendGuestConfirmationEmail).
  */
-export async function sendPaymentConfirmedEmails(ctx: PaymentContext): Promise<void> {
-  const resendKey  = process.env.RESEND_API_KEY
+export async function sendAdminPaymentEmail(ctx: PaymentContext): Promise<void> {
+  const client = _resendClient()
+  if (!client) return
   const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL ?? "bogalegaba@gmail.com"
-  const from       = process.env.RESEND_FROM_EMAIL ?? "Boga Legaba <onboarding@resend.dev>"
-  if (!resendKey || resendKey === "re_REPLACE_ME") return
-
-  const resend = new Resend(resendKey)
   const guestFullName = resolveGuestName(ctx).full
-
-  if (ctx.guestEmail) {
-    try {
-      await resend.emails.send({
-        from,
-        to:      ctx.guestEmail,
-        subject: "Payment Confirmed – Boga Legaba",
-        html:    buildGuestConfirmEmail(ctx),
-      })
-    } catch (err) {
-      console.error("[payment] Guest confirmation email error:", err)
-    }
-  }
-
   try {
-    await resend.emails.send({
-      from,
+    await client.resend.emails.send({
+      from:    client.from,
       to:      adminEmail,
       subject: `New Payment – ${guestFullName} · ${ctx.bookingRef || "no ref"}`,
       html:    buildAdminPaymentEmail(ctx, true),
     })
   } catch (err) {
     console.error("[payment] Admin notification email error:", err)
+  }
+}
+
+/**
+ * Send the guest their final "Payment Confirmed" email. Called only once the
+ * booking has settled on NightsBridge (see settleGuestConfirmation in
+ * lib/booking-emails.ts), so ctx.roomName / ctx.bookingRef reflect the real,
+ * confirmed booking rather than a still-in-progress one.
+ */
+export async function sendGuestConfirmationEmail(ctx: PaymentContext): Promise<void> {
+  const client = _resendClient()
+  if (!client || !ctx.guestEmail) return
+  try {
+    await client.resend.emails.send({
+      from:    client.from,
+      to:      ctx.guestEmail,
+      subject: "Payment Confirmed – Boga Legaba",
+      html:    buildGuestConfirmEmail(ctx),
+    })
+  } catch (err) {
+    console.error("[payment] Guest confirmation email error:", err)
   }
 }
 

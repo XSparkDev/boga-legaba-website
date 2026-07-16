@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getBookingJob, savePaystackUrl } from "@/lib/booking-job"
 import { releaseHold } from "@/lib/booking-holds"
 import { initiatePaystackPayment } from "@/lib/payment-utils"
+import { settleGuestConfirmation } from "@/lib/booking-emails"
 import { transitionBookingStatus, type BookingStatus } from "@/lib/booking-status"
 
 export const dynamic = "force-dynamic"
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest) {
   // email/redirect that will never come.
   const STALE_MS = 6 * 60_000 // well past the ~50-90s typical booking duration
   const ageMs = Date.now() - new Date(job.created_at).getTime()
-  if (bookingStatus && bookingStatus !== "FAILED" && bookingStatus !== "BOGA_NOTIFIED" && bookingStatus !== "AWAITING_PAYMENT" && ageMs > STALE_MS) {
+  if (bookingStatus && bookingStatus !== "FAILED" && bookingStatus !== "BOGA_NOTIFIED" && bookingStatus !== "GUEST_CONFIRMED" && bookingStatus !== "AWAITING_PAYMENT" && ageMs > STALE_MS) {
     console.error(`[booking/status] reference=${reference} STALE (${Math.round(ageMs / 1000)}s in ${bookingStatus}) — marking FAILED so the guest isn't stuck loading forever`)
     await transitionBookingStatus(reference, "FAILED", { reason: `Stale — stuck in ${bookingStatus} for ${Math.round(ageMs / 1000)}s` })
     bookingStatus = "FAILED"
@@ -143,6 +144,14 @@ export async function GET(request: NextRequest) {
       await transitionBookingStatus(reference, "AWAITING_PAYMENT", { from: ["CONFIRMATION_EMAIL_SENT"] })
       bookingStatus = "AWAITING_PAYMENT"
     }
+  }
+
+  // Opportunistic guest-email settle: if payment is already confirmed
+  // (BOGA_NOTIFIED) and the NightsBridge booking has since resolved, this poll
+  // sends the held-back guest email. Idempotent — no-ops otherwise.
+  if (bookingStatus === "BOGA_NOTIFIED") {
+    const g = await settleGuestConfirmation(reference)
+    if (g.sent) bookingStatus = "GUEST_CONFIRMED"
   }
 
   return NextResponse.json({

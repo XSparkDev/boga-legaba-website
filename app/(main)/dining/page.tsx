@@ -1,8 +1,6 @@
 import type { Metadata } from "next"
 import { UtensilsCrossed, Wine, TreePalm, PartyPopper } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
-import { SiteImage } from "@/components/site-image"
-import { resolveSiteImage } from "@/lib/site-images-live"
 import { InterestForm } from "@/components/forms/interest-form"
 import { Reveal } from "@/components/reveal"
 
@@ -19,8 +17,7 @@ const SECTIONS = [
   { Icon: Wine, title: "Bar", body: "A welcoming bar for after-work drinks, nightcaps and social evenings." },
 ]
 
-export default async function DiningPage() {
-  const diningImage = await resolveSiteImage("dining")
+export default function DiningPage() {
   return (
     <main>
       <PageHeader
@@ -32,18 +29,7 @@ export default async function DiningPage() {
 
       <section className="bg-background py-16 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Reveal>
-            <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl">
-              <SiteImage
-                src={diningImage.url}
-                alt={`Lantana dining and events space at Boga Legaba: ${diningImage.alt}`}
-                fill
-                sizes="(max-width: 1280px) 100vw, 1280px"
-              />
-            </div>
-          </Reveal>
-
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {SECTIONS.map(({ Icon, title, body }, i) => (
               <Reveal as="article" key={title} delay={i * 80}>
                 <div className="flex h-full flex-col rounded-xl border border-border bg-card p-6">

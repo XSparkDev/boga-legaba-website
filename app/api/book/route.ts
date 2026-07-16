@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ok: false,
-        error: `Sorry — ${body.roomTypeName} was just taken for ${body.checkin} to ${body.checkout}. Please choose different dates or another room.`,
+        error: `Sorry, ${body.roomTypeName} was just taken for ${body.checkin} to ${body.checkout}. Please choose different dates or another room.`,
       },
       { status: 409 },
     )

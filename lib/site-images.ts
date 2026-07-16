@@ -23,6 +23,6 @@ export function getRoomImage(
   const img = getSiteImage(key)
   return {
     url: img.url,
-    alt: `${roomName} room at ${propertyName} — ${img.alt}`,
+    alt: `${roomName} room at ${propertyName}, ${img.alt}`,
   }
 }

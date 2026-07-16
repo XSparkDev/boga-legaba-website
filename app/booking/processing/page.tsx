@@ -192,7 +192,7 @@ function ProcessingContent() {
             </p>
             <p style={{ color: "#8C7B6B", fontSize: "13px", lineHeight: 1.7 }}>
               We&apos;re registering your stay with the property.
-              {slow ? " This can take a minute or two — hang tight." : ""}
+              {slow ? " This can take a minute or two, hang tight." : ""}
             </p>
           </div>
 

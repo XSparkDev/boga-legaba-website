@@ -6,7 +6,7 @@ import { InterestForm } from '@v2/components/forms/interest-form'
 import { getSiteImage } from '@v2/data/images'
 
 export const metadata: Metadata = {
-  title: 'Dining & Events at Lantana — Coming Soon',
+  title: 'Dining & Events at Lantana: Coming Soon',
   description:
     'Dining and events experiences coming soon at Lantana, Mahikeng. Register your interest for our restaurant, private events, outdoor space and bar.',
 }
@@ -48,7 +48,7 @@ export default function DiningPage() {
               Dining & Events · Lantana
             </p>
             <h1 className="mt-4 max-w-3xl font-display text-5xl italic font-bold leading-[0.95] text-deep-earth text-balance md:text-7xl">
-              More than a stay — experiences at Lantana.
+              More than a stay, experiences at Lantana.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-body-brown">
               We&apos;re building something special at our Lantana property. Dining, events and
@@ -101,7 +101,7 @@ export default function DiningPage() {
                 withInterest
                 interestOptions={['Dining', 'Private Events', 'Outdoor', 'Bar']}
                 buttonLabel="Notify Me"
-                successMessage="Thank you — we’ll let you know the moment we launch."
+                successMessage="Thank you, we’ll let you know the moment we launch."
               />
             </div>
           </Reveal>

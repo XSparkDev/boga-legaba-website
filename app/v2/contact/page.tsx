@@ -11,7 +11,7 @@ import { EMAIL, PHONE, properties, waLink } from '@v2/data/site'
 export const metadata: Metadata = {
   title: 'Contact Us',
   description:
-    'Contact Boga Legaba Guest House Mahikeng — phone, email and WhatsApp for Chababa, Interlaken A and Lantana.',
+    'Contact Boga Legaba Guest House Mahikeng: phone, email and WhatsApp for Chababa, Interlaken A and Lantana.',
 }
 
 export default function ContactPage() {
@@ -20,7 +20,7 @@ export default function ContactPage() {
       <PageHeader
         label="Get in Touch"
         title="We’re here to help."
-        subtitle="Reception, conference bookings and accounts — reach the right team across our three properties."
+        subtitle="Reception, conference bookings and accounts: reach the right team across our three properties."
       />
 
       <section className="bg-cream py-20 md:py-28">

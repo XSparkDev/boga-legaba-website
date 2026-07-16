@@ -35,12 +35,12 @@ export function RefreshReviewsButton() {
       const data = (await res.json().catch(() => ({}))) as SyncResult | SyncError
       if (!res.ok || !data.ok) {
         const e = data as SyncError
-        setError(e.detail ? `${e.error} — ${e.detail}` : e.error || `Request failed (${res.status})`)
+        setError(e.detail ? `${e.error}: ${e.detail}` : e.error || `Request failed (${res.status})`)
       } else {
         setResult(data)
       }
     } catch {
-      setError("Network error — please try again.")
+      setError("Network error, please try again.")
     } finally {
       setLoading(false)
     }
@@ -58,7 +58,7 @@ export function RefreshReviewsButton() {
       </button>
 
       <p className="mt-3 max-w-xl font-mono text-[11px] leading-relaxed text-gray-400">
-        Google only provides up to 5 reviews via this method — this reflects their current top reviews, not a
+        Google only provides up to 5 reviews via this method. This reflects their current top reviews, not a
         random sample.
       </p>
 
@@ -84,7 +84,7 @@ export function RefreshReviewsButton() {
             <p className="font-mono text-[11px] leading-relaxed">
               {result.homepageShowsLive ? (
                 <>
-                  <strong>{result.eligible}</strong> live reviews clear the 3-star filter — the homepage will now
+                  <strong>{result.eligible}</strong> live reviews clear the 3-star filter, so the homepage will now
                   show these live reviews.
                 </>
               ) : (

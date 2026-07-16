@@ -51,7 +51,7 @@ function FailedContent() {
               Payment didn&apos;t go through
             </h1>
             <p style={{ color: "#8C7B6B", fontSize: "13px", lineHeight: 1.7 }}>
-              Your room is still reserved with us — this only affected payment. Please contact us to arrange
+              Your room is still reserved with us. This only affected payment. Please contact us to arrange
               payment, or try again below.
             </p>
           </div>

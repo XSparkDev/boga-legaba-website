@@ -242,7 +242,7 @@ export function buildInvoiceEmail(invoice: Invoice): string {
 
   return emailShell({
     title: `Invoice ${invoice.invoice_no} – Boga Legaba`,
-    preheader: `Your invoice ${invoice.invoice_no} — total ${fmtZar(invoice.total)}`,
+    preheader: `Your invoice ${invoice.invoice_no}, total ${fmtZar(invoice.total)}`,
     eyebrow: `Invoice ${invoice.invoice_no}`,
     bodyHtml: `
       <tr><td style="padding:32px 40px 8px;">

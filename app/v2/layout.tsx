@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     template: "%s | Boga Legaba Website 2",
   },
   description:
-    "Alternate Boga Legaba experience — guest house and conference venue in Mahikeng with 27 rooms across 3 properties.",
+    "Alternate Boga Legaba experience: guest house and conference venue in Mahikeng with 27 rooms across 3 properties.",
   icons: {
     icon: "/logo1.svg",
     shortcut: "/logo1.svg",

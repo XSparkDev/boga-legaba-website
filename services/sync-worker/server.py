@@ -323,6 +323,45 @@ def _already_completed(reference: str) -> str | None:
     return None
 
 
+def _site_base_url() -> str:
+    """The website's base URL, for pinging it on booking completion. Accepts a
+    few common env names; empty string if none set (ping is then skipped)."""
+    for name in ("SITE_URL", "PUBLIC_SITE_URL", "NEXT_PUBLIC_SITE_URL", "WEBSITE_URL"):
+        val = (os.environ.get(name) or "").strip()
+        if val:
+            return val.rstrip("/")
+    return ""
+
+
+def _ping_settle_guest_email(reference: str) -> None:
+    """Tell the website a booking has RESOLVED so it can send the guest's
+    held-back confirmation email — covers the case where the guest finished
+    paying before this background job did, so no payment-time trigger or
+    browser poll would otherwise catch the completion. Best-effort and fully
+    idempotent on the website side; never blocks or crashes the booking thread.
+    Skipped (with a one-line log) if no site URL / CRON_SECRET is configured."""
+    if not reference:
+        return
+    base = _site_base_url()
+    secret = (os.environ.get("CRON_SECRET") or "").strip()
+    if not base or not secret:
+        print(f"[worker] booking_job[{reference}] guest-email ping skipped (no SITE_URL/CRON_SECRET)")
+        return
+    try:
+        import urllib.request
+        data = json.dumps({"reference": reference}).encode()
+        req = urllib.request.Request(
+            f"{base}/api/booking/settle-guest-email",
+            data=data,
+            headers={"Authorization": f"Bearer {secret}", "Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            print(f"[worker] booking_job[{reference}] guest-email ping -> HTTP {resp.status}")
+    except Exception as exc:
+        print(f"[worker] booking_job[{reference}] guest-email ping failed (non-blocking): {exc}", file=sys.stderr)
+
+
 def _write_booking_job(reference: str, fields: dict) -> None:
     """Upsert the booking_job row for this reference (async booking status).
     Best-effort — a DB failure here must never crash the booking thread."""
@@ -337,6 +376,11 @@ def _write_booking_job(reference: str, fields: dict) -> None:
         print(f"[worker] booking_job[{reference}] -> {fields.get('status')}")
     except Exception as exc:
         print(f"[worker] booking_job write error ({reference}): {exc}", file=sys.stderr)
+        return
+    # On a RESOLVED outcome (completed or failed), nudge the website to send the
+    # guest's confirmation email. Not for interim "processing"/"pending" writes.
+    if fields.get("status") in ("completed", "failed"):
+        _ping_settle_guest_email(reference)
 
 
 # Mirrors lib/booking-status.ts's ALLOWED_TRANSITIONS — keep these in sync.
@@ -350,7 +394,8 @@ _ALLOWED_TRANSITIONS = {
     "AWAITING_PAYMENT": ["PAYMENT_CONFIRMED", "PAYMENT_FAILED", "FAILED"],
     "PAYMENT_FAILED": ["PAYMENT_CONFIRMED", "AWAITING_PAYMENT", "FAILED"],
     "PAYMENT_CONFIRMED": ["BOGA_NOTIFIED", "FAILED"],
-    "BOGA_NOTIFIED": [],
+    "BOGA_NOTIFIED": ["GUEST_CONFIRMED"],
+    "GUEST_CONFIRMED": [],
     "FAILED": [],
 }
 

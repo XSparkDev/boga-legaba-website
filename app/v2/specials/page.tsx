@@ -6,14 +6,14 @@ import { Reveal } from '@v2/components/reveal'
 export const metadata: Metadata = {
   title: 'Specials & Offers',
   description:
-    'Current specials and seasonal offers at Boga Legaba Guest House Mahikeng — direct booking benefits and corporate packages.',
+    'Current specials and seasonal offers at Boga Legaba Guest House Mahikeng: direct booking benefits and corporate packages.',
 }
 
 const specials = [
   {
     title: 'Direct Booking Advantage',
     detail:
-      'Book on our site or via NightsBridge and skip OTA fees — best available rates with instant confirmation.',
+      'Book on our site or via NightsBridge and skip OTA fees, with best available rates and instant confirmation.',
   },
   {
     title: 'Extended Stay',

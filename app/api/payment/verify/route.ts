@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { sendPaymentConfirmedEmails, type PaymentContext } from "@/lib/payment-utils"
+import { sendAdminPaymentEmail, sendGuestConfirmationEmail, type PaymentContext } from "@/lib/payment-utils"
+import { settleGuestConfirmation } from "@/lib/booking-emails"
 import { transitionBookingStatus } from "@/lib/booking-status"
 import { getBookingJob } from "@/lib/booking-job"
 
@@ -90,18 +91,26 @@ export async function GET(request: NextRequest) {
 
   if (!internalReference) {
     console.error(`[payment/verify] paystackRef=${reference} has no internalReference in metadata — cannot drive the state machine (old/manual transaction?), sending emails unconditionally as a best-effort fallback`)
-    await sendPaymentConfirmedEmails(ctx)
+    await sendAdminPaymentEmail(ctx)
+    await sendGuestConfirmationEmail(ctx)
   } else {
     const claimed = await transitionBookingStatus(internalReference, "PAYMENT_CONFIRMED", {
       from: ["AWAITING_PAYMENT"],
       reason: `Guest browser redirect (paystackRef=${reference})`,
     })
     if (claimed.ok) {
-      await sendPaymentConfirmedEmails(ctx)
+      // Boga is notified IMMEDIATELY on payment success — never gated on the
+      // NightsBridge booking, so they can act (e.g. Retry) if it hasn't landed.
+      await sendAdminPaymentEmail(ctx)
       await transitionBookingStatus(internalReference, "BOGA_NOTIFIED", { from: ["PAYMENT_CONFIRMED"] })
     } else {
-      console.log(`[payment/verify] internalRef=${internalReference} PAYMENT_CONFIRMED transition rejected (${claimed.reason}) — already processed via webhook, skipping duplicate emails`)
+      console.log(`[payment/verify] internalRef=${internalReference} PAYMENT_CONFIRMED transition rejected (${claimed.reason}) — already processed via webhook, skipping duplicate admin email`)
     }
+    // Guest email is held until the NightsBridge booking has resolved. Attempt
+    // it now (common case: NightsBridge already finished while the guest paid);
+    // if not yet resolved, the worker's completion ping / a later poll sends it.
+    const g = await settleGuestConfirmation(internalReference)
+    console.log(`[payment/verify] internalRef=${internalReference} guest email: ${g.reason}`)
   }
 
   const successUrl = new URL(

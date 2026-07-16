@@ -85,9 +85,9 @@ export function buildEnquiryGuestEmail(input: EnquiryInput): { subject: string; 
 
   if (input.type === "conference") {
     const rows: InfoRow[] = [
-      { label: "Company / Organisation", value: input.entity || "—" },
-      { label: "Preferred Date(s)", value: String(d.dates ?? "—") },
-      { label: "Attendees", value: String(d.attendees ?? "—") },
+      { label: "Company / Organisation", value: input.entity || "N/A" },
+      { label: "Preferred Date(s)", value: String(d.dates ?? "N/A") },
+      { label: "Attendees", value: String(d.attendees ?? "N/A") },
     ]
     if (d.setup) rows.push({ label: "Setup Style", value: String(d.setup) })
     return {
@@ -112,11 +112,11 @@ export function buildEnquiryGuestEmail(input: EnquiryInput): { subject: string; 
 
   if (input.type === "corporate") {
     const rows: InfoRow[] = [
-      { label: "Company / Department", value: input.entity || "—" },
-      { label: "Booking Type", value: String(d.type ?? "—") },
-      { label: "Check-in", value: String(d.checkin ?? "—") },
-      { label: "Check-out", value: String(d.checkout ?? "—") },
-      { label: "Rooms Required", value: String(d.rooms ?? "—") },
+      { label: "Company / Department", value: input.entity || "N/A" },
+      { label: "Booking Type", value: String(d.type ?? "N/A") },
+      { label: "Check-in", value: String(d.checkin ?? "N/A") },
+      { label: "Check-out", value: String(d.checkout ?? "N/A") },
+      { label: "Rooms Required", value: String(d.rooms ?? "N/A") },
     ]
     return {
       subject: "We've received your enquiry – Boga Legaba",
@@ -131,7 +131,7 @@ export function buildEnquiryGuestEmail(input: EnquiryInput): { subject: string; 
           }) +
           emailInfoTable(rows, { title: "Your enquiry" }) +
           emailParagraph(
-            "If this is a government per diem booking, please have your official order/PO number ready — our team will guide you through the rest.",
+            "If this is a government per diem booking, please have your official order/PO number ready. Our team will guide you through the rest.",
           ) +
           emailButton("WhatsApp Us", EMAIL_BRAND.whatsappHref),
       }),
@@ -153,7 +153,7 @@ export function buildEnquiryGuestEmail(input: EnquiryInput): { subject: string; 
           emailInfoTable(
             [
               { label: "Subject", value: String(d.subject ?? "General Enquiry") },
-              { label: "Your Message", value: input.message || "—" },
+              { label: "Your Message", value: input.message || "N/A" },
             ],
             { title: "What you sent us" },
           ) +
@@ -188,33 +188,33 @@ export function buildEnquiryStaffEmail(input: EnquiryInput): { subject: string; 
   const rows: InfoRow[] = [
     { label: "Name", value: input.name },
     { label: "Email", value: input.email },
-    { label: "Phone", value: input.phone || "—" },
+    { label: "Phone", value: input.phone || "N/A" },
   ]
   if (input.entity) rows.push({ label: "Company / Entity", value: input.entity })
 
   if (input.type === "conference") {
     rows.push(
-      { label: "Preferred Date(s)", value: String(d.dates ?? "—") },
-      { label: "Attendees", value: String(d.attendees ?? "—") },
-      { label: "Setup Style", value: String(d.setup ?? "—") },
-      { label: "AV Requirements", value: Array.isArray(d.av) && d.av.length ? d.av.join(", ") : "—" },
-      { label: "Catering", value: Array.isArray(d.catering) && d.catering.length ? d.catering.join(", ") : "—" },
-      { label: "Accommodation Needed", value: d.accommodation ? `Yes — ${d.rooms ?? "?"} room(s)` : "No" },
+      { label: "Preferred Date(s)", value: String(d.dates ?? "N/A") },
+      { label: "Attendees", value: String(d.attendees ?? "N/A") },
+      { label: "Setup Style", value: String(d.setup ?? "N/A") },
+      { label: "AV Requirements", value: Array.isArray(d.av) && d.av.length ? d.av.join(", ") : "N/A" },
+      { label: "Catering", value: Array.isArray(d.catering) && d.catering.length ? d.catering.join(", ") : "N/A" },
+      { label: "Accommodation Needed", value: d.accommodation ? `Yes, ${d.rooms ?? "?"} room(s)` : "No" },
     )
   } else if (input.type === "corporate") {
     rows.push(
-      { label: "Booking Type", value: String(d.type ?? "—") },
-      { label: "Check-in", value: String(d.checkin ?? "—") },
-      { label: "Check-out", value: String(d.checkout ?? "—") },
-      { label: "Rooms Required", value: String(d.rooms ?? "—") },
-      { label: "PO Number", value: String(d.po ?? "—") },
-      { label: "Billing Contact", value: String(d.billing ?? "—") },
+      { label: "Booking Type", value: String(d.type ?? "N/A") },
+      { label: "Check-in", value: String(d.checkin ?? "N/A") },
+      { label: "Check-out", value: String(d.checkout ?? "N/A") },
+      { label: "Rooms Required", value: String(d.rooms ?? "N/A") },
+      { label: "PO Number", value: String(d.po ?? "N/A") },
+      { label: "Billing Contact", value: String(d.billing ?? "N/A") },
     )
   } else if (input.type === "contact") {
     rows.push({ label: "Subject", value: String(d.subject ?? "General Enquiry") })
   } else if (input.type === "interest") {
-    rows.push({ label: "Interest Area", value: d.interest ? String(d.interest) : "—" })
-    rows.push({ label: "Source Page", value: d.source ? String(d.source) : "—" })
+    rows.push({ label: "Interest Area", value: d.interest ? String(d.interest) : "N/A" })
+    rows.push({ label: "Source Page", value: d.source ? String(d.source) : "N/A" })
   }
 
   return {
