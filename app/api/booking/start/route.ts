@@ -126,8 +126,10 @@ export async function POST(request: NextRequest) {
 
   // ── Fire the NightsBridge booking in the BACKGROUND (best-effort) ──────────
   // Pay-first: we do NOT block on it and do NOT fail the guest if the worker is
-  // unreachable. The booking_job.status track stays "processing"; the admin
-  // page shows "not yet on NightsBridge" and offers a Retry.
+  // unreachable. If this trigger is lost (cold worker, network blip), the row
+  // stays status="pending" and the worker's background sweep picks it up and
+  // books it automatically — no admin Retry needed. The admin page still shows
+  // "not yet on NightsBridge" (with a Retry) until it lands.
   triggerAsyncBooking(ctx)
     .then((accepted) => console.log(`[booking/start] reference=${reference} background worker trigger accepted=${accepted}`))
     .catch((err) => console.error(`[booking/start] reference=${reference} background worker trigger error:`, err))

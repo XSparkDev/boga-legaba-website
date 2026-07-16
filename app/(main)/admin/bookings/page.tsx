@@ -59,7 +59,7 @@ export type WebsiteBooking = {
   room_type_name: string | null
   room_name: string | null
   amount: number | null
-  status: string | null          // NightsBridge track: processing | completed | failed
+  status: string | null          // NightsBridge track: pending | processing | completed | failed
   booking_id: string | null      // NightsBridge NBID once booked
   booking_status: string | null  // payment track: PENDING | AWAITING_PAYMENT | PAYMENT_CONFIRMED | ...
   error: string | null
