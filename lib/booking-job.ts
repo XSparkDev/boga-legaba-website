@@ -9,11 +9,15 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import type { PaymentContext } from "@/lib/payment-utils"
 
-// "processing": worker thread accepted the job, Playwright run may still be in
-// flight. "completed": the NightsBridge booking genuinely succeeded — a real
-// booking_id was scraped from the confirmation page and written here. Only
-// "completed" means it's safe to send the guest to payment.
-export type BookingJobStatus = "processing" | "completed" | "failed"
+// "pending": row created by the website, worker has NOT accepted it yet — the
+// worker's background sweep (services/sync-worker/server.py) auto-recovers any
+// row stuck here (the /book trigger never arrived), so a lost trigger no
+// longer needs an admin to click Retry. "processing": worker thread accepted
+// the job, Playwright run may still be in flight. "completed": the
+// NightsBridge booking genuinely succeeded — a real booking_id was scraped
+// from the confirmation page and written here. Only "completed" means it's
+// safe to send the guest to payment.
+export type BookingJobStatus = "pending" | "processing" | "completed" | "failed"
 
 export type BookingJob = {
   reference: string
@@ -98,7 +102,14 @@ export async function ensurePendingBookingJob(
 
     const { error } = await sb.from("booking_job").insert({
       reference: ctx.reference,
-      status: "processing",
+      // "pending" = not yet accepted by the worker. The worker overwrites this
+      // to "processing" the moment its /book endpoint accepts the job — so a
+      // row still "pending" minutes later provably never reached the worker,
+      // and its background sweep can safely re-run it (no Playwright run ever
+      // started, so no double-booking risk). /api/booking/status already
+      // normalizes "pending" -> "processing" on the wire, and the admin UI
+      // shows anything not completed/failed as "Not yet on NightsBridge".
+      status: "pending",
       guest_name: ctx.guestName || null,
       guest_email: ctx.guestEmail || null,
       checkin: ctx.checkin || null,
@@ -117,7 +128,7 @@ export async function ensurePendingBookingJob(
       console.error(`[booking-job] ensurePending INSERT FAILED reference=${ctx.reference}:`, error.message)
       return "unavailable"
     }
-    console.log(`[booking-job] ensurePending reference=${ctx.reference} -> created (status=processing)`)
+    console.log(`[booking-job] ensurePending reference=${ctx.reference} -> created (status=pending)`)
     return "created"
   } catch (err) {
     console.error(`[booking-job] ensurePending THREW reference=${ctx.reference}:`, err)
