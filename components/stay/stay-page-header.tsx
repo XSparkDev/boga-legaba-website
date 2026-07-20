@@ -13,7 +13,7 @@ export function StayPageHeader() {
         fill
         priority
         sizes="100vw"
-        className="object-cover object-center"
+        className="scale-95 object-cover object-center"
       />
       {/* Flat semi-transparent overlay for text legibility — brand guide: flat
           color blocks, no gradients. Kept dark so the hero reads in dark mode. */}

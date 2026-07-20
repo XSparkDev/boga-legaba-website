@@ -1,7 +1,11 @@
 "use client"
 
+import { useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Suspense } from "react"
+import { toast } from "sonner"
+import { SiteLogo } from "@/components/site-logo"
+import { cn } from "@/lib/utils"
 
 function SuccessContent() {
   const params       = useSearchParams()
@@ -12,6 +16,12 @@ function SuccessContent() {
   const roomTypeName = params.get("roomTypeName") ?? ""
   const roomName     = params.get("roomName") ?? ""
   const amount       = params.get("amount") ?? ""
+
+  useEffect(() => {
+    toast.success("Payment confirmed", {
+      description: "Your stay at Boga Legaba is fully booked.",
+    })
+  }, [])
 
   const fmtDate = (iso: string) => {
     if (!iso) return ""
@@ -34,47 +44,31 @@ function SuccessContent() {
   ].filter((r) => r.value)
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-5" style={{ background: "#F2EDE4" }}>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-sand p-5">
       <div className="w-full max-w-md">
 
         {/* Card */}
-        <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.10)" }}>
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
 
-          {/* Dark lodge header */}
-          <div className="px-8 py-7 text-center" style={{ background: "#0A0A0A" }}>
-            <p
-              className="tracking-[0.25em] font-normal"
-              style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: "#C9A84C", fontSize: "20px" }}
-            >
-              BOGA LEGABA
-            </p>
-            <p className="tracking-[0.18em] mt-1" style={{ color: "#8C7B6B", fontSize: "10px" }}>
-              GUEST HOUSE &amp; CONFERENCE CENTRE
-            </p>
-            {/* Gold divider */}
-            <div className="mx-auto mt-4" style={{ height: "1px", width: "48px", background: "#C9A84C", opacity: 0.6 }} />
+          {/* Dark header, matches site nav */}
+          <div className="bg-black px-8 py-7 text-center">
+            <SiteLogo size="hero" className="mx-auto" />
+            <div className="mx-auto mt-4 h-px w-12 bg-gold opacity-60" />
           </div>
 
           {/* Success banner */}
           <div className="px-8 pt-8 pb-4 text-center">
-            {/* Gold check circle */}
-            <div
-              className="mx-auto mb-4 flex items-center justify-center rounded-full"
-              style={{ width: 56, height: 56, background: "#F2EDE4", border: "2px solid #C9A84C" }}
-            >
+            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full border-2 border-gold bg-sand">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M5 13l4 4L19 7" stroke="#C9A84C" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M5 13l4 4L19 7" stroke="#996948" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
 
-            <h1
-              className="font-normal mb-2"
-              style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: "#0A0A0A", fontSize: "26px", letterSpacing: "-0.01em" }}
-            >
+            <h1 className="mb-2 font-display text-2xl font-semibold tracking-tight text-foreground">
               Payment Confirmed
             </h1>
-            <p style={{ color: "#8C7B6B", fontSize: "13px", lineHeight: 1.6 }}>
-              Thank you, <span style={{ color: "#3D3532", fontWeight: 500 }}>{guestName}</span>.<br />
+            <p className="text-[13px] leading-relaxed text-muted-foreground">
+              Thank you, <span className="font-medium text-foreground">{guestName}</span>.<br />
               Your stay at Boga Legaba is fully confirmed.
             </p>
           </div>
@@ -82,27 +76,26 @@ function SuccessContent() {
           {/* Booking details */}
           {details.length > 0 && (
             <div className="px-6 py-4">
-              <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #E8E0D4" }}>
+              <div className="overflow-hidden rounded-xl border border-border">
                 {details.map((row, i) => (
                   <div
                     key={row.label}
-                    className="px-5 py-3.5"
-                    style={{
-                      background: i % 2 === 0 ? "#FAFAF8" : "#F2EDE4",
-                      borderBottom: i < details.length - 1 ? "1px solid #E8E0D4" : "none",
-                    }}
+                    className={cn(
+                      "px-5 py-3.5",
+                      i % 2 === 0 ? "bg-sand" : "bg-card",
+                      i < details.length - 1 && "border-b border-border",
+                    )}
                   >
-                    <p style={{ color: "#8C7B6B", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.12em", margin: 0 }}>
+                    <p className="m-0 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                       {row.label}
                     </p>
                     <p
-                      style={{
-                        margin: "3px 0 0",
-                        fontSize: row.gold ? "20px" : "14px",
-                        fontWeight: row.gold ? 600 : 500,
-                        color: row.gold ? "#B8973B" : "#3D3532",
-                        fontFamily: row.gold ? "var(--font-playfair), Georgia, serif" : "inherit",
-                      }}
+                      className={cn(
+                        "mt-[3px]",
+                        row.gold
+                          ? "font-display text-xl font-semibold text-gold"
+                          : "text-sm font-medium text-foreground",
+                      )}
                     >
                       {row.value}
                     </p>
@@ -113,12 +106,12 @@ function SuccessContent() {
           )}
 
           {/* Note */}
-          <div className="mx-6 mb-5 px-4 py-3 rounded-xl" style={{ background: "#F2EDE4", border: "1px solid #E8E0D4" }}>
-            <p style={{ margin: 0, fontSize: "12px", color: "#8C7B6B", lineHeight: 1.6, textAlign: "center" }}>
+          <div className="mx-6 mb-5 rounded-xl border border-border bg-sand px-4 py-3">
+            <p className="m-0 text-center text-xs leading-relaxed text-muted-foreground">
               A confirmation email has been sent to you with all the details.<br />
               We look forward to welcoming you.
             </p>
-            <p style={{ margin: "8px 0 0", fontSize: "11px", color: "#8C7B6B", lineHeight: 1.6, textAlign: "center" }}>
+            <p className="m-0 mt-2 text-center text-[11px] leading-relaxed text-muted-foreground">
               If you don&apos;t receive it shortly, please contact us at Boga Legaba.
             </p>
           </div>
@@ -127,8 +120,7 @@ function SuccessContent() {
           <div className="px-6 pb-7">
             <a
               href="/"
-              className="flex w-full items-center justify-center rounded-xl py-3.5 text-sm font-semibold transition-all"
-              style={{ background: "#C9A84C", color: "#0A0A0A", letterSpacing: "0.04em" }}
+              className="flex w-full items-center justify-center rounded-xl bg-gold py-3.5 text-sm font-semibold tracking-wide text-white transition-all hover:brightness-110"
             >
               Back to Home
             </a>
@@ -136,7 +128,7 @@ function SuccessContent() {
         </div>
 
         {/* Footer note */}
-        <p className="text-center mt-5" style={{ color: "#8C7B6B", fontSize: "11px", letterSpacing: "0.05em" }}>
+        <p className="mt-5 text-center text-[11px] tracking-wide text-muted-foreground">
           SECURE PAYMENT BY PAYSTACK
         </p>
 

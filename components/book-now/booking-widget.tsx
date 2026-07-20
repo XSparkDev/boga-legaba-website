@@ -176,8 +176,6 @@ export function BookingWidget({
     }
   }
 
-  const nbUrl = `https://book.nightsbridge.com/${bbid}?arrive=${arrive}&depart=${depart}`
-
   // Recompute occupancy error whenever counts change
   const totalGuests = adults + children1 + children2
   const adultsOverLimit = adults > maxAdults
@@ -707,17 +705,6 @@ export function BookingWidget({
               You will be redirected to Paystack to complete payment securely after we confirm your booking.
             </p>
           </div>
-          <p className="mt-2 font-body text-[11px] text-gray-400">
-            Prefer to book directly?{" "}
-            <a
-              href={nbUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#996948] underline underline-offset-2 hover:brightness-75"
-            >
-              Continue on NightsBridge
-            </a>
-          </p>
         </div>
 
         {/* T&Cs */}

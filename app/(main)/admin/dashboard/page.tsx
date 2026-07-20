@@ -221,7 +221,7 @@ function AvailabilityCalendar({ days }: { days: OccupancyDay[] }) {
   const todayISO = today()
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-border bg-card p-5">
       <div className="mb-4 flex items-center justify-between">
         <p className="font-serif text-lg font-semibold text-gray-900">{heading}</p>
         <div className="flex items-center gap-3 font-mono text-[10px] text-gray-400">
@@ -307,7 +307,7 @@ function StatCard({
   color: string
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${color}`}>
         <Icon className="size-5" />
       </div>
@@ -388,7 +388,7 @@ export default async function AdminDashboardPage() {
   const NB_BOOKING = `https://book.nightsbridge.com/${NB_BBID}`
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-sand">
       {/* ── Top bar ──────────────────────────────────────────── */}
       <div className="sticky top-0 z-30 border-b border-white/10 bg-[#000000] px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
@@ -444,7 +444,7 @@ export default async function AdminDashboardPage() {
 
         {/* ── Section 1: Summary stats ──────────────────────── */}
         <div>
-          <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
+          <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-gold">
             Overview · Live from NightsBridge
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3">
@@ -474,7 +474,7 @@ export default async function AdminDashboardPage() {
 
         {/* ── Section 1b: Analytics ─────────────────────────── */}
         <div>
-          <h2 className="mb-4 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
+          <h2 className="mb-4 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-gold">
             <BarChart3 className="size-3.5 text-[#996948]" />
             Analytics
           </h2>
@@ -490,12 +490,12 @@ export default async function AdminDashboardPage() {
         {/* ── Section 2: Property overview ──────────────────── */}
         {estData ? (
           <div>
-            <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
+            <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-gold">
               Property · {estData.name}
             </h2>
             <div className="grid gap-4 lg:grid-cols-3">
               {/* Quick facts */}
-              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="rounded-xl border border-border bg-card p-5">
                 <h3 className="mb-3 font-mono text-[11px] uppercase tracking-wider text-gray-500">
                   Quick facts
                 </h3>
@@ -557,7 +557,7 @@ export default async function AdminDashboardPage() {
               </div>
 
               {/* Room type list */}
-              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="rounded-xl border border-border bg-card p-5">
                 <h3 className="mb-3 font-mono text-[11px] uppercase tracking-wider text-gray-500">
                   Room types ({estData.roomTypes.size})
                 </h3>
@@ -602,7 +602,7 @@ export default async function AdminDashboardPage() {
               </div>
 
               {/* Property gallery */}
-              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="rounded-xl border border-border bg-card p-5">
                 <h3 className="mb-3 font-mono text-[11px] uppercase tracking-wider text-gray-500">
                   Property images
                 </h3>
@@ -615,7 +615,7 @@ export default async function AdminDashboardPage() {
                         alt={img.categoryname}
                         className="h-28 w-full object-cover"
                       />
-                      <p className="bg-gray-50 px-2 py-1 font-mono text-[9px] text-gray-400">
+                      <p className="bg-sand px-2 py-1 font-mono text-[9px] text-gray-400">
                         {img.categoryname}
                       </p>
                     </div>
@@ -649,7 +649,7 @@ export default async function AdminDashboardPage() {
         {roomOccupancy.length > 0 ? (
           <div>
             <div className="mb-4 flex items-center justify-between gap-4">
-              <h2 className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
+              <h2 className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-gold">
                 <CalendarDays className="size-3.5 text-[#996948]" />
                 Availability calendar · {totalRooms} rooms
               </h2>
@@ -657,7 +657,7 @@ export default async function AdminDashboardPage() {
                 href={NB_CALENDAR}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-mono text-[10px] text-gray-500 transition-colors hover:text-gray-800"
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 font-mono text-[10px] text-gray-500 transition-colors hover:text-gray-800"
               >
                 Open in NightsBridge
                 <ExternalLink className="size-3" />
@@ -672,14 +672,14 @@ export default async function AdminDashboardPage() {
         {/* ── Section 4: Specials ───────────────────────────── */}
         {specials.length > 0 ? (
           <div>
-            <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
+            <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-gold">
               Active specials ({specials.length})
             </h2>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {specials.map((s) => (
                 <div
                   key={s.specialid}
-                  className="rounded-xl border border-[#996948]/20 bg-white p-4 shadow-sm"
+                  className="rounded-xl border border-gold/25 bg-card p-4"
                 >
                   <p className="font-semibold text-gray-900">{s.title}</p>
                   {s.description ? (
@@ -700,7 +700,7 @@ export default async function AdminDashboardPage() {
             </div>
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-gray-200 bg-white p-5">
+          <div className="rounded-xl border border-dashed border-border bg-card p-5">
             <p className="font-mono text-[11px] text-gray-400 text-center uppercase tracking-wider">
               No active specials on NightsBridge
             </p>
@@ -709,13 +709,13 @@ export default async function AdminDashboardPage() {
 
         {/* ── Section 5: Supabase data ──────────────────────── */}
         <div>
-          <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
+          <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-gold">
             Supabase database
           </h2>
           <div className="grid gap-4 lg:grid-cols-2">
             {/* Rooms */}
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-100 bg-gray-50 px-4 py-2.5">
+            <div className="overflow-hidden rounded-xl border border-border bg-card">
+              <div className="border-b border-border bg-sand px-4 py-2.5">
                 <p className="font-mono text-[11px] uppercase tracking-wider text-gray-500">
                   Synced rooms ({sbStats.roomCount})
                 </p>
@@ -741,8 +741,8 @@ export default async function AdminDashboardPage() {
             </div>
 
             {/* Rate cache */}
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-100 bg-gray-50 px-4 py-2.5">
+            <div className="overflow-hidden rounded-xl border border-border bg-card">
+              <div className="border-b border-border bg-sand px-4 py-2.5">
                 <p className="font-mono text-[11px] uppercase tracking-wider text-gray-500">
                   Rate cache: latest 20 rows ({sbStats.rateCacheCount} total)
                 </p>
@@ -755,7 +755,7 @@ export default async function AdminDashboardPage() {
                 <div className="overflow-x-auto overscroll-x-contain">
                   <table className="w-full min-w-[400px] text-xs">
                     <thead>
-                      <tr className="border-b border-gray-100 bg-gray-50">
+                      <tr className="border-b border-border bg-sand">
                         <th className="px-4 py-2 text-left font-mono text-[10px] text-gray-400">Room type</th>
                         <th className="px-3 py-2 text-right font-mono text-[10px] text-gray-400">1 adult</th>
                         <th className="px-3 py-2 text-right font-mono text-[10px] text-gray-400">2 adults</th>
@@ -765,7 +765,7 @@ export default async function AdminDashboardPage() {
                     <tbody className="divide-y divide-gray-100">
                       {sbStats.rateCache.map(
                         (r: { rtname: string; rate_single: string | null; rate_double: string | null; arrive: string; depart: string }, i: number) => (
-                          <tr key={i} className="hover:bg-gray-50/60">
+                          <tr key={i} className="hover:bg-sand/60">
                             <td className="px-4 py-2 font-medium text-gray-800">{r.rtname}</td>
                             <td className="px-3 py-2 text-right text-[#996948]">
                               {r.rate_single ? fmt(Number(r.rate_single)) : "N/A"}
@@ -789,7 +789,7 @@ export default async function AdminDashboardPage() {
 
         {/* ── Section 8: NightsBridge quick links ───────────── */}
         <div>
-          <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-gray-400">
+          <h2 className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-gold">
             NightsBridge quick access
           </h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -828,7 +828,7 @@ export default async function AdminDashboardPage() {
                 href={item.href}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-all hover:-translate-y-1 hover:border-soft-neutral"
               >
                 <div
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.color}`}
@@ -847,7 +847,7 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* ── Footer ───────────────────────────────────────── */}
-        <div className="border-t border-gray-200 pb-8 pt-4 text-center">
+        <div className="border-t border-border pb-8 pt-4 text-center">
           <p className="font-mono text-[10px] uppercase tracking-widest text-gray-300">
             Boga Legaba Admin · Last updated: {new Date().toLocaleTimeString("en-ZA")} ·{" "}
             <a href="/admin/dashboard" className="hover:text-gray-500 transition-colors">

@@ -59,6 +59,8 @@ import {
   type MealPlanRate,
 } from "@/lib/nightsbridge-rates"
 import { BookingWidget } from "@/components/book-now/booking-widget"
+import { RoomPhotoGallery } from "@/components/book-now/room-photo-gallery"
+import { getRoomImagesByBbroomid } from "@/lib/room-images"
 
 export const dynamic = "force-dynamic"
 
@@ -1089,6 +1091,11 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
   const toDate = params.to ?? null
   const roomTypeNameParam = params.roomTypeName ?? null
 
+  // Real per-room photos (Supabase room_images, keyed by physical room id).
+  // Kicked off in parallel with the NightsBridge calls below; empty when this
+  // room has no uploaded photos or arrived here without a bbroomid.
+  const roomPhotosPromise = bbroomid ? getRoomImagesByBbroomid(bbroomid) : Promise.resolve([])
+
   // ── Parallel API calls ─────────────────────────────────────────────
   const [rates, policies, estData, mealPlanMap] =
     fromDate && toDate
@@ -1104,6 +1111,8 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
           fetchEstablishment(bbid),
           Promise.resolve(null),
         ])
+
+  const roomPhotos = await roomPhotosPromise
 
   // ── Resolve the room type detail ────────────────────────────────────
   // Priority 1: direct bbrtid lookup (most reliable — survives stale roomTypeName)
@@ -1156,6 +1165,10 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
 
   const hasSelectedRoom = Boolean((selectedRate || directDetail) && fromDate && toDate)
 
+  // Real photos for THIS physical room → drives the gallery. When empty we fall
+  // back to the NightsBridge hero image exactly as before.
+  const realPhotos = roomPhotos.map((p) => ({ url: p.image_url, title: p.title }))
+
   return (
     <>
       {/* ── Dark header with breadcrumb ──────────────────────── */}
@@ -1194,44 +1207,60 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
             {/* SELECTED ROOM DETAIL FLOW */}
             {hasSelectedRoom && (selectedRate || directDetail) ? (
               <>
-                {/* Hero image — full-width with gallery strip */}
-                <RoomHero
-                  detail={selectedDetail}
-                  roomTypeName={displayRoomTypeName ?? ""}
-                  arrive={fromDate}
-                  depart={toDate}
-                />
+                {realPhotos.length > 0 ? (
+                  /* Real per-room photos → Airbnb-style lead + thumbnails gallery */
+                  <RoomPhotoGallery
+                    photos={realPhotos}
+                    roomTypeName={displayRoomTypeName ?? ""}
+                    arrive={fromDate}
+                    depart={toDate}
+                    quality={selectedDetail?.quality}
+                    roomSizeM2={selectedDetail?.roomSizeM2}
+                    bedType={selectedDetail?.bedTypes?.[0]?.description}
+                    maxAdults={selectedDetail?.maxAdults}
+                  />
+                ) : (
+                  <>
+                    {/* No real photos for this room → NightsBridge hero fallback */}
+                    <RoomHero
+                      detail={selectedDetail}
+                      roomTypeName={displayRoomTypeName ?? ""}
+                      arrive={fromDate}
+                      depart={toDate}
+                    />
 
-                {/* Photo gallery strip (all images from NightsBridge) */}
-                {selectedDetail && selectedDetail.images.length > 1 ? (
-                  <div className="mx-auto max-w-6xl px-4 pt-5 sm:px-6 lg:px-8">
-                    <h2 className="mb-3 font-body text-[13px] font-semibold tracking-normal text-gray-500">
-                      Room photos · {selectedDetail.images.length} images
-                    </h2>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-                      {selectedDetail.images.map((img, i) => (
-                        <div
-                          key={i}
-                          className="group relative aspect-video overflow-hidden rounded-xl border border-gray-100 bg-gray-100 shadow-sm"
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={img.big ?? img.medium}
-                            alt={`${displayRoomTypeName}: photo ${i + 1}`}
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                          {img.categoryname ? (
-                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1.5 opacity-0 transition-opacity group-hover:opacity-100">
-                              <p className="font-body text-[10px] text-white/80">
-                                {img.categoryname}
-                              </p>
+                    {/* Photo gallery strip (all images from NightsBridge) */}
+                    {selectedDetail && selectedDetail.images.length > 1 ? (
+                      <div className="mx-auto max-w-6xl px-4 pt-5 sm:px-6 lg:px-8">
+                        <h2 className="mb-3 font-body text-[13px] font-semibold tracking-normal text-gray-500">
+                          Room photos · {selectedDetail.images.length} images
+                        </h2>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                          {selectedDetail.images.map((img, i) => (
+                            <div
+                              key={i}
+                              className="group relative aspect-video overflow-hidden rounded-xl border border-gray-100 bg-gray-100 shadow-sm"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={img.big ?? img.medium}
+                                alt={`${displayRoomTypeName}: photo ${i + 1}`}
+                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              />
+                              {img.categoryname ? (
+                                <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+                                  <p className="font-body text-[10px] text-white/80">
+                                    {img.categoryname}
+                                  </p>
+                                </div>
+                              ) : null}
                             </div>
-                          ) : null}
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
+                      </div>
+                    ) : null}
+                  </>
+                )}
 
                 {/* Detail + booking widget */}
                 {selectedRate ? (

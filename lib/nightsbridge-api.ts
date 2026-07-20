@@ -41,6 +41,27 @@ const NB_HEADERS = {
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
 }
 
+// NightsBridge's CMS text (areainfo, attractions, directions, etc.) is stored
+// as Windows-1252 but served as if it were UTF-8. Smart quotes/dashes land as
+// raw C1 control bytes (e.g. 0x92 for a right single quote), which browsers
+// render as an invisible glyph — "Bethel's Rocks" shows up as "Bethel Rocks"
+// with a gap where the apostrophe should be. Map the known bytes back.
+const WIN1252_C1_MAP: Record<string, string> = {
+  "\u0080": "\u20AC", "\u0082": "\u201A", "\u0083": "\u0192", "\u0084": "\u201E",
+  "\u0085": "\u2026", "\u0086": "\u2020", "\u0087": "\u2021", "\u0088": "\u02C6",
+  "\u0089": "\u2030", "\u008A": "\u0160", "\u008B": "\u2039", "\u008C": "\u0152",
+  "\u008E": "\u017D", "\u0091": "\u2018", "\u0092": "\u2019", "\u0093": "\u201C",
+  "\u0094": "\u201D", "\u0095": "\u2022", "\u0096": "\u2013", "\u0097": "\u2014",
+  "\u0098": "\u02DC", "\u0099": "\u2122", "\u009A": "\u0161", "\u009B": "\u203A",
+  "\u009C": "\u0153", "\u009E": "\u017E", "\u009F": "\u0178",
+}
+const WIN1252_C1_RE = /[\u0080-\u009F]/g
+
+function fixMojibake<T extends string | null | undefined>(s: T): T {
+  if (!s) return s
+  return s.replace(WIN1252_C1_RE, (ch) => WIN1252_C1_MAP[ch] ?? ch) as T
+}
+
 /** Number of stay nights between two YYYY-MM-DD strings. */
 function stayNightCount(arrive: string, depart: string): number {
   const ms =
@@ -743,15 +764,15 @@ export async function fetchEstablishment(bbid: number): Promise<EstablishmentDat
     for (const rt of c.roomtypes ?? []) {
       roomTypes.set(rt.roomtypeid, {
         rtid: rt.roomtypeid,
-        name: rt.roomtypename,
-        description: rt.description,
+        name: fixMojibake(rt.roomtypename),
+        description: fixMojibake(rt.description),
         roomSizeM2: rt.roomsizeinmeters ?? null,
         quality: rt.quality ?? null,
         roomType: rt.roomtype ?? null,
         maxOccupancy: rt.maxoccupancy ?? null,
         maxAdults: rt.maxadults ?? null,
         bedTypes: (rt.bedtypes ?? []).map((b) => ({
-          description: b.description,
+          description: fixMojibake(b.description),
           bedcount: b.bedcount,
         })),
         amenityGroups: rt.roomtypeamenitygroups ?? [],
@@ -761,13 +782,13 @@ export async function fetchEstablishment(bbid: number): Promise<EstablishmentDat
     }
 
     const data: EstablishmentData = {
-      name: c.name ?? "",
-      teaser: c.teaser?.trim() || null,
-      generaldescription: c.generaldescription?.trim() || null,
-      areainfo: c.areainfo?.trim() || null,
-      attractions: c.attractions?.trim() || null,
-      directions: c.directions?.trim() || null,
-      address: c.address?.trim() || null,
+      name: fixMojibake(c.name) ?? "",
+      teaser: fixMojibake(c.teaser?.trim()) || null,
+      generaldescription: fixMojibake(c.generaldescription?.trim()) || null,
+      areainfo: fixMojibake(c.areainfo?.trim()) || null,
+      attractions: fixMojibake(c.attractions?.trim()) || null,
+      directions: fixMojibake(c.directions?.trim()) || null,
+      address: fixMojibake(c.address?.trim()) || null,
       lat: c.lat ?? null,
       lng: c.lng ?? null,
       checkintime: c.checkintime ?? null,
@@ -780,7 +801,7 @@ export async function fetchEstablishment(bbid: number): Promise<EstablishmentDat
       grading: c.grading ?? [],
       propertyAmenities: c.propertyamenities ?? [],
       propertyImages: imgs.propertygallery ?? [],
-      cancellationPolicy: c.cancellationpolicy?.description?.trim() || null,
+      cancellationPolicy: fixMojibake(c.cancellationpolicy?.description?.trim()) || null,
       tripadvisorLocationId: c.tripadvisorextbbid ?? null,
       roomTypes,
     }
@@ -877,7 +898,7 @@ export async function fetchPropertyPolicies(
     const childFixedRate = d.roomtypes?.[0]?.childpolicy?.childrate2 ?? null
 
     const policies: PropertyPolicies = {
-      cancellationPolicy: d.cancellationpolicy?.description?.trim() || null,
+      cancellationPolicy: fixMojibake(d.cancellationpolicy?.description?.trim()) || null,
       childAgeFreeUpTo: d.childpolicy?.childage1 ?? null,
       childAgeFixedRate: d.childpolicy?.childage2 ?? null,
       childFixedRate,
@@ -934,8 +955,8 @@ export async function fetchSpecials(bbid: number): Promise<NbSpecial[]> {
       for (const s of json.data as Record<string, unknown>[]) {
         specials.push({
           specialid: Number(s.specialid ?? 0),
-          title: String(s.title ?? s.name ?? ""),
-          description: String(s.description ?? ""),
+          title: fixMojibake(String(s.title ?? s.name ?? "")),
+          description: fixMojibake(String(s.description ?? "")),
           validfrom: (s.validfrom as string) ?? null,
           validto: (s.validto as string) ?? null,
           discount: s.discount != null ? Number(s.discount) : null,

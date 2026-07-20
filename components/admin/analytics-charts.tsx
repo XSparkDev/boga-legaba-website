@@ -29,9 +29,12 @@ function ratesHeight(n: number) {
   return Math.max(180, n * 38 + 40)
 }
 
-const GOLD = "#996948"
-const INK = "#000000"
-const TEAL = "#73CAC3" // Chart data-series accent (brand guide: charts use brand accents only)
+// Boga Legaba brand palette — exact hex values from app/globals.css
+// (heritage gold, lantana olive, soft-neutral). Charts use only these brand
+// accents per the brand guide; no generic black/placeholder series colours.
+const GOLD = "#996948" // --color-heritage / --color-gold
+const OLIVE = "#7A8850" // --color-olive-accent (lantana)
+const NEUTRAL = "#C1C4C2" // --color-soft-neutral (chababa)
 
 function rand(n: number) {
   return `R ${Math.round(n).toLocaleString("en-ZA")}`
@@ -47,8 +50,8 @@ function CardShell({
   className?: string
 }) {
   return (
-    <div className={`rounded-xl border border-gray-200 bg-white p-5 shadow-sm ${className}`}>
-      <h3 className="mb-4 font-mono text-[11px] uppercase tracking-wider text-gray-500">{title}</h3>
+    <div className={`rounded-xl border border-border bg-card p-5 ${className}`}>
+      <h3 className="mb-4 font-mono text-[11px] uppercase tracking-wider text-taupe">{title}</h3>
       {children}
     </div>
   )
@@ -69,7 +72,7 @@ export function AnalyticsCharts({
 }) {
   const donut = [
     { name: "Booked", value: todayBooked, color: GOLD },
-    { name: "Available", value: todayAvailable, color: TEAL },
+    { name: "Available", value: todayAvailable, color: NEUTRAL },
   ].filter((d) => d.value > 0)
   const hasDonut = todayBooked + todayAvailable > 0
   const hasRates = rates.some((r) => r.single != null || r.double != null)
@@ -196,7 +199,7 @@ export function AnalyticsCharts({
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
                 <Bar dataKey="single" name="1 adult" fill={GOLD} radius={[0, 4, 4, 0]} maxBarSize={14} />
-                <Bar dataKey="double" name="2 adults" fill={INK} radius={[0, 4, 4, 0]} maxBarSize={14} />
+                <Bar dataKey="double" name="2 adults" fill={OLIVE} radius={[0, 4, 4, 0]} maxBarSize={14} />
               </BarChart>
             </ResponsiveContainer>
           </div>
