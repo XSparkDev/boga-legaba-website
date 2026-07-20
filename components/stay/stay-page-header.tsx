@@ -3,7 +3,7 @@ import { Reveal } from "@/components/reveal"
 
 export function StayPageHeader() {
   return (
-    <section className="relative overflow-hidden pb-14 pt-28 text-white lg:pb-20 lg:pt-36">
+    <section className="relative overflow-hidden bg-black pb-14 pt-28 text-white lg:pb-20 lg:pt-36">
       {/* Background hero image — next/image with `priority` so it is preloaded
           and served in an optimized, compressed format. */}
       <Image
