@@ -11,6 +11,8 @@ function LoginForm() {
   const sp = useSearchParams()
   const from = sp.get("from") ?? "/admin/dashboard"
 
+  // Pre-filled with the admin login so day-to-day you only type the password.
+  const [email, setEmail] = useState("admin@bogalegaba.co.za")
   const [password, setPassword] = useState("")
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -25,13 +27,13 @@ function LoginForm() {
       const res = await fetch("/api/admin/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       })
       if (res.ok) {
         router.push(from)
       } else {
         const data = (await res.json()) as { error?: string }
-        setError(data.error ?? "Invalid password")
+        setError(data.error ?? "Invalid email or password")
       }
     } catch {
       setError("Network error, check your connection")
@@ -68,6 +70,25 @@ function LoginForm() {
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
               <label
+                htmlFor="email"
+                className="mb-1.5 block font-mono text-[11px] uppercase tracking-wider text-white/50"
+              >
+                Admin email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="username"
+                placeholder="admin@bogalegaba.co.za"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-mono text-sm text-white placeholder:text-white/20 focus:border-[#996948]/50 focus:outline-none focus:ring-1 focus:ring-[#996948]/30"
+              />
+            </div>
+
+            <div>
+              <label
                 htmlFor="password"
                 className="mb-1.5 block font-mono text-[11px] uppercase tracking-wider text-white/50"
               >
@@ -80,7 +101,6 @@ function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  autoFocus
                   autoComplete="current-password"
                   placeholder="Enter admin password"
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-11 font-mono text-sm text-white placeholder:text-white/20 focus:border-[#996948]/50 focus:outline-none focus:ring-1 focus:ring-[#996948]/30"
@@ -103,7 +123,7 @@ function LoginForm() {
 
             <button
               type="submit"
-              disabled={loading || !password}
+              disabled={loading || !email || !password}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#996948] px-6 py-3 font-mono text-sm font-semibold uppercase tracking-wider text-white shadow-md transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (

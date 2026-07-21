@@ -1,24 +1,35 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { createSupabaseAnonClient } from "@/lib/supabase/client"
 
 const ADMIN_SESSION_COOKIE = "bl_admin_session"
 const SESSION_MAX_AGE = 60 * 60 * 8 // 8 hours
 
 export async function POST(request: NextRequest) {
   try {
-    const { password } = (await request.json()) as { password?: string }
-    const adminPassword = process.env.ADMIN_PASSWORD
+    const { email, password } = (await request.json()) as { email?: string; password?: string }
     const adminSecret = process.env.ADMIN_SECRET
 
-    if (!adminPassword || !adminSecret) {
+    if (!adminSecret) {
       return NextResponse.json(
-        { error: "Admin not configured. Set ADMIN_PASSWORD and ADMIN_SECRET in .env.local" },
+        { error: "Admin not configured. Set ADMIN_SECRET in .env.local" },
         { status: 500 },
       )
     }
 
-    if (!password || password !== adminPassword) {
-      return NextResponse.json({ error: "Invalid password" }, { status: 401 })
+    if (!email || !password) {
+      return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
+    }
+
+    // Verify credentials against Supabase Auth — the password is stored/hashed
+    // by Supabase, never in this codebase or an env var. A successful sign-in is
+    // all we need: the existing bl_admin_session cookie stays the session
+    // mechanism, so every admin page and API route keeps authorising exactly as
+    // before (nothing downstream changes).
+    const supabase = createSupabaseAnonClient()
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error || !data?.user) {
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
     }
 
     const res = NextResponse.json({ success: true })
