@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react"
 import { NightsBridgeModal } from "@/components/NightsBridgeModal"
 import { SiteLogo } from "@/components/site-logo"
 import { HeroSlideshow } from "@/components/home/hero-slideshow"
+import { HomeAvailabilityWidget } from "@/components/home/home-availability-widget"
 import { useBookingModal } from "@/hooks/useBookingModal"
 
 const HERO_IMAGES_FALLBACK = [
@@ -62,6 +63,8 @@ export function HomeHero({ images, alt }: { images?: string[]; alt?: string }) {
                 Enquire About Conferences
               </Link>
             </div>
+
+            <HomeAvailabilityWidget />
 
             <div
               className="flex flex-col items-center gap-2 pb-[max(0.25rem,env(safe-area-inset-bottom))] sm:items-start"

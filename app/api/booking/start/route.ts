@@ -76,7 +76,11 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const reference = `BLJOB-${Date.now()}`
+  // Random, unguessable reference. The timestamp prefix stays for readable logs
+  // and admin sorting; the random suffix is what stops anyone from guessing
+  // another booking's reference — /api/booking/status is a public lookup keyed
+  // off this string, so a predictable value would let it be enumerated.
+  const reference = `BLJOB-${Date.now()}-${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`
   console.log(`[booking/start] reference=${reference} creating hold room=${roomTypeName} ${checkin}->${checkout}`)
   await createHold({ reference, bbid, roomTypeName, checkin, checkout })
 

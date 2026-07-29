@@ -18,6 +18,7 @@ import { lockBodyScroll, unlockBodyScroll } from "@/lib/body-scroll-lock"
 import { cn } from "@/lib/utils"
 
 const NAV_LINKS = [
+  { href: "/", label: "Home" },
   { href: "/stay", label: "Stay" },
   { href: "/conference", label: "Conference" },
   { href: "/corporate", label: "Corporate" },
@@ -26,7 +27,6 @@ const NAV_LINKS = [
   { href: "/specials", label: "Specials" },
   { href: "/gallery", label: "Gallery" },
   { href: "/faqs", label: "FAQs" },
-  { href: "/", label: "Home" },
   { href: "/contact", label: "Contact" },
 ]
 
