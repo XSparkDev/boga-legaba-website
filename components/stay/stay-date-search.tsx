@@ -16,6 +16,7 @@ type StayDateSearchProps = {
   searched?: boolean
   availableCount?: number
   className?: string
+  subtextClassName?: string
 }
 
 export function StayDateSearch({
@@ -29,6 +30,7 @@ export function StayDateSearch({
   searched,
   availableCount,
   className,
+  subtextClassName,
 }: StayDateSearchProps) {
   const minOut = checkIn || minCheckInDate()
 
@@ -39,7 +41,7 @@ export function StayDateSearch({
           <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-gold">
             <CalendarRange className="size-3.5" /> Check availability
           </p>
-          <p className="mt-1 font-body text-sm text-muted-foreground">
+          <p className={cn("mt-1 font-body text-sm text-muted-foreground", subtextClassName)}>
             Pick your dates to see which rooms are free, synced from NightsBridge.
           </p>
         </div>

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Check } from 'lucide-react'
-import { CorporateSbdButton } from '@v2/components/corporate/corporate-sbd-button'
 import { PageHeader } from '@v2/components/page-header'
 import { Reveal } from '@v2/components/reveal'
 import { CorporateForm } from '@v2/components/forms/corporate-form'
@@ -47,16 +46,6 @@ export default function CorporatePage() {
                 </li>
               ))}
             </ul>
-            <div
-              className="mt-8 rounded-xl px-5 py-4"
-              style={{ background: 'rgba(0,0,0,0.04)', borderLeft: '4px solid var(--deep-earth)' }}
-            >
-              <p className="text-sm text-body-brown">
-                We are moving toward an 80% corporate / 20% government booking mix and welcome
-                long-term account relationships.
-              </p>
-            </div>
-            <CorporateSbdButton />
           </Reveal>
 
           {/* Right form */}

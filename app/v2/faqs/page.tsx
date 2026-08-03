@@ -16,8 +16,8 @@ export const metadata: Metadata = {
 
 const faqs = [
   {
-    q: 'How do I get the best rate?',
-    a: 'Book directly through our website or NightsBridge engine. Direct bookings avoid OTA commissions and include our best-rate guarantee.',
+    q: 'How do I make a booking?',
+    a: 'Call us, message us on WhatsApp, or email reception and our team will confirm live availability and rates directly, no third-party booking fees.',
   },
   {
     q: 'What time is check-in and check-out?',

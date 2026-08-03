@@ -34,7 +34,7 @@ export const properties: Property[] = [
   {
     id: "chababa",
     name: "Chababa",
-    code: "8 Interlaken",
+    code: "8 Interlaken Ave",
     address: "8 Interlaken Avenue, Riviera Park, Mahikeng, 2745",
     tagline: "The Volume Driver",
     color: "prop-chababa",
@@ -60,7 +60,7 @@ export const properties: Property[] = [
   {
     id: "interlaken-a",
     name: "Interlaken A",
-    code: "6 Interlaken",
+    code: "6 Interlaken Ave",
     address: "6 Interlaken Avenue, Riviera Park, Mahikeng, 2745",
     tagline: "The Multi-Occupancy Hub",
     color: "prop-interlaken",
@@ -81,14 +81,14 @@ export const properties: Property[] = [
   {
     id: "lantana",
     name: "Lantana",
-    code: "10 Lantana",
-    address: "10 Lantana Street, Mahikeng",
+    code: "10 Lantana St",
+    address: "10 Lantana Street, Riviera Park, Mahikeng, 2745",
     tagline: "The Conference Core",
     color: "prop-lantana",
     colorHex: "#7A8850",
     roomCount: 7,
     description: "Corporate and events focus, anchored by our conference facility. The home of business stays at Boga Legaba.",
-    locationNote: "Lantana is located at 10 Lantana Street, Mahikeng.",
+    locationNote: "Lantana is located at 10 Lantana Street, Riviera Park, Mahikeng.",
     whatsapp: "https://wa.me/27828757018?text=Hi%20Boga%20Legaba%2C%20I%27d%20like%20to%20enquire%20about%20Lantana%20(10%20Lantana)%20%26%20Conference.",
     rooms: [
       { name: "Modiga", config: "TBC", bathroom: "TBC", description: "Room details are being finalised, enquire for current availability." },

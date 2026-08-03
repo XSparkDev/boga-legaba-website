@@ -51,7 +51,7 @@ export function CorporateForm() {
 
   if (submitted) {
     return (
-      <SuccessMessage message="Thank you — our accounts team will respond within 2 business hours." />
+      <SuccessMessage message="Thank you — our accounts team will be in touch shortly." />
     )
   }
 

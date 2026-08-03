@@ -21,7 +21,7 @@ export const properties: Property[] = [
   {
     key: 'chababa',
     name: 'Chababa',
-    code: '8 INTERLAKEN',
+    code: '8 INTERLAKEN AVE',
     address: '8 Interlaken Avenue',
     area: 'Riviera Park, Mahikeng, 2745',
     rooms: 10,
@@ -31,7 +31,7 @@ export const properties: Property[] = [
   {
     key: 'interlaken-a',
     name: 'Interlaken A',
-    code: '6 INTERLAKEN',
+    code: '6 INTERLAKEN AVE',
     address: '6 Interlaken Avenue',
     area: 'Riviera Park, Mahikeng, 2745',
     rooms: 6,
@@ -41,9 +41,9 @@ export const properties: Property[] = [
   {
     key: 'lantana',
     name: 'Lantana',
-    code: '10 LANTANA',
+    code: '10 LANTANA ST',
     address: '10 Lantana Street',
-    area: 'Mahikeng',
+    area: 'Riviera Park, Mahikeng, 2745',
     rooms: 7,
     color: '#737373',
     whatsapp: '27828757018',

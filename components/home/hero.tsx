@@ -47,33 +47,33 @@ export function HomeHero({ images, alt }: { images?: string[]; alt?: string }) {
             Three unique properties. One seamless experience. Mahikeng&apos;s premier guest house and conference
             destination.
           </p>
-          <div className="mt-7 space-y-6 sm:mt-9 sm:space-y-8">
-            <div className="flex w-full max-w-xl flex-col gap-3 sm:max-w-2xl sm:flex-row sm:items-stretch">
-              <Link
-                href="/stay"
-                data-ga4-event="book_now_click"
-                className="btn-gold flex min-h-[3rem] w-full flex-1 items-center justify-center gap-2 border border-transparent px-5 py-3.5 text-center text-sm font-medium sm:px-6"
-              >
-                Book Your Stay <ArrowRight className="size-4 shrink-0" />
-              </Link>
-              <Link
-                href="/conference"
-                className="btn-glass flex min-h-[3rem] w-full flex-1 items-center justify-center px-5 py-3.5 text-center text-sm font-medium sm:px-6"
-              >
-                Enquire About Conferences
-              </Link>
-            </div>
-
-            <HomeAvailabilityWidget />
-
-            <div
-              className="flex flex-col items-center gap-2 pb-[max(0.25rem,env(safe-area-inset-bottom))] sm:items-start"
-              aria-hidden
+          <div className="mt-7 flex w-full max-w-xl flex-col gap-3 sm:mt-9 sm:max-w-2xl sm:flex-row sm:items-stretch">
+            <Link
+              href="/stay"
+              data-ga4-event="book_now_click"
+              className="btn-gold flex min-h-[3rem] w-full flex-1 items-center justify-center gap-2 border border-transparent px-5 py-3.5 text-center text-sm font-medium sm:px-6"
             >
-              <span className="font-mono text-[10px] tracking-[0.15em] text-gold uppercase">Scroll</span>
-              <div className="h-8 w-px bg-gold/60 animate-pulse" />
-            </div>
+              Book Your Stay <ArrowRight className="size-4 shrink-0" />
+            </Link>
+            <Link
+              href="/conference"
+              className="btn-glass flex min-h-[3rem] w-full flex-1 items-center justify-center px-5 py-3.5 text-center text-sm font-medium sm:px-6"
+            >
+              Enquire About Conferences
+            </Link>
           </div>
+        </div>
+
+        <div className="mt-7 sm:mt-9">
+          <HomeAvailabilityWidget />
+        </div>
+
+        <div
+          className="mt-7 flex flex-col items-center gap-2 pb-[max(0.25rem,env(safe-area-inset-bottom))] sm:mt-9 sm:items-start"
+          aria-hidden
+        >
+          <span className="font-mono text-[10px] tracking-[0.15em] text-gold uppercase">Scroll</span>
+          <div className="h-8 w-px bg-gold/60 animate-pulse" />
         </div>
       </div>
       <NightsBridgeModal isOpen={isOpen} onClose={closeModal} />

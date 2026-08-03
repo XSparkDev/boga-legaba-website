@@ -37,15 +37,6 @@ export default function CorporatePage() {
         </div>
       </section>
 
-      <section className="bg-[#000000] py-12 text-white">
-        <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-          <p className="text-pretty text-lg leading-relaxed text-white/80">
-            Boga Legaba is moving toward an <span className="text-gold">80% corporate</span> and{" "}
-            <span className="text-gold">20% government</span> booking mix. We welcome long-term corporate account
-            relationships.
-          </p>
-        </div>
-      </section>
     </main>
   )
 }

@@ -22,9 +22,9 @@ const COLUMNS = [
   {
     title: "Properties",
     links: [
-      { href: "/stay", label: "Chababa: 8 Interlaken" },
-      { href: "/stay", label: "Interlaken A: 6 Interlaken" },
-      { href: "/stay", label: "Lantana: 10 Lantana" },
+      { href: "/stay", label: "Chababa: 8 Interlaken Ave" },
+      { href: "/stay", label: "Interlaken A: 6 Interlaken Ave" },
+      { href: "/stay", label: "Lantana: 10 Lantana St" },
       { href: "/stay", label: "Transnet Portfolio" },
     ],
   },

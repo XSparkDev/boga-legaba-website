@@ -87,7 +87,7 @@ export function ConferenceForm() {
         <CheckCircle2 className="size-12 text-gold" />
         <h3 className="font-serif text-2xl text-foreground">Thank you, enquiry received.</h3>
         <p className="max-w-md text-pretty leading-relaxed text-muted-foreground">
-          Our conference team will respond within 2 business hours.
+          Our conference team will be in touch shortly.
         </p>
       </div>
     )
@@ -219,7 +219,7 @@ export function ConferenceForm() {
         {submitting ? "Sending…" : "Send Conference Enquiry"}
       </button>
       <p className="text-center text-xs text-muted-foreground">
-        Our conference team will respond within 2 business hours.
+        Our conference team will be in touch shortly.
       </p>
     </form>
   )

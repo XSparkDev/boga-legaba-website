@@ -49,7 +49,7 @@ export function ConferenceForm() {
 
   if (submitted) {
     return (
-      <SuccessMessage message="Thank you — our conference team will respond within 2 business hours." />
+      <SuccessMessage message="Thank you — our conference team will be in touch shortly." />
     )
   }
 

@@ -21,20 +21,6 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // ── First-visit landing: send NEW visitors to /stay once, then leave "/"
-  //    serving the home page so the Home link/logo still work. ────────────
-  if (pathname === "/" && !request.cookies.get(MAIN_VISITED_COOKIE)) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/stay"
-    const response = NextResponse.redirect(url)
-    response.cookies.set(MAIN_VISITED_COOKIE, "1", {
-      path: "/",
-      maxAge: ONE_YEAR_SECONDS,
-      sameSite: "lax",
-    })
-    return response
-  }
-
   if (pathname === "/v2" && !request.cookies.get(V2_VISITED_COOKIE)) {
     const url = request.nextUrl.clone()
     url.pathname = "/v2/stay"

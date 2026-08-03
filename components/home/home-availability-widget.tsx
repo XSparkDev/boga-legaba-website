@@ -13,7 +13,7 @@ export function HomeAvailabilityWidget() {
   const availability = useAvailability()
   const [checkIn, setCheckIn] = useState("")
   const [checkOut, setCheckOut] = useState("")
-  const [floating, setFloating] = useState(false)
+  const [scrolledPast, setScrolledPast] = useState(false)
   const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export function HomeAvailabilityWidget() {
   }, [])
 
   useEffect(() => {
-    const onScroll = () => setFloating(window.scrollY > window.innerHeight - 160)
+    const onScroll = () => setScrolledPast(window.scrollY > window.innerHeight - 160)
     onScroll()
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
@@ -49,7 +49,10 @@ export function HomeAvailabilityWidget() {
     sessionStorage.setItem(DISMISS_KEY, "1")
   }
 
-  if (dismissed) return null
+  // Dismissing only closes the FLOATING bar. The copy sitting in the hero is
+  // always rendered — hiding that one too would leave the guest with no way to
+  // search dates again for the rest of the session.
+  const floating = scrolledPast && !dismissed
 
   const availableCount = availability.searched
     ? Array.from(availability.byRoom.values()).filter((s) => s.available).length
@@ -59,35 +62,38 @@ export function HomeAvailabilityWidget() {
     <div
       className={cn(
         floating
-          ? "fixed left-1/2 top-4 z-40 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 sm:top-6"
-          : "relative w-full max-w-2xl",
+          ? "fixed left-0 right-0 top-[4.5rem] z-[60] flex justify-center bg-white px-4 py-4 shadow-lg xl:top-[6rem]"
+          : "relative w-full",
       )}
     >
-      {floating ? (
-        <button
-          type="button"
-          onClick={handleClose}
-          aria-label="Hide availability search"
-          className="absolute -top-2 -right-2 z-10 inline-flex size-7 items-center justify-center rounded-full bg-black text-white shadow-md hover:bg-black/80"
-        >
-          <X className="size-4" />
-        </button>
-      ) : null}
-      <StayDateSearch
-        checkIn={checkIn}
-        checkOut={checkOut}
-        onCheckInChange={setCheckIn}
-        onCheckOutChange={setCheckOut}
-        onSearch={handleSearch}
-        onClear={handleClear}
-        loading={availability.loading}
-        searched={availability.searched}
-        availableCount={availableCount}
-        className={cn(
-          "rounded border-[rgba(255,255,255,0.6)] bg-transparent shadow-none transition-colors duration-250 hover:border-white hover:bg-[rgba(255,255,255,0.12)]",
-          floating && "border-border bg-card shadow-xl hover:border-border hover:bg-card",
-        )}
-      />
+      <div className={cn("relative w-full", floating && "max-w-7xl")}>
+        {floating ? (
+          <button
+            type="button"
+            onClick={handleClose}
+            aria-label="Hide availability search"
+            className="absolute -top-2 -right-2 z-10 inline-flex size-8 items-center justify-center rounded-full bg-black text-white shadow-lg ring-2 ring-white hover:bg-black/80"
+          >
+            <X className="size-4" />
+          </button>
+        ) : null}
+        <StayDateSearch
+          checkIn={checkIn}
+          checkOut={checkOut}
+          onCheckInChange={setCheckIn}
+          onCheckOutChange={setCheckOut}
+          onSearch={handleSearch}
+          onClear={handleClear}
+          loading={availability.loading}
+          searched={availability.searched}
+          availableCount={availableCount}
+          subtextClassName={floating ? undefined : "text-white"}
+          className={cn(
+            "rounded-2xl border-[rgba(255,255,255,0.6)] bg-[rgba(255,255,255,0.12)] transition-colors duration-250",
+            floating && "border-transparent bg-white shadow-none",
+          )}
+        />
+      </div>
     </div>
   )
 }

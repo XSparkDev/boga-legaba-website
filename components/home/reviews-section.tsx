@@ -1,4 +1,5 @@
 import { Reveal } from "@/components/reveal"
+import { ReviewsCarousel } from "@/components/home/reviews-carousel"
 import { getGuestReviews, OVERALL_RATING, OVERALL_REVIEW_COUNT } from "@/lib/google-reviews"
 
 function Stars({ rating }: { rating: number }) {
@@ -13,11 +14,13 @@ function Stars({ rating }: { rating: number }) {
 
 /**
  * Guest reviews on the home page. Server component: reads (rating >= 3)
- * reviews from the DB at render time. If there are none, it renders nothing
- * so the page never shows an empty/broken section.
+ * reviews from the DB at render time, capped to 6 (Google's own Places API
+ * never returns more than 5 reviews for a listing anyway). If there are none,
+ * it renders nothing so the page never shows an empty/broken section.
  */
 export async function ReviewsSection() {
-  const reviews = await getGuestReviews()
+  const allReviews = await getGuestReviews()
+  const reviews = allReviews.slice(0, 6)
   if (!reviews.length) return null
 
   return (
@@ -39,27 +42,9 @@ export async function ReviewsSection() {
           </div>
         </Reveal>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {reviews.map((r, i) => (
-            <Reveal key={i} delay={i * 80}>
-              <figure className="flex h-full flex-col rounded-2xl border border-[#000000]/10 bg-sand p-6">
-                <div className="mb-3 flex items-center justify-between">
-                  <Stars rating={r.rating} />
-                  <span className="font-body text-xs text-taupe">{r.relativeTime}</span>
-                </div>
-                <blockquote className="font-body text-sm leading-relaxed text-body-text line-clamp-6">
-                  “{r.text}”
-                </blockquote>
-                <figcaption className="mt-4 flex items-center gap-3 border-t border-[#000000]/10 pt-4">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-[#000000] text-xs font-semibold text-gold">
-                    {r.author.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="font-body text-sm font-medium text-[#000000]">{r.author}</span>
-                </figcaption>
-              </figure>
-            </Reveal>
-          ))}
-        </div>
+        <Reveal>
+          <ReviewsCarousel reviews={reviews} />
+        </Reveal>
       </div>
     </section>
   )

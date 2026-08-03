@@ -21,7 +21,8 @@ export function SiteImage({
         alt={alt}
         className="absolute inset-0 h-full w-full object-cover"
         loading={priority ? 'eager' : 'lazy'}
-        decoding="async"
+        fetchPriority={priority ? 'high' : 'auto'}
+        decoding={priority ? 'sync' : 'async'}
       />
       {children}
     </div>

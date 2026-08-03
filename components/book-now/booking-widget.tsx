@@ -74,6 +74,21 @@ export function BookingWidget({
     }
   }, [])
 
+  // If the guest leaves for Paystack and comes back via the browser's Back
+  // button (declining to pay), the page can be restored from bfcache frozen
+  // mid-"paying" spinner — with no poll actually still running. Detect that
+  // restore and drop back to the form so the UI doesn't look stuck forever.
+  useEffect(() => {
+    function handlePageShow(e: PageTransitionEvent) {
+      if (e.persisted) {
+        cancelledRef.current = true
+        setStep((s) => (s === "paying" ? "form" : s))
+      }
+    }
+    window.addEventListener("pageshow", handlePageShow)
+    return () => window.removeEventListener("pageshow", handlePageShow)
+  }, [])
+
   // Keep the widget in view across step changes. Submitting collapses the tall
   // form into the short "Reserving…" spinner (or the error box), which shrinks
   // the page by ~1000px while the scroll position stays put — leaving the new
