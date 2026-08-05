@@ -11,7 +11,7 @@ export const viewport = {
 
 const TITLE = "Boga Legaba Guest House & Conference Centre | Guest House in Mahikeng"
 const DESCRIPTION =
-  "Premium guest house and conference venue in Mahikeng (Mafikeng), North West Province. 27 rooms across 3 properties. Corporate & government accommodation, conferences up to 80 delegates. Book directly for the best rates."
+  "Premium guest house and conference venue in Mahikeng, North West Province. 27 rooms across 3 properties. Corporate & government accommodation, conferences up to 80 delegates. Book directly for the best rates."
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     "Guest house in Mahikeng",
     "Conference venue in Mahikeng",
     "Government accommodation Mahikeng",
-    "Guesthouse Mafikeng",
+    "Guesthouse Mahikeng",
     "Corporate accommodation North West Province",
   ],
   authors: [{ name: "X Spark" }],

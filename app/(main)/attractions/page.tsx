@@ -10,7 +10,7 @@ import { fetchEstablishment } from "@/lib/nightsbridge-api"
 export const metadata: Metadata = {
   title: "Mahikeng Attractions | Local Guide | Boga Legaba",
   description:
-    "Your local guide to Mahikeng (Mafikeng), North West Province. Game reserve, government buildings, shopping, restaurants, historical sites and airport, all near Boga Legaba.",
+    "Your local guide to Mahikeng, North West Province. Game reserve, government buildings, shopping, restaurants, historical sites and airport, all near Boga Legaba.",
 }
 
 export const dynamic = "force-dynamic"
@@ -18,9 +18,9 @@ export const dynamic = "force-dynamic"
 const ATTRACTIONS = [
   { Icon: Trees, name: "Mahikeng Game Reserve", distance: "~6 km", note: "Big game and birdlife minutes from the city centre." },
   { Icon: Landmark, name: "Government Buildings", distance: "~3 km", note: "Provincial legislature and departmental offices." },
-  { Icon: ShoppingBag, name: "Shopping", distance: "~2 km", note: "Mega City and Mafikeng Mall for retail and essentials." },
+  { Icon: ShoppingBag, name: "Shopping", distance: "~2 km", note: "Mega City and Mahikeng Mall for retail and essentials." },
   { Icon: UtensilsCrossed, name: "Restaurants", distance: "~2 km", note: "A range of local and franchise dining options." },
-  { Icon: BookMarked, name: "Historical Sites", distance: "~4 km", note: "Mafikeng Museum and Anglo-Boer War heritage." },
+  { Icon: BookMarked, name: "Historical Sites", distance: "~4 km", note: "Mahikeng Museum and Anglo-Boer War heritage." },
   { Icon: Plane, name: "Mahikeng Airport", distance: "~18 km", note: "Convenient regional access for business travel." },
 ]
 

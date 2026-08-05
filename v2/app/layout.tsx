@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     'Guest house in Mahikeng',
     'Conference venue in Mahikeng',
     'Government accommodation Mahikeng',
-    'Guesthouse Mafikeng',
+    'Guesthouse Mahikeng',
     'Corporate accommodation North West Province',
   ],
   creator: 'X Spark',

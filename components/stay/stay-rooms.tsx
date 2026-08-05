@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { MapPin } from "lucide-react"
 import { properties as staticProperties, type Property, type PropertyId, type Room } from "@/data/rooms"
 import { RoomCard } from "@/components/room-card"
@@ -52,15 +53,23 @@ export function StayRooms() {
       ? data.properties
       : (staticProperties as unknown as SyncedProperty[])
   const isLiveInventory = data?.source === "database"
+  const searchParams = useSearchParams()
   const [active, setActive] = useState<PropertyId>("chababa")
   const [criteria, setCriteria] = useState<string[]>([])
   const [checkIn, setCheckIn] = useState("")
   const [checkOut, setCheckOut] = useState("")
 
   useEffect(() => {
-    const defaults = defaultCheckInOut()
-    setCheckIn(defaults.checkIn)
-    setCheckOut(defaults.checkOut)
+    const urlCheckIn = searchParams.get("checkIn")
+    const urlCheckOut = searchParams.get("checkOut")
+    if (urlCheckIn && urlCheckOut) {
+      setCheckIn(urlCheckIn)
+      setCheckOut(urlCheckOut)
+    } else {
+      const defaults = defaultCheckInOut()
+      setCheckIn(defaults.checkIn)
+      setCheckOut(defaults.checkOut)
+    }
   }, [])
 
   const initialSearchDone = useRef(false)
@@ -154,6 +163,7 @@ export function StayRooms() {
           searched={availability.searched}
           availableCount={availability.searched ? filteredRooms.length : undefined}
           className="mb-8"
+          gridClassName="lg:items-end"
         />
 
         {availability.error ? (

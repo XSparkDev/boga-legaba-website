@@ -76,7 +76,7 @@ export async function generateMetadata({ searchParams }: BookNowPageProps): Prom
       ? `Book ${name} | Boga Legaba Guest House`
       : "Availability & Rates | Boga Legaba Guest House",
   description:
-      "Check live room availability and rates at Boga Legaba Guest House, Mafikeng. Book directly: no OTA fees, secure and instant.",
+      "Check live room availability and rates at Boga Legaba Guest House, Mahikeng. Book directly: no OTA fees, secure and instant.",
   }
 }
 
@@ -927,7 +927,7 @@ function AreaSection({ est }: { est: EstablishmentData }) {
       {est.areainfo ? (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
           <h3 className="mb-3 flex items-center gap-2 font-body text-[13px] font-semibold tracking-normal text-gray-500">
-            <TreePine className="size-4 text-[#996948]" /> About Mafikeng
+            <TreePine className="size-4 text-[#996948]" /> About Mahikeng
           </h3>
           <p className="text-sm leading-relaxed text-gray-600">{est.areainfo}</p>
         </div>
@@ -1194,7 +1194,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
               : "Check Availability & Rates"}
           </h1>
           <p className="mt-1 font-body text-xs text-white/40">
-            Boga Legaba Guest House &amp; Conference Centre · Mafikeng
+            Boga Legaba Guest House &amp; Conference Centre · Mahikeng
           </p>
         </div>
       </div>
@@ -1385,7 +1385,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
             {estData ? (
               <div className="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
                 <h2 className="mb-4 font-serif text-xl font-bold text-gray-900">
-                  Explore Mafikeng
+                  Explore Mahikeng
                 </h2>
                 <AreaSection est={estData} />
               </div>
@@ -1473,7 +1473,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
                   <p className="text-sm leading-relaxed text-gray-600 max-w-2xl">{estData.teaser}</p>
                 ) : null}
                 <PropertyInfoSection est={estData} />
-                <h2 className="font-serif text-xl font-bold text-gray-900">Explore Mafikeng</h2>
+                <h2 className="font-serif text-xl font-bold text-gray-900">Explore Mahikeng</h2>
                 <AreaSection est={estData} />
               </>
             ) : null}

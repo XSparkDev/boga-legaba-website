@@ -33,7 +33,7 @@ export function lodgingBusinessJsonLd() {
     "@id": `${SITE_URL}/#lodging`,
     name: BUSINESS.name,
     description:
-      "Premium guest house and conference venue in Mahikeng (Mafikeng), North West Province: corporate & government accommodation and conferences.",
+      "Premium guest house and conference venue in Mahikeng, North West Province: corporate & government accommodation and conferences.",
     url: SITE_URL,
     telephone: BUSINESS.phone,
     email: BUSINESS.email,

@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import { StayPageHeader } from "@/components/stay/stay-page-header"
 import { StayRooms } from "@/components/stay/stay-rooms"
 import { StayBookingCta } from "@/components/stay/stay-booking-cta"
@@ -14,7 +15,9 @@ export default function StayPage() {
   return (
     <main>
       <StayPageHeader />
-      <StayRooms />
+      <Suspense>
+        <StayRooms />
+      </Suspense>
       <StayBookingCta />
       <RoutePrefetcher />
     </main>

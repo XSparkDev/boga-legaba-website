@@ -290,6 +290,42 @@
   color: #ffffff;
 }
 
+/* Gap above the home availability card. A short laptop screen has almost no
+   slack under the Search button, so the gap only opens up on taller viewports —
+   that drops the card into the empty space instead of leaving it stranded high.
+   Width-guarded so tall phones keep the tight mobile spacing. */
+.hero-widget-gap {
+  margin-top: 1.25rem;
+}
+@media (min-width: 640px) {
+  .hero-widget-gap {
+    margin-top: 1.5rem;
+  }
+}
+@media (min-width: 640px) and (min-height: 840px) {
+  .hero-widget-gap {
+    margin-top: 3.5rem;
+  }
+}
+@media (min-width: 640px) and (min-height: 940px) {
+  .hero-widget-gap {
+    margin-top: 5rem;
+  }
+}
+
+/* Home hero only. The full .heading-hero size wraps the home title onto four
+   lines and pushes the availability widget below the fold, so this variant
+   trades a little scale for keeping "Check availability" on the first screen.
+   Other pages keep .heading-hero unchanged. */
+.heading-hero-home {
+  font-family: var(--font-title), 'League Spartan', Arial, sans-serif;
+  font-weight: 800;
+  font-size: clamp(30px, 6.5vw, 84px);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
 /* Boga Legaba Brand Guidelines — exact type scale (pt converted to px at
    1pt = 1.333px). Base/max size is the literal spec value; clamp() only
    scales DOWN for narrow mobile viewports so text doesn't overflow, it

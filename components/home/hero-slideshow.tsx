@@ -28,7 +28,10 @@ export function HeroSlideshow({ images, alt, className }: HeroSlideshowProps) {
     <div className={cn("absolute inset-0", className)}>
       {images.map((src, i) => (
         <Image
-          key={src}
+          // Keyed by slot index, not by URL: two hero slots can legitimately
+          // point at the same picture (admin sets them in the Images screen),
+          // and duplicate keys stop the crossfade dead.
+          key={i}
           src={src}
           alt={alt}
           fill

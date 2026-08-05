@@ -4,7 +4,7 @@ import { CheckCircle2 } from 'lucide-react'
 import { cn } from '@v2/lib/utils'
 
 const baseInput =
-  'w-full rounded-xl border border-warm-sand/70 bg-off-white px-4 py-3 font-sans text-sm text-deep-earth placeholder:text-muted-brown/60 outline-none transition-all focus:border-terracotta focus:shadow-[0_0_0_3px_rgba(0,0,0,0.1)]'
+  'w-full rounded-xl border border-warm-sand/70 bg-off-white px-4 py-3.5 font-sans text-sm text-deep-earth placeholder:text-muted-brown/60 outline-none transition-all focus:border-terracotta focus:shadow-[0_0_0_3px_rgba(0,0,0,0.1)]'
 
 export function Field({
   label,

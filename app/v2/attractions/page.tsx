@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 const attractions = [
   { icon: Trees, name: 'Game Reserve', distance: '12 km', note: 'Botsalano & nearby reserves for game drives.' },
   { icon: Landmark, name: 'Government Buildings', distance: '4 km', note: 'Provincial offices and the legislature precinct.' },
-  { icon: ShoppingBag, name: 'Shopping', distance: '3 km', note: 'Mega City and Mafikeng Mall for everything you need.' },
+  { icon: ShoppingBag, name: 'Shopping', distance: '3 km', note: 'Mega City and Mahikeng Mall for everything you need.' },
   { icon: Utensils, name: 'Restaurants', distance: '2–5 km', note: 'Local eateries and familiar favourites.' },
   { icon: BookOpen, name: 'History', distance: '5 km', note: 'Mahikeng Museum and the Siege of Mafeking sites.' },
   { icon: Plane, name: 'Airport', distance: '18 km', note: 'Mahikeng Airport for regional connections.' },

@@ -16,8 +16,14 @@ type StayDateSearchProps = {
   searched?: boolean
   availableCount?: number
   className?: string
+  gridClassName?: string
   subtextClassName?: string
   labelClassName?: string
+  /**
+   * Overrides the "Check availability" heading colour. The home hero sits on a
+   * photo where the default gold is hard to read; the Stay page card keeps it.
+   */
+  titleClassName?: string
   /**
    * Prefixes the input ids. The home page renders this twice (hero copy +
    * floating bar), so the second copy needs its own ids for the labels to work.
@@ -38,8 +44,10 @@ export function StayDateSearch({
   searched,
   availableCount,
   className,
+  gridClassName,
   subtextClassName,
   labelClassName,
+  titleClassName,
   idPrefix = "stay",
   compact,
 }: StayDateSearchProps) {
@@ -91,7 +99,7 @@ export function StayDateSearch({
         type="button"
         onClick={onSearch}
         disabled={loading || !checkIn || !checkOut}
-        className={cn("btn-gold h-[46px] justify-center px-6 text-sm disabled:opacity-50", compact && "flex-1 sm:flex-none")}
+        className={cn("btn-gold h-[50px] justify-center px-6 text-sm disabled:opacity-50", compact && "flex-1 sm:flex-none")}
       >
         {loading ? <Loader2 className="size-4 animate-spin" /> : "Search"}
       </button>
@@ -99,7 +107,7 @@ export function StayDateSearch({
         <button
           type="button"
           onClick={onClear}
-          className="btn-glass h-[46px] justify-center gap-2 px-4 text-sm"
+          className="btn-glass h-[50px] justify-center gap-2 px-4 text-sm"
         >
           <X className="size-4" /> Clear
         </button>
@@ -134,7 +142,7 @@ export function StayDateSearch({
     <div className={cn("rounded-2xl border border-border bg-card p-5 sm:p-6", className)}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-gold">
+          <p className={cn("flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-gold", titleClassName)}>
             <CalendarRange className="size-3.5" /> Check availability
           </p>
           <p className={cn("mt-1 font-body text-sm text-muted-foreground", subtextClassName)}>
@@ -142,11 +150,11 @@ export function StayDateSearch({
           </p>
         </div>
         {countLabel ? (
-          <p className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">{countLabel}</p>
+          <p className={cn("font-mono text-[11px] uppercase tracking-wide text-muted-foreground", subtextClassName)}>{countLabel}</p>
         ) : null}
       </div>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto]">
+      <div className={cn("mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto]", gridClassName)}>
         {fields}
         {actions}
       </div>

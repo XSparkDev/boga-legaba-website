@@ -33,21 +33,24 @@ export function HomeHero({ images, alt }: { images?: string[]; alt?: string }) {
           color blocks, no gradients. */}
       <div className="absolute inset-0 bg-black/55" />
 
-      <div className="relative z-[2] mx-auto flex w-full max-w-7xl flex-1 flex-col justify-start px-4 pb-8 pt-[calc(4.5rem+1rem)] sm:justify-center sm:px-6 sm:pb-10 sm:pt-[calc(4.5rem+1.75rem)] xl:px-8 xl:pt-[calc(6rem+2rem)]">
-        <div className="max-w-3xl">
-          <SiteLogo size="hero" className="mb-3 hidden sm:mb-8 sm:block" />
-          <p className="font-body text-[11px] tracking-[0.2em] text-gold uppercase">
+      <div className="relative z-[2] mx-auto flex w-full max-w-7xl flex-1 flex-col justify-start px-4 pb-8 pt-[calc(4.5rem+1rem)] sm:justify-center sm:px-6 sm:pb-10 sm:pt-[calc(4.5rem+1rem)] xl:px-8 xl:pt-[calc(4.5rem+1.25rem)]">
+        {/* max-w-5xl (not 3xl) so the larger hero title still lands on two
+            lines — three lines would push the availability widget below the
+            fold. The paragraph and buttons keep their own narrower widths. */}
+        <div className="max-w-5xl">
+          <SiteLogo size="hero" className="mb-3 hidden sm:mb-4 sm:block" />
+          <p className="font-body text-[11px] tracking-[0.2em] text-white uppercase">
             Mahikeng · North West Province
           </p>
-          <div className="my-3 h-[2px] w-[60px] bg-gold sm:my-4" />
-          <h1 className="heading-hero text-balance font-bold">
+          <div className="my-3 h-[2px] w-[60px] bg-white" />
+          <h1 className="heading-hero-home text-balance font-bold">
             Where Business Travel Meets African Hospitality
           </h1>
-          <p className="mt-5 max-w-xl text-pretty font-body text-base leading-relaxed text-white/75 sm:mt-7 sm:text-lg">
+          <p className="mt-4 max-w-xl text-pretty font-body text-base leading-relaxed text-white/75 sm:mt-5 sm:text-lg">
             Three unique properties. One seamless experience. Mahikeng&apos;s premier guest house and conference
             destination.
           </p>
-          <div className="mt-7 flex w-full max-w-xl flex-col gap-3 sm:mt-9 sm:max-w-2xl sm:flex-row sm:items-stretch">
+          <div className="mt-5 flex w-full max-w-xl flex-col gap-3 sm:mt-6 sm:max-w-2xl sm:flex-row sm:items-stretch">
             <Link
               href="/stay"
               data-ga4-event="book_now_click"
@@ -64,7 +67,7 @@ export function HomeHero({ images, alt }: { images?: string[]; alt?: string }) {
           </div>
         </div>
 
-        <div className="mt-7 sm:mt-9">
+        <div className="hero-widget-gap">
           <HomeAvailabilityWidget />
         </div>
 
@@ -72,8 +75,8 @@ export function HomeHero({ images, alt }: { images?: string[]; alt?: string }) {
           className="mt-7 flex flex-col items-center gap-2 pb-[max(0.25rem,env(safe-area-inset-bottom))] sm:mt-9 sm:items-start"
           aria-hidden
         >
-          <span className="font-mono text-[10px] tracking-[0.15em] text-gold uppercase">Scroll</span>
-          <div className="h-8 w-px bg-gold/60 animate-pulse" />
+          <span className="font-mono text-[10px] tracking-[0.15em] text-white uppercase">Scroll</span>
+          <div className="h-8 w-px bg-white/60 animate-pulse" />
         </div>
       </div>
       <NightsBridgeModal isOpen={isOpen} onClose={closeModal} />

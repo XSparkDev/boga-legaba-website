@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { X } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { StayDateSearch } from "@/components/stay/stay-date-search"
 import { useAvailability } from "@/hooks/useAvailability"
 import { NAV_STICKY_TOP_CLASS } from "@/lib/nav-shell"
@@ -13,6 +14,7 @@ import { cn } from "@/lib/utils"
 const NAV_HEIGHT_PX = 96
 
 export function HomeAvailabilityWidget() {
+  const router = useRouter()
   const availability = useAvailability()
   const [checkIn, setCheckIn] = useState("")
   const [checkOut, setCheckOut] = useState("")
@@ -46,7 +48,8 @@ export function HomeAvailabilityWidget() {
   }, [])
 
   function handleSearch() {
-    availability.search(checkIn, checkOut)
+    if (!checkIn || !checkOut) return
+    router.push(`/stay?checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}`)
   }
 
   function handleClear() {
@@ -86,6 +89,9 @@ export function HomeAvailabilityWidget() {
       <StayDateSearch
         {...shared}
         subtextClassName="text-white"
+        titleClassName="text-white"
+        labelClassName="text-white"
+        gridClassName="lg:items-end"
         className={cn(
           "rounded-2xl border-[rgba(255,255,255,0.6)] bg-[rgba(255,255,255,0.12)]",
           // Hidden rather than unmounted: the hero keeps its height, so docking
