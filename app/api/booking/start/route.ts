@@ -42,6 +42,11 @@ export async function POST(request: NextRequest) {
   const roomTypeName = String(body.roomTypeName)
   const bbid         = typeof body.bbid === "number" ? body.bbid : NB_BBID
 
+  const todayUTC = new Date().toISOString().slice(0, 10)
+  if (checkin < todayUTC) {
+    return NextResponse.json({ ok: false, error: "Check-in date cannot be in the past." }, { status: 400 })
+  }
+
   // ── Pre-warm the worker ────────────────────────────────────────────────────
   // Fire a non-blocking /health GET to wake a sleeping Render free-tier worker
   // NOW, while we run the availability/hold checks below — so by the time we

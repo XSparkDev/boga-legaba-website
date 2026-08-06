@@ -4,6 +4,8 @@ import { useEffect, useState, type FormEvent } from "react"
 import { CheckCircle2, Loader2, AlertTriangle } from "lucide-react"
 import { SbdFormGenerator } from "@/components/forms/sbd-form-generator"
 import { Field, inputClass } from "@/components/forms/form-ui"
+import { minCheckInDate } from "@/lib/room-availability"
+import { useBookingDates } from "@/hooks/useBookingDates"
 
 const BOOKING_TYPES = ["Corporate Individual", "Government Per Diem", "Block Booking", "Corporate Event"]
 
@@ -18,13 +20,14 @@ export function CorporateForm() {
     email: "",
     phone: "",
     type: "",
-    checkin: "",
-    checkout: "",
     rooms: "",
     po: "",
     billing: "",
     requirements: "",
   })
+
+  // Booking dates are managed by the centralized hook — guarantees checkout > checkin at all times.
+  const { checkIn, checkOut, setCheckIn, setCheckOut, minCheckIn, minCheckOut } = useBookingDates()
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -42,8 +45,9 @@ export function CorporateForm() {
     if (!form.entity.trim()) e.entity = "Please enter your company, department or entity."
     if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = "Please enter a valid email address."
     if (!form.phone.trim()) e.phone = "Please enter a phone number."
-    if (!form.checkin) e.checkin = "Please select a check-in date."
-    if (!form.checkout) e.checkout = "Please select a check-out date."
+    if (!checkIn) e.checkin = "Please select a check-in date."
+    else if (checkIn < minCheckInDate()) e.checkin = "Check-in date cannot be in the past."
+    if (!checkOut) e.checkout = "Please select a check-out date."
     if (!form.rooms.trim()) e.rooms = "Please enter the number of rooms required."
     setErrors(e)
     return Object.keys(e).length === 0
@@ -67,8 +71,8 @@ export function CorporateForm() {
           message: form.requirements,
           details: {
             type: form.type,
-            checkin: form.checkin,
-            checkout: form.checkout,
+            checkin: checkIn,
+            checkout: checkOut,
             rooms: form.rooms,
             po: form.po,
             billing: form.billing,
@@ -107,8 +111,8 @@ export function CorporateForm() {
     entity: form.entity,
     email: form.email,
     phone: form.phone,
-    checkin: form.checkin,
-    checkout: form.checkout,
+    checkin: checkIn,
+    checkout: checkOut,
     roomsRequired: form.rooms,
     po: form.po,
     billing: form.billing,
@@ -151,10 +155,22 @@ export function CorporateForm() {
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <Field label="Check-in Date" required error={errors.checkin}>
-          <input type="date" className={inputClass} value={form.checkin} onChange={(e) => set("checkin", e.target.value)} />
+          <input
+            type="date"
+            className={inputClass}
+            min={minCheckIn}
+            value={checkIn}
+            onChange={(e) => setCheckIn(e.target.value)}
+          />
         </Field>
         <Field label="Check-out Date" required error={errors.checkout}>
-          <input type="date" className={inputClass} value={form.checkout} onChange={(e) => set("checkout", e.target.value)} />
+          <input
+            type="date"
+            className={inputClass}
+            min={minCheckOut}
+            value={checkOut}
+            onChange={(e) => setCheckOut(e.target.value)}
+          />
         </Field>
         <Field label="Rooms Required" required error={errors.rooms}>
           <input type="number" min={1} className={inputClass} value={form.rooms} onChange={(e) => set("rooms", e.target.value)} />

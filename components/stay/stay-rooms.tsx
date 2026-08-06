@@ -13,6 +13,7 @@ import { useRoomImages } from "@/hooks/useRoomImages"
 import { useSyncedRooms } from "@/hooks/useSyncedRooms"
 import { matchesAllCriteria } from "@/lib/match-criteria"
 import { defaultCheckInOut } from "@/lib/room-availability"
+import { useBookingDates } from "@/hooks/useBookingDates"
 import type { SyncedProperty, SyncedRoom } from "@/lib/synced-rooms"
 import { LiveDataBadge } from "@/components/stay/live-data-badge"
 import { cn } from "@/lib/utils"
@@ -56,21 +57,18 @@ export function StayRooms() {
   const searchParams = useSearchParams()
   const [active, setActive] = useState<PropertyId>("chababa")
   const [criteria, setCriteria] = useState<string[]>([])
-  const [checkIn, setCheckIn] = useState("")
-  const [checkOut, setCheckOut] = useState("")
+  const { checkIn, checkOut, setCheckIn, setCheckOut, reset } = useBookingDates()
 
   useEffect(() => {
     const urlCheckIn = searchParams.get("checkIn")
     const urlCheckOut = searchParams.get("checkOut")
-    if (urlCheckIn && urlCheckOut) {
-      setCheckIn(urlCheckIn)
-      setCheckOut(urlCheckOut)
-    } else {
-      const defaults = defaultCheckInOut()
-      setCheckIn(defaults.checkIn)
-      setCheckOut(defaults.checkOut)
-    }
-  }, [])
+    // reset() validates the dates through the same rules as manual input:
+    // past check-in is clamped to today, invalid checkout is repaired to +2.
+    reset({
+      checkIn: urlCheckIn || defaultCheckInOut().checkIn,
+      checkOut: urlCheckOut || defaultCheckInOut().checkOut,
+    })
+  }, [reset])
 
   const initialSearchDone = useRef(false)
   useEffect(() => {
@@ -126,9 +124,7 @@ export function StayRooms() {
 
   function handleClearDates() {
     availability.clear()
-    const defaults = defaultCheckInOut()
-    setCheckIn(defaults.checkIn)
-    setCheckOut(defaults.checkOut)
+    reset(defaultCheckInOut())
   }
 
   if (loading) {

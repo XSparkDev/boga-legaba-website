@@ -127,3 +127,12 @@ export function maxBookingDate(): string {
   d.setDate(d.getDate() + 350)
   return formatDate(d)
 }
+
+/** Add `n` days to an ISO date string. Returns "" on invalid input. */
+export function addDays(iso: string, n: number): string {
+  const d = parseDate(iso)
+  if (!d) return ""
+  d.setDate(d.getDate() + n)
+  return formatDate(d)
+}
+

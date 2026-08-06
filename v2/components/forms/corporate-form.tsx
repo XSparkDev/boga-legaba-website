@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { Field, TextInput, TextArea, Select, SuccessMessage } from './form-atoms'
 import { SbdFormGenerator } from './sbd-form-generator'
+import { minCheckInDate } from '@/lib/room-availability'
+import { useBookingDates } from '@/hooks/useBookingDates'
 
 export function CorporateForm() {
   const [submitted, setSubmitted] = useState(false)
@@ -13,13 +15,14 @@ export function CorporateForm() {
     entity: '',
     email: '',
     phone: '',
-    checkin: '',
-    checkout: '',
     roomsRequired: '',
     po: '',
     billing: '',
     requirements: '',
   })
+
+  // Booking dates managed by centralized hook — guarantees checkout > checkin at all times.
+  const { checkIn, checkOut, setCheckIn, setCheckOut, minCheckIn, minCheckOut } = useBookingDates()
 
   function updateField(key: keyof typeof formData, value: string) {
     setFormData((prev) => ({ ...prev, [key]: value }))
@@ -35,14 +38,18 @@ export function CorporateForm() {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const data = new FormData(e.currentTarget)
-    const required = ['contact', 'entity', 'email', 'phone', 'checkin', 'checkout', 'roomsRequired']
     const next: Record<string, string> = {}
-    required.forEach((key) => {
-      if (!String(data.get(key) ?? '').trim()) next[key] = 'This field is required.'
-    })
-    const email = String(data.get('email') ?? '')
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = 'Enter a valid email address.'
+
+    if (!formData.contact.trim()) next.contact = 'This field is required.'
+    if (!formData.entity.trim()) next.entity = 'This field is required.'
+    if (!formData.email.trim()) next.email = 'This field is required.'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) next.email = 'Enter a valid email address.'
+    if (!formData.phone.trim()) next.phone = 'This field is required.'
+    if (!checkIn) next.checkin = 'This field is required.'
+    else if (checkIn < minCheckInDate()) next.checkin = 'Check-in date cannot be in the past.'
+    if (!checkOut) next.checkout = 'This field is required.'
+    if (!formData.roomsRequired.trim()) next.roomsRequired = 'This field is required.'
+
     setErrors(next)
     if (Object.keys(next).length === 0) {
       setSubmitted(true)
@@ -56,6 +63,19 @@ export function CorporateForm() {
   }
 
   const showSbd = bookingType === 'Government Per Diem'
+
+  const sbdFormData = {
+    contact: formData.contact,
+    entity: formData.entity,
+    email: formData.email,
+    phone: formData.phone,
+    checkin: checkIn,
+    checkout: checkOut,
+    roomsRequired: formData.roomsRequired,
+    po: formData.po,
+    billing: formData.billing,
+    requirements: formData.requirements,
+  }
 
   return (
     <form onSubmit={handleSubmit} data-ga4-event="corporate_enquiry_submit" noValidate className="space-y-5">
@@ -115,23 +135,25 @@ export function CorporateForm() {
         </Select>
       </Field>
 
-      {showSbd ? <SbdFormGenerator formData={formData} /> : null}
+      {showSbd ? <SbdFormGenerator formData={sbdFormData} /> : null}
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Check-in Date" required error={errors.checkin}>
           <TextInput
             type="date"
             name="checkin"
-            value={formData.checkin}
-            onChange={(e) => updateField('checkin', e.target.value)}
+            min={minCheckIn}
+            value={checkIn}
+            onChange={(e) => setCheckIn(e.target.value)}
           />
         </Field>
         <Field label="Check-out Date" required error={errors.checkout}>
           <TextInput
             type="date"
             name="checkout"
-            value={formData.checkout}
-            onChange={(e) => updateField('checkout', e.target.value)}
+            min={minCheckOut}
+            value={checkOut}
+            onChange={(e) => setCheckOut(e.target.value)}
           />
         </Field>
         <Field label="Number of Rooms Required" required error={errors.roomsRequired}>

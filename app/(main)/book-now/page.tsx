@@ -61,6 +61,7 @@ import {
 import { BookingWidget } from "@/components/book-now/booking-widget"
 import { RoomPhotoGallery } from "@/components/book-now/room-photo-gallery"
 import { getRoomImagesByBbroomid } from "@/lib/room-images"
+import { addDays } from "@/lib/room-availability"
 
 export const dynamic = "force-dynamic"
 
@@ -1087,8 +1088,16 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
   const bbid = params.bbid ? Number(params.bbid) : NB_BBID
   // bbrtid = NightsBridge room TYPE id — use it for direct lookup in establishment data
   const bbrtidParam = params.bbrtid ? Number(params.bbrtid) : null
-  const fromDate = params.from ?? null
-  const toDate = params.to ?? null
+  const todayUTC = new Date().toISOString().slice(0, 10)
+  const rawFrom = params.from ?? null
+  const fromDate = rawFrom && rawFrom < todayUTC ? todayUTC : rawFrom
+  const rawTo = params.to ?? null
+  // Clamp toDate: must be after fromDate; if missing or invalid, default to fromDate + 2
+  const toDate = (() => {
+    if (!fromDate) return rawTo
+    if (!rawTo || rawTo <= fromDate) return addDays(fromDate, 2)
+    return rawTo
+  })()
   const roomTypeNameParam = params.roomTypeName ?? null
 
   // Real per-room photos (Supabase room_images, keyed by physical room id).

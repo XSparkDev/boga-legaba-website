@@ -31,6 +31,11 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  const todayUTC = new Date().toISOString().slice(0, 10)
+  if (String(body.checkin) < todayUTC) {
+    return NextResponse.json({ ok: false, error: "Check-in date cannot be in the past." }, { status: 400 })
+  }
+
   // ── Real-time availability gate ──────────────────────────────────────────
   // Ask NightsBridge directly, right now (no cache), whether a room of this type
   // is actually free for these exact dates. This catches the case where the

@@ -6,6 +6,7 @@ import { X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { StayDateSearch } from "@/components/stay/stay-date-search"
 import { useAvailability } from "@/hooks/useAvailability"
+import { useBookingDates } from "@/hooks/useBookingDates"
 import { NAV_STICKY_TOP_CLASS } from "@/lib/nav-shell"
 import { defaultCheckInOut } from "@/lib/room-availability"
 import { cn } from "@/lib/utils"
@@ -16,8 +17,7 @@ const NAV_HEIGHT_PX = 96
 export function HomeAvailabilityWidget() {
   const router = useRouter()
   const availability = useAvailability()
-  const [checkIn, setCheckIn] = useState("")
-  const [checkOut, setCheckOut] = useState("")
+  const { checkIn, checkOut, setCheckIn, setCheckOut, reset } = useBookingDates()
   const [scrolledPast, setScrolledPast] = useState(false)
   const [dismissed, setDismissed] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -25,10 +25,10 @@ export function HomeAvailabilityWidget() {
 
   useEffect(() => {
     setMounted(true)
-    const defaults = defaultCheckInOut()
-    setCheckIn(defaults.checkIn)
-    setCheckOut(defaults.checkOut)
-  }, [])
+    // Defer real dates to avoid SSR/client hydration mismatch (today's date
+    // differs between the server's UTC clock and the browser's local time).
+    reset(defaultCheckInOut())
+  }, [reset])
 
   // The bar takes over the instant the hero copy reaches the nav — from there on
   // the hero copy is hidden (its space is kept, so nothing reflows) and the two
@@ -54,9 +54,7 @@ export function HomeAvailabilityWidget() {
 
   function handleClear() {
     availability.clear()
-    const defaults = defaultCheckInOut()
-    setCheckIn(defaults.checkIn)
-    setCheckOut(defaults.checkOut)
+    reset(defaultCheckInOut())
   }
 
   // Closing lasts for this page view only — deliberately NOT persisted. A guest

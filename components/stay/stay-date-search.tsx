@@ -2,7 +2,7 @@
 
 import { CalendarRange, Loader2, X } from "lucide-react"
 import { inputClass } from "@/components/forms/form-ui"
-import { minCheckInDate, maxBookingDate } from "@/lib/room-availability"
+import { addDays, minCheckInDate, maxBookingDate } from "@/lib/room-availability"
 import { cn } from "@/lib/utils"
 
 type StayDateSearchProps = {
@@ -51,7 +51,9 @@ export function StayDateSearch({
   idPrefix = "stay",
   compact,
 }: StayDateSearchProps) {
-  const minOut = checkIn || minCheckInDate()
+  // min for check-out is check-in + 1 day (one-night stays allowed, same-day not).
+  // This is defence-in-depth: the useBookingDates hook also validates in state.
+  const minOut = checkIn ? addDays(checkIn, 1) : minCheckInDate()
   const checkInId = `${idPrefix}-check-in`
   const checkOutId = `${idPrefix}-check-out`
 
