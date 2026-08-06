@@ -64,28 +64,28 @@ export function StayDateSearch({
 
   const fields = (
     <>
-      <div className={cn("flex flex-col gap-1.5", compact && "min-w-0 flex-1 sm:w-[9.5rem] sm:flex-none")}>
+      <div className={cn("flex flex-col gap-1.5", compact && "min-w-0 flex-1 overflow-hidden sm:w-[9.5rem] sm:flex-none")}>
         <label htmlFor={checkInId} className={cn("text-sm font-medium text-foreground", compact && "sr-only sm:not-sr-only", labelClassName)}>
           Check-in
         </label>
         <input
           id={checkInId}
           type="date"
-          className={inputClass}
+          className={cn(inputClass, "min-w-0 px-2 sm:px-4")}
           min={minCheckInDate()}
           max={maxBookingDate()}
           value={checkIn}
           onChange={(e) => onCheckInChange(e.target.value)}
         />
       </div>
-      <div className={cn("flex flex-col gap-1.5", compact && "min-w-0 flex-1 sm:w-[9.5rem] sm:flex-none")}>
+      <div className={cn("flex flex-col gap-1.5", compact && "min-w-0 flex-1 overflow-hidden sm:w-[9.5rem] sm:flex-none")}>
         <label htmlFor={checkOutId} className={cn("text-sm font-medium text-foreground", compact && "sr-only sm:not-sr-only", labelClassName)}>
           Check-out
         </label>
         <input
           id={checkOutId}
           type="date"
-          className={inputClass}
+          className={cn(inputClass, "min-w-0 px-2 sm:px-4")}
           min={minOut}
           max={maxBookingDate()}
           value={checkOut}

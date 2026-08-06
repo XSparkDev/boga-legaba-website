@@ -217,6 +217,12 @@
   body {
     @apply bg-background text-foreground font-body;
   }
+  /* Date inputs default to min-width:auto in flex/grid containers, which causes
+     them to overflow their parent when there isn't enough space. Reset to 0 so
+     flex/grid sizing controls the width instead of the browser's intrinsic value. */
+  input[type="date"] {
+    min-width: 0;
+  }
 }
 
 @layer utilities {
