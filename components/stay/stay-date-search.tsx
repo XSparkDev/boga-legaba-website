@@ -64,7 +64,7 @@ export function StayDateSearch({
 
   const fields = (
     <>
-      <div className={cn("flex flex-col gap-1.5", compact && "min-w-0 flex-1 overflow-hidden sm:w-[9.5rem] sm:flex-none")}>
+      <div className={cn("flex flex-col gap-1.5", compact && "overflow-hidden sm:min-w-0 sm:w-[9.5rem] sm:flex-none")}>
         <label htmlFor={checkInId} className={cn("text-sm font-medium text-foreground", compact && "sr-only sm:not-sr-only", labelClassName)}>
           Check-in
         </label>
@@ -78,7 +78,7 @@ export function StayDateSearch({
           onChange={(e) => onCheckInChange(e.target.value)}
         />
       </div>
-      <div className={cn("flex flex-col gap-1.5", compact && "min-w-0 flex-1 overflow-hidden sm:w-[9.5rem] sm:flex-none")}>
+      <div className={cn("flex flex-col gap-1.5", compact && "overflow-hidden sm:min-w-0 sm:w-[9.5rem] sm:flex-none")}>
         <label htmlFor={checkOutId} className={cn("text-sm font-medium text-foreground", compact && "sr-only sm:not-sr-only", labelClassName)}>
           Check-out
         </label>
@@ -101,7 +101,14 @@ export function StayDateSearch({
         type="button"
         onClick={onSearch}
         disabled={loading || !checkIn || !checkOut}
-        className={cn("btn-gold h-[50px] justify-center px-6 text-sm disabled:opacity-50", compact && "flex-1 sm:flex-none")}
+        className={cn(
+          "btn-gold h-[50px] justify-center px-6 text-sm disabled:opacity-50",
+          // Compact: full-width on mobile so it lines up with the stacked date
+          // inputs; reverts to content-sized at sm+.
+          // Non-compact: full-width in the single/two-column grid on mobile and
+          // tablet; reverts to auto at the 4-column desktop breakpoint.
+          compact ? "w-full sm:w-auto sm:flex-none" : "w-full lg:w-auto",
+        )}
       >
         {loading ? <Loader2 className="size-4 animate-spin" /> : "Search"}
       </button>
@@ -109,7 +116,10 @@ export function StayDateSearch({
         <button
           type="button"
           onClick={onClear}
-          className="btn-glass h-[50px] justify-center gap-2 px-4 text-sm"
+          className={cn(
+            "btn-glass h-[50px] justify-center gap-2 px-4 text-sm",
+            compact ? "w-full sm:w-auto sm:flex-none" : "w-full lg:w-auto",
+          )}
         >
           <X className="size-4" /> Clear
         </button>
@@ -132,9 +142,14 @@ export function StayDateSearch({
             </p>
           ) : null}
         </div>
-        <div className="flex flex-wrap items-end gap-3">
+        {/* Mobile: flex-col → Check-in, Check-out, Search each fill full width
+            and stack vertically (matching edges, same visual weight).
+            sm+: flex-row flex-wrap → the original compact side-by-side layout. */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           {fields}
-          <div className="flex w-full gap-3 sm:contents">{actions}</div>
+          {/* `contents` makes the buttons direct flex children of the wrapper at
+              all sizes so gap-3 from the parent applies between them. */}
+          <div className="contents">{actions}</div>
         </div>
       </div>
     )
