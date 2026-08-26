@@ -160,10 +160,23 @@ export function RoomCard({
         ) : null}
 
         {room.description ? (
-          <p className="font-body text-sm text-taupe leading-relaxed flex-1 mb-5">{room.description}</p>
+          <p className="font-body text-sm text-taupe leading-relaxed flex-1 mb-4">{room.description}</p>
         ) : (
-          <div className="flex-1 mb-5" />
+          <div className="flex-1 mb-4" />
         )}
+
+        {/* Item 21: give guests a direct path to the full room detail — amenities,
+            meal plans (breakfast), cancellation terms and live rates — on the Book
+            Now room page, so they don't have to contact the property to understand
+            the room. Display-only link; reuses the existing bookHref. No booking,
+            availability, or NightsBridge-integration logic is changed here. */}
+        <Link
+          href={bookHref}
+          className="mb-5 inline-flex items-center gap-1 self-start font-body text-xs font-medium text-gold hover:underline"
+        >
+          Room details, amenities &amp; cancellation terms
+          <span aria-hidden>→</span>
+        </Link>
 
         <div className="space-y-2 mt-auto">
           <Link

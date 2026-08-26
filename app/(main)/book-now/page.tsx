@@ -1518,16 +1518,11 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
                     className="group flex h-full flex-col rounded-xl border border-gray-200 border-l-4 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-[#996948]/40"
                     style={{ borderLeftColor: p.colorHex }}
                   >
-                    <span
-                      className="font-body text-xs"
-                      style={{ color: p.colorHex }}
-                    >
-                    {p.tagline}
-                  </span>
-                    <span className="mt-1 font-serif text-lg text-gray-900">{p.name}</span>
-                    <span className="font-body text-xs text-gray-400">
-                      {p.code}
-                    </span>
+                    {/* Item 20: one coherent block — customer-facing label (name +
+                        descriptor) then address, with no duplicated bare-name fragment.
+                        The WhatsApp href above (p.whatsapp) is unchanged. */}
+                    <span className="font-serif text-lg text-gray-900">{p.tagline}</span>
+                    <span className="mt-1 font-body text-xs text-gray-400">{p.code}</span>
                     <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#1ea952]">
                     <MessageCircle className="size-4" /> Chat now
                   </span>

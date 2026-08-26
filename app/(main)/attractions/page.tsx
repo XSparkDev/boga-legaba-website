@@ -29,13 +29,46 @@ export default async function AttractionsPage() {
   const estData = await fetchEstablishment(21091)
   const mapImage = await resolveSiteImage("attractions.map")
 
-  // Parse attractions list from NB (newline + "*" delimited)
-  const nbAttractions = estData?.attractions
-    ? estData.attractions
-        .split(/\n/)
-        .map((l) => l.replace(/^\*\s*/, "").trim())
-        .filter(Boolean)
-    : []
+  // DISPLAY-ONLY normalization of the LIVE NightsBridge attractions text.
+  // The fetched string (estData.attractions) is unstructured CMS copy:
+  //   - a leading intro paragraph (no "*" prefix)
+  //   - "*"-prefixed attraction names
+  //   - a trailing non-"*" line that is actually the DESCRIPTION of the
+  //     preceding '* ... :' heading (e.g. "Makikeng Game Reserve:" + its blurb)
+  // We regroup it here for presentation only — the fetch/integration in
+  // fetchEstablishment() above is NOT touched.
+  // A single, narrow, documented correction of a known source typo
+  // ("Makikeng" -> "Mahikeng") is applied at render time: the reserve is
+  // officially the Mahikeng Game Reserve, and NB's own area-info/directions
+  // (and the rest of the site) use "Mahikeng". No other names are altered
+  // (e.g. "Mafikeng" museum/site names are left as-is).
+  // TODO: VERIFY — unclear attraction name "The Mail and The Moshoeshoe graves"
+  // comes straight from the NightsBridge listing; confirm the real name with
+  // the client before shipping. Do NOT invent a correction here.
+  let nbIntro: string | null = null
+  const nbAttractions: { name: string; note: string | null }[] = []
+  if (estData?.attractions) {
+    const rawLines = estData.attractions.split(/\n/).map((l) => l.trim()).filter(Boolean)
+    for (const line of rawLines) {
+      const isBullet = /^\*/.test(line)
+      const text = line
+        .replace(/^\*\s*/, "")        // drop leading "*"
+        .replace(/:\s*$/, "")          // drop trailing colon after a name
+        .replace(/\bMakikeng\b/g, "Mahikeng") // documented display-only typo fix
+        .trim()
+      if (!text) continue
+      if (isBullet) {
+        nbAttractions.push({ name: text, note: null })
+      } else if (nbAttractions.length === 0) {
+        // leading non-bullet line = intro paragraph
+        nbIntro = nbIntro ? `${nbIntro} ${text}` : text
+      } else {
+        // trailing non-bullet line = description of the previous attraction
+        const prev = nbAttractions[nbAttractions.length - 1]
+        prev.note = prev.note ? `${prev.note} ${text}` : text
+      }
+    }
+  }
 
   return (
     <main>
@@ -85,11 +118,17 @@ export default async function AttractionsPage() {
                     <Star className="size-5 text-[#996948]" />
                     What to see and do
                   </h2>
+                  {nbIntro ? (
+                    <p className="mb-4 text-sm leading-relaxed text-gray-600">{nbIntro}</p>
+                  ) : null}
                   <ul className="space-y-2">
                     {nbAttractions.map((a, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
                         <span className="mt-0.5 shrink-0 text-[#996948] font-bold">✦</span>
-                        {a}
+                        <span>
+                          <span className="font-medium text-gray-900">{a.name}</span>
+                          {a.note ? <span> — {a.note}</span> : null}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -150,7 +189,7 @@ export default async function AttractionsPage() {
       <section className="bg-[#000000] py-14 text-white">
         <div className="mx-auto flex max-w-4xl flex-col items-center gap-5 px-4 text-center sm:px-6 lg:px-8">
           <h2 className="text-balance font-serif text-2xl font-bold sm:text-3xl">
-            Book your stay in Mahikeng&apos;s most central guest house
+            Established accommodation and conference hospitality in Mahikeng
           </h2>
           <AttractionsBookingCta />
         </div>
