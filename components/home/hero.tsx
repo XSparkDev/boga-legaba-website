@@ -47,8 +47,8 @@ export function HomeHero({ images, alt }: { images?: string[]; alt?: string }) {
             Where Business Travel Meets African Hospitality
           </h1>
           <p className="mt-4 max-w-xl text-pretty font-body text-base leading-relaxed text-white/75 sm:mt-5 sm:text-lg">
-            Three unique properties. One seamless experience. Mahikeng&apos;s premier guest house and conference
-            destination.
+            Three unique properties. One seamless experience. Established accommodation and conference
+            hospitality in Mahikeng.
           </p>
           <div className="mt-5 flex w-full max-w-xl flex-col gap-3 sm:mt-6 sm:max-w-2xl sm:flex-row sm:items-stretch">
             <Link

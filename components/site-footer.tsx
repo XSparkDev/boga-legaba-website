@@ -52,7 +52,7 @@ export function SiteFooter() {
               <SiteLogo size="footer" />
             </Link>
             <p className="mt-5 max-w-xs text-pretty text-sm leading-relaxed text-white/60">
-              Mahikeng&apos;s premier guest house and conference destination. Three unique properties, 27 rooms, one
+              Established accommodation and conference hospitality in Mahikeng. Three unique properties, 27 rooms, one
               seamless experience.
             </p>
             <div className="mt-6 flex items-center gap-3">
