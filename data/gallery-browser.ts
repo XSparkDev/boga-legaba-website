@@ -40,7 +40,6 @@ export const galleryFilterSuggestions = [
   "Conference",
   "Dining",
   "Room",
-  "Spa",
   "Poolside",
   "Mahikeng",
 ]

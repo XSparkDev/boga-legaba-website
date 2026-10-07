@@ -1,8 +1,8 @@
 import type { Metadata } from "next"
-import { UtensilsCrossed, Wine, TreePalm, PartyPopper } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
 import { InterestForm } from "@/components/forms/interest-form"
 import { Reveal } from "@/components/reveal"
+import { diningIconFor, getDiningSections } from "@/lib/dining-sections"
 
 export const metadata: Metadata = {
   title: "Dining & Events at Lantana | Boga Legaba Mahikeng",
@@ -10,14 +10,14 @@ export const metadata: Metadata = {
     "Coming soon: restaurant, bar, and private event bookings at our 10 Lantana property in Mahikeng. Register your interest for launch announcements.",
 }
 
-const SECTIONS = [
-  { Icon: UtensilsCrossed, title: "Dining", body: "A relaxed restaurant serving local and contemporary dishes, open to guests and visitors." },
-  { Icon: PartyPopper, title: "Private Events", body: "Intimate celebrations, corporate functions and milestone occasions hosted at Lantana." },
-  { Icon: TreePalm, title: "Outdoor Venue", body: "A landscaped outdoor space for daytime gatherings and golden-hour receptions." },
-  { Icon: Wine, title: "Bar", body: "A welcoming bar for after-work drinks, nightcaps and social evenings." },
-]
+// Admin-managed content (via /admin/dining, table `dining_sections`) with
+// built-in fallback — always renders, even before migration 019 is applied.
+export const dynamic = "force-dynamic"
 
-export default function DiningPage() {
+export default async function DiningPage() {
+  const sections = await getDiningSections()
+  const anyComingSoon = sections.some((s) => s.status === "coming-soon")
+
   return (
     <main>
       <PageHeader
@@ -29,19 +29,40 @@ export default function DiningPage() {
 
       <section className="bg-background py-16 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          {anyComingSoon ? (
+            <Reveal>
+              <p
+                role="status"
+                className="mx-auto mb-10 max-w-3xl rounded-2xl border border-gold/40 bg-gold/10 px-6 py-4 text-center text-sm leading-relaxed text-foreground"
+              >
+                <span className="font-heading font-bold">Coming soon - not open yet.</span>{" "}
+                The restaurant, bar and event spaces at Lantana are still in development.
+                Register your interest below and we will announce the launch.
+              </p>
+            </Reveal>
+          ) : null}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {SECTIONS.map(({ Icon, title, body }, i) => (
-              <Reveal as="article" key={title} delay={i * 80}>
-                <div className="flex h-full flex-col rounded-xl border border-border bg-card p-6">
-                  <span className="inline-flex size-12 items-center justify-center rounded-full bg-[#000000] text-gold">
-                    <Icon className="size-5" />
-                  </span>
-                  <h3 className="mt-5 font-serif text-xl text-foreground">{title}</h3>
-                  <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">{body}</p>
-                  <span className="mt-4 font-mono text-[10px] uppercase tracking-wider text-taupe">Coming soon</span>
-                </div>
-              </Reveal>
-            ))}
+            {sections.map(({ id, title, body, icon, status }, i) => {
+              const Icon = diningIconFor(icon)
+              return (
+                <Reveal as="article" key={id} delay={i * 80}>
+                  <div className="flex h-full flex-col rounded-xl border border-border bg-card p-6">
+                    <span className="inline-flex size-12 items-center justify-center rounded-full bg-[#000000] text-gold">
+                      <Icon className="size-5" aria-hidden />
+                    </span>
+                    <h3 className="mt-5 font-serif text-xl text-foreground">{title}</h3>
+                    <p className="mt-2 flex-1 text-pretty text-sm leading-relaxed text-muted-foreground">
+                      {body}
+                    </p>
+                    {status === "coming-soon" ? (
+                      <span className="mt-4 inline-flex w-fit items-center rounded-full border border-gold/50 bg-gold/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.15em] text-gold">
+                        Coming soon
+                      </span>
+                    ) : null}
+                  </div>
+                </Reveal>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -58,7 +79,7 @@ export default function DiningPage() {
             <div className="mt-8 rounded-2xl border border-border bg-card p-6 sm:p-8">
               <InterestForm
                 withInterestArea
-                interestOptions={["Dining", "Private Events", "Outdoor Venue", "Bar"]}
+                interestOptions={sections.map((s) => s.title)}
                 gaEvent="dining_interest_submit"
                 source="Dining"
               />

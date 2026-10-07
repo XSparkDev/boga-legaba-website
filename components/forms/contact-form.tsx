@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react"
 import { CheckCircle2, Loader2, AlertTriangle } from "lucide-react"
 import { Field, inputClass } from "@/components/forms/form-ui"
+import { MarketingOptIn, PrivacyConsentCheckbox } from "@/components/forms/privacy-consent"
 
 const SUBJECTS = ["General Enquiry", "Booking", "Conference", "Corporate / Government", "Accounts", "Other"]
 
@@ -12,6 +13,8 @@ export function ContactForm() {
   const [submitError, setSubmitError] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" })
+  const [consent, setConsent] = useState(false)
+  const [optIn, setOptIn] = useState(false)
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -21,6 +24,7 @@ export function ContactForm() {
     if (!form.name.trim()) e.name = "Please enter your name."
     if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = "Please enter a valid email address."
     if (!form.message.trim()) e.message = "Please enter a message."
+    if (!consent) e.consent = "Please agree to the Privacy Notice to continue."
     setErrors(e)
     if (Object.keys(e).length) return
 
@@ -36,7 +40,7 @@ export function ContactForm() {
           email: form.email,
           phone: form.phone,
           message: form.message,
-          details: { subject: form.subject || "General Enquiry" },
+          details: { subject: form.subject || "General Enquiry", marketingOptIn: optIn },
         }),
       })
       const data = (await res.json()) as { ok: boolean; error?: string }
@@ -95,6 +99,8 @@ export function ContactForm() {
           <AlertTriangle className="size-4 shrink-0" /> {submitError}
         </p>
       ) : null}
+      <PrivacyConsentCheckbox checked={consent} onChange={setConsent} error={errors.consent} />
+      <MarketingOptIn checked={optIn} onChange={setOptIn} />
       <button
         type="submit"
         disabled={submitting}

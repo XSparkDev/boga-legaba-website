@@ -7,6 +7,14 @@ import { SiteLogo } from "@/components/site-logo"
 import { BUSINESS } from "@/data/rooms"
 import { useBookingModal } from "@/hooks/useBookingModal"
 
+const LEGAL_LINKS = [
+  { href: "/privacy", label: "Privacy Notice" },
+  { href: "/terms", label: "Terms of Use" },
+  { href: "/booking-terms", label: "Booking Terms" },
+  { href: "/cancellation-policy", label: "Cancellation Policy" },
+  { href: "/cookies", label: "Cookie Notice" },
+]
+
 const COLUMNS = [
   {
     title: "Quick Links",
@@ -46,7 +54,7 @@ export function SiteFooter() {
   return (
     <footer className="bg-[#000000] text-white">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-        <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+        <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1.2fr]">
           <div>
             <Link href="/" className="inline-block">
               <SiteLogo size="footer" />
@@ -114,27 +122,57 @@ export function SiteFooter() {
               ) : null}
             </div>
           ))}
+
+          {/* Legal column — same heading/link styling as the other columns,
+              plus a visible keyboard-focus state. */}
+          <div>
+            <h3 className="font-mono text-xs uppercase tracking-widest text-gold">Legal</h3>
+            <ul className="mt-4 space-y-3">
+              {LEGAL_LINKS.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="rounded-sm text-sm text-white/65 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
 
       <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-6 text-center text-xs text-white/50 sm:flex-row sm:px-6 sm:text-left lg:px-8">
-          <p>© {new Date().getFullYear()} Boga Legaba Guest House &amp; Conference Centre. All rights reserved.</p>
-          <p className="font-mono tracking-wider text-white/50">
-            <span className="uppercase">www.bogalegaba.co.za</span>
-            <span className="mx-2 hidden text-white/30 sm:inline">·</span>
-            <span className="mt-1 block normal-case sm:mt-0 sm:inline">
-              Developed by{" "}
-              <a
-                href="https://www.xspark.co.za/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/70 transition-colors hover:text-white"
+        <div className="mx-auto max-w-7xl px-4 py-6 text-center text-xs text-white/50 sm:px-6 sm:text-left lg:px-8">
+          <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+            <p>© {new Date().getFullYear()} Boga Legaba Guest House &amp; Conference Centre. All rights reserved.</p>
+            <p className="font-mono tracking-wider text-white/50">
+              <span className="mt-1 block normal-case sm:mt-0 sm:inline">
+                Developed by{" "}
+                <a
+                  href="https://www.xspark.co.za/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/70 transition-colors hover:text-white"
+                >
+                  X Spark
+                </a>
+              </span>
+            </p>
+          </div>
+          {/* Compact legal row — wraps without horizontal scroll on phones. */}
+          <nav aria-label="Legal" className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:justify-start">
+            {LEGAL_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-sm font-mono tracking-wider text-white/50 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
               >
-                X Spark
-              </a>
-            </span>
-          </p>
+                {link.label}
+              </Link>
+            ))}
+          </nav>
         </div>
       </div>
       <NightsBridgeModal isOpen={isOpen} onClose={closeModal} />

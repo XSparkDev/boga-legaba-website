@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react"
 import { CheckCircle2, Loader2, AlertTriangle } from "lucide-react"
 import { Field, CheckboxRow, inputClass } from "@/components/forms/form-ui"
+import { MarketingOptIn, PrivacyConsentCheckbox } from "@/components/forms/privacy-consent"
 import { CONFERENCE_AV, CONFERENCE_CATERING, CONFERENCE_SETUPS } from "@/data/conference"
 
 export function ConferenceForm() {
@@ -13,17 +14,24 @@ export function ConferenceForm() {
   const [accommodation, setAccommodation] = useState(false)
   const [av, setAv] = useState<string[]>([])
   const [catering, setCatering] = useState<string[]>([])
+  const [consent, setConsent] = useState(false)
+  const [optIn, setOptIn] = useState(false)
   const [form, setForm] = useState({
     name: "",
     company: "",
     email: "",
     phone: "",
-    dates: "",
     attendees: "",
     setup: "",
     rooms: "",
     notes: "",
   })
+  // Preferred date(s) as real date-picker values (YYYY-MM-DD). Composed into
+  // the existing `details.dates` string on submit, so the enquiry payload
+  // and staff email format are unchanged.
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
+  const today = new Date().toISOString().slice(0, 10)
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }))
   const toggle = (list: string[], setList: (v: string[]) => void, val: string) =>
@@ -35,8 +43,10 @@ export function ConferenceForm() {
     if (!form.company.trim()) e.company = "Please enter your company or organisation."
     if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = "Please enter a valid email address."
     if (!form.phone.trim()) e.phone = "Please enter a phone number."
-    if (!form.dates.trim()) e.dates = "Please indicate your preferred date(s)."
+    if (!dateFrom) e.dates = "Please choose your preferred date(s)."
+    else if (dateTo && dateTo < dateFrom) e.dates = "The end date must be on or after the start date."
     if (!form.attendees.trim()) e.attendees = "Please enter the number of attendees."
+    if (!consent) e.consent = "Please agree to the Privacy Notice to continue."
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -58,13 +68,14 @@ export function ConferenceForm() {
           entity: form.company,
           message: form.notes,
           details: {
-            dates: form.dates,
+            dates: dateTo ? `${dateFrom} to ${dateTo}` : dateFrom,
             attendees: form.attendees,
             setup: form.setup,
             av,
             catering,
             accommodation,
             rooms: form.rooms,
+            marketingOptIn: optIn,
           },
         }),
       })
@@ -113,13 +124,32 @@ export function ConferenceForm() {
         <Field label="Phone Number" required error={errors.phone}>
           <input type="tel" className={inputClass} value={form.phone} onChange={(e) => set("phone", e.target.value)} />
         </Field>
-        <Field label="Preferred Date(s)" required error={errors.dates}>
-          <input
-            className={inputClass}
-            placeholder="e.g. 12–13 March 2026"
-            value={form.dates}
-            onChange={(e) => set("dates", e.target.value)}
-          />
+        <Field label="Preferred Date(s)" required error={errors.dates} className="sm:col-span-2">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs text-muted-foreground">From</span>
+              <input
+                type="date"
+                className={inputClass}
+                value={dateFrom}
+                min={today}
+                onChange={(e) => {
+                  setDateFrom(e.target.value)
+                  if (dateTo && e.target.value && dateTo < e.target.value) setDateTo("")
+                }}
+              />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs text-muted-foreground">To <span className="opacity-70">(optional)</span></span>
+              <input
+                type="date"
+                className={inputClass}
+                value={dateTo}
+                min={dateFrom || today}
+                onChange={(e) => setDateTo(e.target.value)}
+              />
+            </label>
+          </div>
         </Field>
         <Field label="Number of Attendees" required error={errors.attendees}>
           <input
@@ -209,6 +239,9 @@ export function ConferenceForm() {
           <AlertTriangle className="size-4 shrink-0" /> {submitError}
         </p>
       ) : null}
+
+      <PrivacyConsentCheckbox checked={consent} onChange={setConsent} error={errors.consent} />
+      <MarketingOptIn checked={optIn} onChange={setOptIn} />
 
       <button
         type="submit"

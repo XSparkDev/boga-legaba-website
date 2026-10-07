@@ -42,9 +42,30 @@ export default async function AttractionsPage() {
   // officially the Mahikeng Game Reserve, and NB's own area-info/directions
   // (and the rest of the site) use "Mahikeng". No other names are altered
   // (e.g. "Mafikeng" museum/site names are left as-is).
-  // TODO: VERIFY — unclear attraction name "The Mail and The Moshoeshoe graves"
-  // comes straight from the NightsBridge listing; confirm the real name with
-  // the client before shipping. Do NOT invent a correction here.
+  // Display-only attraction-name corrections below apply to bullet NAMES
+  // only - never to the intro sentence, notes of other items, or any other
+  // page content. Item order and item count are unchanged: every entry is
+  // renamed or replaced in place, nothing is added or removed.
+  const ATTRACTION_RENAMES: Record<string, string> = {
+    "Bethel's Rocks": "Bethell's Rocks",
+    "Kgotla of the Barolong Boora": "Kgotla of the Barolong Boo Ratshidi",
+    "Mafikeng Museum and Siege Headquarters": "Mafikeng Museum (former 1902 Town Hall)",
+    "Mafikeng Town Beacon and Maphatswa Cemetery": "Mafikeng Town Beacon",
+    "Warren's Fort and Well": "Kanon Kopje and Warren's Fort",
+    "Mafikeng Cemetery and Prison": "Mafikeng Town Cemetery (siege graves)",
+    "World Centre for Science and Environment of the Scout Movement.": "Mafikeng SCENE (Scout Centre of Excellence for Nature and the Environment)",
+    "Tshidi Maratiwa House": "St John's Anglican Church (Herbert Baker, 1902)",
+    "Maratiwa House": "Cenotaph at the Mafikeng Museum",
+    "Mmabana Cultural Centre": "Botsalano Game Reserve",
+    "The Monument to Boer ambush of British (Koedoesrant) and the Monument of Democracy and Peace": "Leopard Park Golf Club, Mmabatho",
+    "Spencer Minchin's House": "Sol Plaatje's Mafeking Diary exhibition, Mafikeng Museum",
+    "The Mail and The Moshoeshoe graves": "Molema Cemetery",
+    "Mother and Child monument": "Monument to Chief Besele Montshiwa",
+    "Old Fingo Village and Tontonyane": "Mafikeng Concentration Camp Cemetery and Memorial",
+  }
+  const GAME_RESERVE_NAME = "Mafikeng Game Reserve"
+  const GAME_RESERVE_NOTE =
+    "A 4,600 ha reserve of Kalahari grassland and acacia thorn scrub on the edge of town, home to white rhino, buffalo, gemsbok and giraffe, with good bird viewing along the Molopo River."
   let nbIntro: string | null = null
   const nbAttractions: { name: string; note: string | null }[] = []
   if (estData?.attractions) {
@@ -67,6 +88,16 @@ export default async function AttractionsPage() {
         const prev = nbAttractions[nbAttractions.length - 1]
         prev.note = prev.note ? `${prev.note} ${text}` : text
       }
+    }
+  }
+  // Apply the display-only corrections (bullet names only; order and count kept).
+  for (const a of nbAttractions) {
+    const corrected = ATTRACTION_RENAMES[a.name]
+    if (corrected) a.name = corrected
+    // Game reserve entry (last item): verified name and description.
+    if (a.name === "Mahikeng Game Reserve") {
+      a.name = GAME_RESERVE_NAME
+      a.note = GAME_RESERVE_NOTE
     }
   }
 

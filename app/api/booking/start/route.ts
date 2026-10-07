@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
     checkout,
     roomTypeName,
     amountPaid: Number(body.amountRands ?? 0),
+    marketingOptIn: body.marketingOptIn === true,
     mealPlanName: body.mealPlanName ? String(body.mealPlanName) : undefined,
     adults: typeof body.adults === "number" ? body.adults : undefined,
     children1: typeof body.children1 === "number" ? body.children1 : undefined,

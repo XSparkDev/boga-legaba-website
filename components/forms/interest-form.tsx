@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
+import Link from "next/link"
 import { CheckCircle2, Loader2, AlertTriangle } from "lucide-react"
 import { Field, inputClass } from "@/components/forms/form-ui"
+import { PrivacyConsentCheckbox } from "@/components/forms/privacy-consent"
 
 interface InterestFormProps {
   /** Show an "Interest Area" select (used on Dining page) */
@@ -26,6 +28,9 @@ export function InterestForm({
   const [submitError, setSubmitError] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [form, setForm] = useState({ name: "", email: "", interest: "" })
+  // Required privacy-notice agreement. This form IS the mailing-list opt-in
+  // (submitting subscribes you), so no separate opt-in checkbox is needed.
+  const [consent, setConsent] = useState(false)
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -34,6 +39,7 @@ export function InterestForm({
     const e: Record<string, string> = {}
     if (!form.name.trim()) e.name = "Please enter your name."
     if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = "Please enter a valid email address."
+    if (!consent) e.consent = "Please agree to the Privacy Notice to continue."
     setErrors(e)
     if (Object.keys(e).length) return
 
@@ -47,7 +53,7 @@ export function InterestForm({
           type: "interest",
           name: form.name,
           email: form.email,
-          details: { interest: form.interest || undefined, source },
+          details: { interest: form.interest || undefined, source, marketingOptIn: true },
         }),
       })
       const data = (await res.json()) as { ok: boolean; error?: string }
@@ -101,6 +107,22 @@ export function InterestForm({
           <AlertTriangle className="size-4 shrink-0" /> {submitError}
         </p>
       ) : null}
+      {/* Mailing-list consent: submitting subscribes you; agreement required. */}
+      <div className="rounded-xl border border-border bg-muted/40 p-4">
+        <PrivacyConsentCheckbox checked={consent} onChange={setConsent} error={errors.consent} />
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+          We use your name and email only for the updates you signed up for. Every email carries
+          an unsubscribe link — or email{" "}
+          <a href="mailto:info@bogalegaba.co.za" className="underline underline-offset-2">
+            info@bogalegaba.co.za
+          </a>{" "}
+          anytime to be removed. Details are stored securely and never sold. See our{" "}
+          <Link href="/privacy" className="underline underline-offset-2">
+            Privacy Notice
+          </Link>
+          .
+        </p>
+      </div>
       <button
         type="submit"
         disabled={submitting}

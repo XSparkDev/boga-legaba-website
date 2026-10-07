@@ -217,6 +217,10 @@ export function buildEnquiryStaffEmail(input: EnquiryInput): { subject: string; 
     rows.push({ label: "Source Page", value: d.source ? String(d.source) : "N/A" })
   }
 
+  if (d.marketingOptIn === true) {
+    rows.push({ label: "Mailing List Opt-in", value: "Yes — add to mailing list" })
+  }
+
   return {
     subject: `New ${TYPE_LABEL[input.type]} – ${input.name}`,
     html: emailShell({

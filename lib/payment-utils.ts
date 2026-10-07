@@ -150,6 +150,8 @@ export interface PaymentContext {
    * guest-widget flow, which never learns the specific unit. */
   roomName?:    string
   amountPaid:   number
+  /** Mailing-list opt-in ticked on the booking widget (optional, default false). */
+  marketingOptIn?: boolean
   // Full booking payload — used to CREATE the booking (book-first flow: this
   // happens BEFORE payment is requested, via /api/booking/start).
   mealPlanName?: string

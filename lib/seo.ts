@@ -10,7 +10,7 @@ export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || "https://www.bogalegaba.co.za"
 ).replace(/\/+$/, "")
 
-// Public, indexable routes (matches the 11-page site structure).
+// Public, indexable routes (matches the site structure + About).
 export const SEO_ROUTES = [
   "", // home
   "stay",
@@ -23,6 +23,12 @@ export const SEO_ROUTES = [
   "faqs",
   "contact",
   "book-now",
+  "about",
+  "privacy",
+  "terms",
+  "booking-terms",
+  "cancellation-policy",
+  "cookies",
 ] as const
 
 /** schema.org LodgingBusiness JSON-LD for the guest house. */

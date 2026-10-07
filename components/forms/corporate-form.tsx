@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react"
 import { CheckCircle2, Loader2, AlertTriangle } from "lucide-react"
 import { SbdFormGenerator } from "@/components/forms/sbd-form-generator"
 import { Field, inputClass } from "@/components/forms/form-ui"
+import { MarketingOptIn, PrivacyConsentCheckbox } from "@/components/forms/privacy-consent"
 import { minCheckInDate } from "@/lib/room-availability"
 import { useBookingDates } from "@/hooks/useBookingDates"
 
@@ -28,6 +29,8 @@ export function CorporateForm() {
 
   // Booking dates are managed by the centralized hook — guarantees checkout > checkin at all times.
   const { checkIn, checkOut, setCheckIn, setCheckOut, minCheckIn, minCheckOut } = useBookingDates()
+  const [consent, setConsent] = useState(false)
+  const [optIn, setOptIn] = useState(false)
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -49,6 +52,7 @@ export function CorporateForm() {
     else if (checkIn < minCheckInDate()) e.checkin = "Check-in date cannot be in the past."
     if (!checkOut) e.checkout = "Please select a check-out date."
     if (!form.rooms.trim()) e.rooms = "Please enter the number of rooms required."
+    if (!consent) e.consent = "Please agree to the Privacy Notice to continue."
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -76,6 +80,7 @@ export function CorporateForm() {
             rooms: form.rooms,
             po: form.po,
             billing: form.billing,
+            marketingOptIn: optIn,
           },
         }),
       })
@@ -192,6 +197,9 @@ export function CorporateForm() {
           <AlertTriangle className="size-4 shrink-0" /> {submitError}
         </p>
       ) : null}
+
+      <PrivacyConsentCheckbox checked={consent} onChange={setConsent} error={errors.consent} />
+      <MarketingOptIn checked={optIn} onChange={setOptIn} />
 
       <button
         type="submit"

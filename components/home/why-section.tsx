@@ -1,6 +1,7 @@
 import { Reveal } from "@/components/reveal"
 
-const FEATURES = [
+/** Approved "why" copy — shared with the About page. */
+export const FEATURES = [
   { icon: "⊞", title: "Multiple Properties", desc: "Choose from 27 rooms across 3 distinct locations to suit your stay." },
   { icon: "◉", title: "Direct Bookings", desc: "Book instantly via NightsBridge, no agent fees, best available rates." },
   { icon: "◈", title: "Corporate Ready", desc: "Structured procurement workflows for government & business clients." },

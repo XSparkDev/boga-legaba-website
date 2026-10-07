@@ -116,6 +116,8 @@ export function BookingWidget({
   const [notes, setNotes] = useState("")
   const [emailMismatch, setEmailMismatch] = useState(false)
   const [occupancyError, setOccupancyError] = useState("")
+  const [privacyConsent, setPrivacyConsent] = useState(false)
+  const [marketingOptIn, setMarketingOptIn] = useState(false)
 
   // ── Draft persistence: don't lose typed details on an accidental refresh ────
   // Saved to sessionStorage (survives a refresh, auto-clears when the tab is
@@ -263,6 +265,7 @@ export function BookingWidget({
       bbid,
       maxAdults,
       maxOccupancy,
+      marketingOptIn,
     }
 
     // ── PAY FIRST: /api/booking/start sets up payment immediately and fires the
@@ -728,14 +731,56 @@ export function BookingWidget({
           <span>
             I have read and accepted the{" "}
             <a
-              href="#"
+              href="/terms"
+              target="_blank"
+              rel="noreferrer"
               className="text-[#996948] underline"
-              onClick={(e) => e.preventDefault()}
             >
               terms and conditions
             </a>{" "}
-            including the cancellation policy.
+            including the{" "}
+            <a
+              href="/cancellation-policy"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#996948] underline"
+            >
+              cancellation policy
+            </a>
+            .
           </span>
+        </label>
+
+        {/* Privacy consent (required) + mailing-list opt-in (optional) */}
+        <label className="flex items-start gap-2 text-xs text-gray-500">
+          <input
+            type="checkbox"
+            required
+            checked={privacyConsent}
+            onChange={(e) => setPrivacyConsent(e.target.checked)}
+            className="mt-0.5 accent-[#996948]"
+          />
+          <span>
+            By submitting this booking you agree to our{" "}
+            <a
+              href="/privacy"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#996948] underline"
+            >
+              Privacy Notice
+            </a>
+            .
+          </span>
+        </label>
+        <label className="flex items-start gap-2 text-xs text-gray-500">
+          <input
+            type="checkbox"
+            checked={marketingOptIn}
+            onChange={(e) => setMarketingOptIn(e.target.checked)}
+            className="mt-0.5 accent-[#996948]"
+          />
+          <span>Email me launch announcements and specials (optional, unsubscribe anytime).</span>
         </label>
 
         {/* Cancellation note */}

@@ -23,6 +23,7 @@ import {
   Shield,
   CalendarDays,
   Image as ImageIcon,
+  UtensilsCrossed,
 } from "lucide-react"
 import {
   fetchEstablishment,
@@ -417,6 +418,13 @@ export default async function AdminDashboardPage() {
             >
               <ImageIcon className="size-3.5" />
               Room Photos
+            </Link>
+            <Link
+              href="/admin/dining"
+              className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-[11px] text-white/70 hover:text-white transition-colors"
+            >
+              <UtensilsCrossed className="size-3.5" />
+              Dining Cards
             </Link>
             <Link
               href="/admin/reviews"
