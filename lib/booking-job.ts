@@ -9,12 +9,12 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import type { PaymentContext } from "@/lib/payment-utils"
 
-// "pending": row created by the website, worker has NOT accepted it yet — the
+// "pending": row created by the website, worker has NOT accepted it yet - the
 // worker's background sweep (services/sync-worker/server.py) auto-recovers any
 // row stuck here (the /book trigger never arrived), so a lost trigger no
 // longer needs an admin to click Retry. "processing": worker thread accepted
 // the job, Playwright run may still be in flight. "completed": the
-// NightsBridge booking genuinely succeeded — a real booking_id was scraped
+// NightsBridge booking genuinely succeeded - a real booking_id was scraped
 // from the confirmation page and written here. Only "completed" means it's
 // safe to send the guest to payment.
 export type BookingJobStatus = "pending" | "processing" | "completed" | "failed"
@@ -29,7 +29,7 @@ export type BookingJob = {
   checkin: string | null
   checkout: string | null
   room_type_name: string | null
-  // The exact physical room booked (e.g. "Red Room") — set once a booking
+  // The exact physical room booked (e.g. "Red Room") - set once a booking
   // via the admin-calendar flow succeeds (book_nightsbridge_admin.py knows
   // the real unit; the old guest-widget script doesn't, so this stays null
   // for jobs booked that way). Prefer this over room_type_name wherever the
@@ -37,11 +37,11 @@ export type BookingJob = {
   room_name: string | null
   amount: number | null
   context: PaymentContext | Record<string, unknown>
-  // Full pipeline stage — see lib/booking-status.ts. This is the single
+  // Full pipeline stage - see lib/booking-status.ts. This is the single
   // source of truth for what stage the booking is at; `status` above only
   // covers the narrower "did the worker's Playwright job finish" question.
   // May be undefined at runtime if migration 014 hasn't been applied yet
-  // (column doesn't exist) — callers must not assume it's always present.
+  // (column doesn't exist) - callers must not assume it's always present.
   booking_status: string | undefined
   created_at: string
 }
@@ -52,7 +52,7 @@ export type BookingJob = {
  * IMPORTANT (fix for the "stuck on Reserving your room" bug): this used to
  * return `null` for BOTH "no row exists yet" AND "the DB read itself failed"
  * (bad credentials, RLS denial, network error, table missing). The caller
- * (/api/booking/status) treated any null as "processing" — so a PERSISTENT read
+ * (/api/booking/status) treated any null as "processing" - so a PERSISTENT read
  * failure looked identical to "still booking" and polling would never
  * progress, silently, forever. Now a real error is distinguishable via the
  * `dbError` field so it can be logged/surfaced instead of masked.
@@ -103,7 +103,7 @@ export async function ensurePendingBookingJob(
     const { error } = await sb.from("booking_job").insert({
       reference: ctx.reference,
       // "pending" = not yet accepted by the worker. The worker overwrites this
-      // to "processing" the moment its /book endpoint accepts the job — so a
+      // to "processing" the moment its /book endpoint accepts the job - so a
       // row still "pending" minutes later provably never reached the worker,
       // and its background sweep can safely re-run it (no Playwright run ever
       // started, so no double-booking risk). /api/booking/status already
@@ -139,7 +139,7 @@ export async function ensurePendingBookingJob(
 /**
  * Persist the Paystack checkout URL generated for this booking, so every
  * subsequent poll (not just the one that "won" the email-send race) can read
- * back the SAME link for the browser redirect — never generate a second
+ * back the SAME link for the browser redirect - never generate a second
  * Paystack session for the same booking. Stored in the existing `context`
  * JSONB column (no migration needed) as `context.paystackUrl`.
  */

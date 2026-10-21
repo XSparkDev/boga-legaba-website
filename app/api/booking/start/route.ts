@@ -19,7 +19,7 @@ const NB_BBID = 21091
  *     the worker in the background. The admin page surfaces "not yet on
  *     NightsBridge" until it completes, and can retry it.
  *
- * The guest no longer waits ~50-90s for NightsBridge before paying — we keep
+ * The guest no longer waits ~50-90s for NightsBridge before paying - we keep
  * only the fast live-availability gate, then generate the Paystack session and
  * return its URL so the widget can redirect straight to checkout.
  */
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
   // ── Pre-warm the worker ────────────────────────────────────────────────────
   // Fire a non-blocking /health GET to wake a sleeping Render free-tier worker
-  // NOW, while we run the availability/hold checks below — so by the time we
+  // NOW, while we run the availability/hold checks below - so by the time we
   // trigger the booking the worker is already awake (avoids a cold-start delay
   // that could otherwise push the guest's loading screen toward its time limit).
   const warmBase = (process.env.SYNC_WORKER_URL ?? "").replace(/\/run$/, "")
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
 
   // Random, unguessable reference. The timestamp prefix stays for readable logs
   // and admin sorting; the random suffix is what stops anyone from guessing
-  // another booking's reference — /api/booking/status is a public lookup keyed
+  // another booking's reference - /api/booking/status is a public lookup keyed
   // off this string, so a predictable value would let it be enumerated.
   const reference = `BLJOB-${Date.now()}-${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`
   console.log(`[booking/start] reference=${reference} creating hold room=${roomTypeName} ${checkin}->${checkout}`)
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
 
   // "exists" → a job for this reference is already in flight (shouldn't normally
   // happen since we just generated a fresh reference). Don't re-trigger or
-  // re-generate a second Paystack session — just hand back the one already saved.
+  // re-generate a second Paystack session - just hand back the one already saved.
   if (jobState === "exists") {
     const { job } = await getBookingJob(reference)
     const existingUrl = (job?.context as { paystackUrl?: string } | null)?.paystackUrl ?? ""
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
   // Pay-first: we do NOT block on it and do NOT fail the guest if the worker is
   // unreachable. If this trigger is lost (cold worker, network blip), the row
   // stays status="pending" and the worker's background sweep picks it up and
-  // books it automatically — no admin Retry needed. The admin page still shows
+  // books it automatically - no admin Retry needed. The admin page still shows
   // "not yet on NightsBridge" (with a Retry) until it lands.
   triggerAsyncBooking(ctx)
     .then((accepted) => console.log(`[booking/start] reference=${reference} background worker trigger accepted=${accepted}`))
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
     const payment = await initiatePaystackPayment({
       email: ctx.guestEmail,
       amountRands,
-      bookingRef: reference,        // no NightsBridge NBID yet — use the internal ref
+      bookingRef: reference,        // no NightsBridge NBID yet - use the internal ref
       internalReference: reference, // drives the state machine from verify/webhook
       guestName: ctx.guestName,
       guestPhone: ctx.guestPhone,
@@ -167,13 +167,13 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Onto the payment track immediately — independent of the NightsBridge track.
+  // Onto the payment track immediately - independent of the NightsBridge track.
   await transitionBookingStatus(reference, "AWAITING_PAYMENT", { from: ["PENDING"] })
 
-  // No "complete your payment" pre-payment email — the guest already has
+  // No "complete your payment" pre-payment email - the guest already has
   // Paystack checkout open. They get exactly ONE email, "Payment Confirmed",
   // once the payment actually succeeds (see /api/payment/verify + webhook).
 
-  console.log(`[booking/start] reference=${reference} SUCCESS — payment ready (paymentUrl=${paymentUrl ? "yes" : "no"}), NightsBridge running in background`)
+  console.log(`[booking/start] reference=${reference} SUCCESS - payment ready (paymentUrl=${paymentUrl ? "yes" : "no"}), NightsBridge running in background`)
   return NextResponse.json({ ok: true, reference, paymentUrl })
 }

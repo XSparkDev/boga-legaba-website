@@ -2,7 +2,7 @@
 Intercept ALL XHR/fetch requests on the public NightsBridge booking widget
 and print any that look like availability or room-type data.
 
-No login required — targets the public booking page.
+No login required - targets the public booking page.
 
 Usage:
     cd public/ScriptTestBLGH
@@ -55,7 +55,7 @@ with sync_playwright() as p:
             print(f"Status: {response.status}")
             print(json.dumps(body, indent=2)[:2000])
         except Exception as e:
-            # Not JSON — print raw text for small responses
+            # Not JSON - print raw text for small responses
             try:
                 text = response.text()
                 if len(text) < 5000 and any(x in url.lower() for x in KEYWORDS):
@@ -71,7 +71,7 @@ with sync_playwright() as p:
     try:
         page.goto(URL, wait_until="networkidle", timeout=60_000)
     except Exception as e:
-        print(f"WARNING: {e} — continuing...")
+        print(f"WARNING: {e} - continuing...")
 
     # Extra wait to catch lazy-loaded XHR
     page.wait_for_timeout(5_000)

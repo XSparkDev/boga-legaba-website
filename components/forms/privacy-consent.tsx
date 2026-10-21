@@ -26,10 +26,13 @@ export function PrivacyConsentCheckbox({
   checked,
   onChange,
   error,
+  linkPrivacy = true,
 }: {
   checked: boolean
   onChange: (v: boolean) => void
   error?: string
+  /** Set false to render "Privacy Notice" as plain text instead of a link. */
+  linkPrivacy?: boolean
 }) {
   return (
     <div>
@@ -43,9 +46,13 @@ export function PrivacyConsentCheckbox({
         />
         <span>
           By submitting this form you agree to our{" "}
-          <Link href="/privacy" className={privacyLinkClass}>
-            Privacy Notice
-          </Link>
+          {linkPrivacy ? (
+            <Link href="/privacy" className={privacyLinkClass}>
+              Privacy Notice
+            </Link>
+          ) : (
+            "Privacy Notice"
+          )}
           .
         </span>
       </label>

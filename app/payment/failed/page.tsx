@@ -8,9 +8,9 @@ function FailedContent() {
   const bookingRef = params.get("bookingRef") ?? ""
 
   // BOOK-FIRST FLOW: by the time the guest reaches this page, their room is
-  // already really booked on NightsBridge — this only means the PAYMENT step
+  // already really booked on NightsBridge - this only means the PAYMENT step
   // didn't complete. Per business decision, the booking is left as-is (no
-  // auto-cancel) — the guest already has NightsBridge's own reservation email.
+  // auto-cancel) - the guest already has NightsBridge's own reservation email.
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-5" style={{ background: "#F2EDE4" }}>

@@ -1,5 +1,5 @@
 -- =============================================================================
--- Boga Legaba Guest House — FULL DATABASE SCHEMA (combined, idempotent)
+-- Boga Legaba Guest House - FULL DATABASE SCHEMA (combined, idempotent)
 -- Run this entire script once in the Supabase SQL Editor.
 -- Safe to re-run: uses IF NOT EXISTS / IF EXISTS / DO NOTHING everywhere.
 -- Last updated: 22 June 2026
@@ -69,7 +69,7 @@ VALUES (21091, 'Boga Legaba Guest House & Conference Centre')
 ON CONFLICT (bbid) DO UPDATE SET bbname = EXCLUDED.bbname;
 
 -- ---------------------------------------------------------------------------
--- 2. AVAILABILITY CACHE (public read — website uses this)
+-- 2. AVAILABILITY CACHE (public read - website uses this)
 -- ---------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS availability_cache (
@@ -136,7 +136,7 @@ CREATE INDEX IF NOT EXISTS idx_rate_cache_dates   ON rate_cache (bbid, arrive, d
 CREATE INDEX IF NOT EXISTS idx_rate_cache_scraped ON rate_cache (scraped_at DESC);
 
 -- ---------------------------------------------------------------------------
--- 5. GUESTS & BOOKINGS (PII — service role only)
+-- 5. GUESTS & BOOKINGS (PII - service role only)
 -- ---------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS guest (
@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS booking_room_stay (
 
 CREATE INDEX IF NOT EXISTS idx_stay_room ON booking_room_stay (bbroomid);
 
--- Bookings table (from get_bookings.py — richer view than the booking table above)
+-- Bookings table (from get_bookings.py - richer view than the booking table above)
 CREATE TABLE IF NOT EXISTS bookings (
   id             BIGSERIAL PRIMARY KEY,
   booking_id     TEXT          NOT NULL UNIQUE,   -- NightsBridge booking ID

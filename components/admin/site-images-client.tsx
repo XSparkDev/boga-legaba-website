@@ -8,6 +8,7 @@ import {
   SITE_IMAGE_DEFAULTS,
   type SiteImagePage,
 } from "@/lib/site-image-slots"
+import { GalleryCustomClient } from "@/components/admin/gallery-custom-client"
 
 type Override = { image_url: string; alt: string | null; updated_at: string }
 
@@ -141,6 +142,10 @@ export function SiteImagesClient() {
           )
         })}
       </div>
+
+      {/* Extra, admin-added gallery photos live here - the fixed slots above
+          can only be replaced or reverted, never added to. */}
+      {page === "Gallery" ? <GalleryCustomClient /> : null}
     </div>
   )
 }
@@ -166,7 +171,7 @@ function SlotCard({
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
       <div className="relative h-40 w-full bg-gray-100">
         {url ? (
-          // Admin preview only — plain img avoids next/image remote-domain config.
+          // Admin preview only - plain img avoids next/image remote-domain config.
           // eslint-disable-next-line @next/next/no-img-element
           <img src={url} alt={label} className="h-full w-full object-cover" />
         ) : (

@@ -12,10 +12,10 @@ const config: Config = {
       colors: {
         // Boga Legaba Brand Guidelines. NOTE: main-site pages get these
         // tokens from app/globals.css (CSS-based @theme, which takes
-        // precedence over this JS config where names overlap — verified).
+        // precedence over this JS config where names overlap - verified).
         // This file is kept in sync anyway so it never shows stale values.
         // cream/deep-earth/terracotta*/warm-sand/body-brown/muted-brown/
-        // amber-pale are intentionally left untouched — they belong to the
+        // amber-pale are intentionally left untouched - they belong to the
         // separate /v2 alternate site, out of scope for this restyle.
         gold: '#996948',
         'gold-hover': '#000000',
@@ -38,7 +38,7 @@ const config: Config = {
       },
       fontFamily: {
         // Main-site pages get fonts from app/globals.css (CSS @theme takes
-        // precedence, verified) — kept in sync here for consistency.
+        // precedence, verified) - kept in sync here for consistency.
         display: ['Montserrat', 'Arial', 'sans-serif'],
         body: ['Open Sans', 'Arial', 'sans-serif'],
         sans: ['Open Sans', 'Arial', 'sans-serif'],

@@ -3,7 +3,7 @@ import { CalendarRange, MessageCircle, Phone, ShieldCheck } from "lucide-react"
 import { BUSINESS } from "@/data/rooms"
 
 /**
- * Custom booking CTA — no NightsBridge iframe or embedded widgets.
+ * Custom booking CTA - no NightsBridge iframe or embedded widgets.
  * Guests browse rooms on this site; booking is handled via our own flow.
  */
 export function StayBookingCta() {
@@ -17,7 +17,7 @@ export function StayBookingCta() {
           <h2 className="mt-4 text-balance font-display text-3xl font-bold leading-tight sm:text-4xl">
             Ready to book? Secure your room directly with our team.
           </h2>
-          {/* TODO: CONFIRM — only publish 'best rates' if there is a genuine, consistently-upheld direct-booking rate policy. */}
+          {/* TODO: CONFIRM - only publish 'best rates' if there is a genuine, consistently-upheld direct-booking rate policy. */}
           <p className="mt-3 flex items-center justify-center gap-2 font-body text-sm text-white/60">
             <ShieldCheck className="size-4 text-gold" /> Book direct and avoid third-party booking fees
           </p>

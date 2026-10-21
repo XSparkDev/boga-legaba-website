@@ -35,7 +35,7 @@ export default async function AttractionsPage() {
   //   - "*"-prefixed attraction names
   //   - a trailing non-"*" line that is actually the DESCRIPTION of the
   //     preceding '* ... :' heading (e.g. "Makikeng Game Reserve:" + its blurb)
-  // We regroup it here for presentation only — the fetch/integration in
+  // We regroup it here for presentation only - the fetch/integration in
   // fetchEstablishment() above is NOT touched.
   // A single, narrow, documented correction of a known source typo
   // ("Makikeng" -> "Mahikeng") is applied at render time: the reserve is
@@ -158,7 +158,7 @@ export default async function AttractionsPage() {
                         <span className="mt-0.5 shrink-0 text-[#996948] font-bold">✦</span>
                         <span>
                           <span className="font-medium text-gray-900">{a.name}</span>
-                          {a.note ? <span> — {a.note}</span> : null}
+                          {a.note ? <span> - {a.note}</span> : null}
                         </span>
                       </li>
                     ))}

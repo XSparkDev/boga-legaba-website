@@ -204,7 +204,7 @@ async function fetchPhoto(query, page = 1, key = "") {
 
 function generateTs(images) {
   const lines = [
-    "// Auto-generated Unsplash image URLs — do not edit by hand",
+    "// Auto-generated Unsplash image URLs - do not edit by hand",
     "// Regenerate: node scripts/fetch-unsplash-images.mjs",
     "",
     "export type SiteImage = {",

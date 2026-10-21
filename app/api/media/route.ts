@@ -17,7 +17,7 @@ export type MediaAssetRow = {
   is_primary: boolean
 }
 
-/** GET /api/media — public room/property images from media_asset table */
+/** GET /api/media - public room/property images from media_asset table */
 export async function GET() {
   try {
     const supabase = createSupabaseAnonClient()

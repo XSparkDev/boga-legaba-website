@@ -57,11 +57,11 @@ def _day_of(iso: str) -> int:
 # Main entry point
 # ---------------------------------------------------------------------------
 
-# Error substrings that mean the attempt was AMBIGUOUS/TRANSIENT — the Angular
+# Error substrings that mean the attempt was AMBIGUOUS/TRANSIENT - the Angular
 # SPA didn't confirm, but nothing told us the room is genuinely unavailable.
 # Proven empirically: retrying the IDENTICAL request with no code changes has
 # turned this exact failure into a real booking (e.g. request #1 failed, #2 on
-# the same room/dates booked fine seconds later) — this is a UI-automation
+# the same room/dates booked fine seconds later) - this is a UI-automation
 # timing race (a click landing before Angular finished rendering the next
 # step), not a real NightsBridge rejection. Retrying is the correct fix.
 _RETRYABLE_ERROR_MARKERS = (
@@ -73,7 +73,7 @@ _RETRYABLE_ERROR_MARKERS = (
 
 
 def book_room(params: dict, max_attempts: int = 3) -> dict:
-    """Retry wrapper around _book_room_once — see _RETRYABLE_ERROR_MARKERS for
+    """Retry wrapper around _book_room_once - see _RETRYABLE_ERROR_MARKERS for
     which failures are worth retrying (transient automation timing) vs which
     are real, stable outcomes (sold out, room/meal-plan name mismatch) that
     retrying identical params would never change."""
@@ -89,7 +89,7 @@ def book_room(params: dict, max_attempts: int = 3) -> dict:
             break
         print(
             f"[book_nightsbridge] Attempt {attempt}/{max_attempts} was ambiguous "
-            f"(transient automation timing, not a real rejection) — retrying: {error_text[:150]}",
+            f"(transient automation timing, not a real rejection) - retrying: {error_text[:150]}",
             file=sys.stderr,
         )
         time.sleep(3)
@@ -129,7 +129,7 @@ def _book_room_once(params: dict) -> dict:
         try:
             # ── Step 1: Load booking page ────────────────────────────────
             # (The ?arrive=&depart= params are IGNORED by NightsBridge for the
-            #  actual booking — we set the real dates via the date picker below.)
+            #  actual booking - we set the real dates via the date picker below.)
             url = f"{NB_BASE}?arrive={checkin}&depart={checkout}"
             page.goto(url, wait_until="networkidle", timeout=35_000)
             time.sleep(4)
@@ -150,7 +150,7 @@ def _book_room_once(params: dict) -> dict:
 
             # Wait explicitly for room cards to render in Angular before proceeding.
             # On slower infrastructure the SPA may finish network requests but still
-            # be painting room cards — we try btn-show-rates first, then fall back to
+            # be painting room cards - we try btn-show-rates first, then fall back to
             # any button whose text mentions "rates" in case the class changed.
             try:
                 page.wait_for_selector(
@@ -193,7 +193,7 @@ def _book_room_once(params: dict) -> dict:
 
             # ── Step 3b: Confirm the guest form actually opened ────────────
             # If room/meal-plan selection landed on the wrong (or no) section,
-            # the firstname field never appears — fail fast here with a clear
+            # the firstname field never appears - fail fast here with a clear
             # reason instead of silently filling nothing and surfacing a
             # confusing "no booking number" error from an unrelated page state.
             try:
@@ -273,7 +273,7 @@ def _book_room_once(params: dict) -> dict:
                 }
 
             # A GENUINE booking always ends on a confirmation page with a booking
-            # NUMBER. Require one — a stray "thank you"/"confirmed" keyword is NOT
+            # NUMBER. Require one - a stray "thank you"/"confirmed" keyword is NOT
             # enough (that produced false "booked" results with a blank number).
             confirmation = _parse_confirmation(page)
             booking_ref = _extract_booking_ref(page_text) or (confirmation.get("bookingId") or "").strip()
@@ -297,7 +297,7 @@ def _book_room_once(params: dict) -> dict:
             except Exception:
                 pass
 
-            # CRITICAL — the page we land back on after a failed submit is the
+            # CRITICAL - the page we land back on after a failed submit is the
             # multi-room availability grid, which lists ALL room types. A blind
             # page_text[:450] snippet shows whichever room happens to sort first
             # in that grid, NOT the room the guest actually requested. Anchor the
@@ -309,7 +309,7 @@ def _book_room_once(params: dict) -> dict:
             # availability pre-check (_check_room_availability), which fails
             # before Playwright ever runs. By the time we reach this point the
             # room WAS available per that check, so a missing booking number here
-            # is a transient automation/timing failure, not a sellout — it must
+            # is a transient automation/timing failure, not a sellout - it must
             # stay RETRYABLE. A previous attempt to read "SOLD" from a wide text
             # window around the room name produced false positives (it caught the
             # word "SOLD" belonging to an adjacent room, or to a day OUTSIDE the
@@ -345,7 +345,7 @@ def _book_room_once(params: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 def _list_visible_room_types(page) -> list[str]:
-    """Return room type names visible on the page — used in error messages for diagnosis."""
+    """Return room type names visible on the page - used in error messages for diagnosis."""
     try:
         return page.evaluate(
             """() => {
@@ -355,7 +355,7 @@ def _list_visible_room_types(page) -> list[str]:
                         b => /rates/i.test(b.innerText?.trim() || '')
                     );
                 }
-                // Room names are NOT in heading tags on this page — they sit at the
+                // Room names are NOT in heading tags on this page - they sit at the
                 // start of each room card's text ("Twin Room (Bath & Shower) Bedroom
                 // with..."). Walk up from each button and grab the first line that
                 // looks like a room name (mentions room/suite/family/etc, and is not
@@ -398,7 +398,7 @@ def _set_dates(page, checkin: str, checkout: str) -> bool:
     """Drive NightsBridge's ngx-daterangepicker to the requested stay dates.
 
     CRITICAL: NightsBridge IGNORES the ?arrive=&depart= URL params for the actual
-    booking — the date picker always defaults to *today*. So unless we set the
+    booking - the date picker always defaults to *today*. So unless we set the
     picker ourselves, every booking is registered for today + 1 night, not the
     guest's chosen dates. We navigate the inline calendar (clicking the ❯ "next"
     arrow, which needs a re-render tick between clicks) and click the check-in
@@ -464,15 +464,15 @@ def _click_check_availability(page) -> None:
 def _click_view_rates(page, room_type_name: str) -> bool:
     """Find the room card matching room_type_name and click its VIEW RATES AND BOOK button.
 
-    CRITICAL — each room card sits inside a shared parent that lists EVERY room, so
+    CRITICAL - each room card sits inside a shared parent that lists EVERY room, so
     matching with `.includes()` on ancestor text falsely matches the first room
     (its high-level ancestor "contains" every room name). We therefore match with
     `.startsWith()`: a button only matches the ancestor card whose text BEGINS with
-    the requested room name — that card belongs to this button alone.
+    the requested room name - that card belongs to this button alone.
 
-    Pass 1: exact — the button's own card starts with the full requested name
+    Pass 1: exact - the button's own card starts with the full requested name
             (e.g. "Double Room (Bath)"). Most precise; prefers visible buttons.
-    Pass 2: fallback — strip the parenthetical variant (e.g. "(Bath & Shower)")
+    Pass 2: fallback - strip the parenthetical variant (e.g. "(Bath & Shower)")
             and score every card that starts with the base name by word overlap,
             picking the closest variant. Handles catalogue/NB naming differences
             like our "Twin Room (Bath & Shower)" vs NB's "Twin Room (Shower)".
@@ -484,7 +484,7 @@ def _click_view_rates(page, room_type_name: str) -> bool:
             }
             function isVisible(el) { return !!(el && el.offsetParent !== null); }
 
-            // Base name: everything before the first '(' — used as fallback
+            // Base name: everything before the first '(' - used as fallback
             const baseName = roomTypeName.replace(/\\s*\\(.*$/, '').trim().toLowerCase();
             const wanted = roomTypeName.toLowerCase();
 
@@ -514,7 +514,7 @@ def _click_view_rates(page, room_type_name: str) -> bool:
                         const txt = normalise(el.innerText).toLowerCase();
                         if (txt.startsWith(wanted)) return clickBtn(btn);
                         // Reached this button's own card (starts with base name) but
-                        // it's not the exact variant — stop walking up so we don't
+                        // it's not the exact variant - stop walking up so we don't
                         // bleed into the shared parent that lists every room.
                         if (baseName && txt.startsWith(baseName)) break;
                     }
@@ -557,7 +557,7 @@ def _click_view_rates(page, room_type_name: str) -> bool:
 def _click_book_now(page, meal_plan_name: str) -> bool:
     """Find the meal plan section and click its BOOK NOW button.
 
-    CRITICAL — same shared-ancestor trap as `_click_view_rates`: every room's
+    CRITICAL - same shared-ancestor trap as `_click_view_rates`: every room's
     rates panel lives in the DOM at once, so walking up from a BOOK NOW button
     can bleed into a parent that also contains OTHER rooms' text, and
     `.includes(mealPlanName)` can then match a meal plan belonging to a
@@ -642,7 +642,7 @@ def _fill_guest_form(
     flightno: str,
     notes: str,
 ) -> None:
-    # Dates are set on the calendar in Step 1b (_set_dates) — the guest form has
+    # Dates are set on the calendar in Step 1b (_set_dates) - the guest form has
     # no arrive/depart fields, so nothing date-related is done here.
 
     # Pax counts
@@ -653,7 +653,7 @@ def _fill_guest_form(
         _ng_set(page, "child2-c1", str(children2))
     time.sleep(0.5)
 
-    # Text inputs — use _ng_set (native Angular setter) so the reactive-form
+    # Text inputs - use _ng_set (native Angular setter) so the reactive-form
     # model actually receives the values, not just the visible DOM text.
     for name, val in [
         ("firstname",   firstname),
@@ -675,7 +675,7 @@ def _fill_guest_form(
 def _check_occupancy_error(page) -> str | None:
     """
     Return NightsBridge's occupancy validation message if present, else None.
-    Fires after filling adult/children counts — catches 'Too many people' before submit.
+    Fires after filling adult/children counts - catches 'Too many people' before submit.
     """
     try:
         return page.evaluate(
@@ -703,14 +703,14 @@ def _check_occupancy_error(page) -> str | None:
 
 def _wait_for_result(page, timeout_ms: int = 20_000) -> None:
     """
-    Wait until NightsBridge shows a booking result — confirmation or error.
+    Wait until NightsBridge shows a booking result - confirmation or error.
     Falls back to a plain sleep if the JS condition never fires.
     """
     try:
         page.wait_for_function(
             """() => {
                 const text = document.body.innerText.toLowerCase();
-                // Success signals — "reference" excluded: it appears on the form page too
+                // Success signals - "reference" excluded: it appears on the form page too
                 if (text.includes('confirmed') || text.includes('thank you') ||
                     text.includes('booking number') || text.includes('booking id')) return true;
                 // Error signals
@@ -767,7 +767,7 @@ def _select_payment(page, method: str = "bank_transfer") -> None:
                 }
             }
 
-            // Strategy 3: only one radio — just click it
+            // Strategy 3: only one radio - just click it
             if (radios.length === 1) { clickAngular(radios[0]); return; }
 
             // Strategy 4: fall back to first radio
@@ -782,7 +782,7 @@ def _accept_tcs(page) -> None:
 
     # Strategy 1: Playwright native click on mat-checkbox containing T&C text.
     # Angular Material's click target is the mat-checkbox component, NOT the
-    # hidden native input — clicking the component dispatches the correct events.
+    # hidden native input - clicking the component dispatches the correct events.
     try:
         loc = page.locator("mat-checkbox").filter(
             has_text=_re.compile(r"term|condition|agree|policy", _re.IGNORECASE)
@@ -824,7 +824,7 @@ def _accept_tcs(page) -> None:
             except Exception:
                 pass
 
-    # Strategy 4: JavaScript — click every checkbox near T&C text plus its container
+    # Strategy 4: JavaScript - click every checkbox near T&C text plus its container
     page.evaluate(
         """() => {
             const boxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
@@ -867,9 +867,9 @@ def _submit_booking(page) -> str:
     """Click the booking-form's CONFIRM BOOKING button.
 
     CRITICAL: NightsBridge renders the whole flow on ONE Angular page, so the
-    DOM contains ~30 `type="submit"` buttons at once — CHECK AVAILABILITY, SHOW
+    DOM contains ~30 `type="submit"` buttons at once - CHECK AVAILABILITY, SHOW
     MORE, VIEW RATES AND BOOK, BOOK NOW, etc. The previous code grabbed the FIRST
-    `button[type=submit]`, which is CHECK AVAILABILITY — so it re-ran the search
+    `button[type=submit]`, which is CHECK AVAILABILITY - so it re-ran the search
     instead of submitting the booking, and nothing was ever registered.
 
     We now target the confirm button specifically: by its `confirm-button` class
@@ -918,7 +918,7 @@ def _parse_confirmation(page) -> dict:
     """
     Extract structured booking confirmation fields from the NightsBridge
     confirmation page. Uses DOM table rows first, regex on raw text as fallback.
-    Returns an empty dict on any failure — callers treat it as optional.
+    Returns an empty dict on any failure - callers treat it as optional.
     """
     try:
         return page.evaluate(r"""() => {
@@ -986,11 +986,11 @@ def _extract_booking_ref(text: str) -> str | None:
     patterns = [
         # NightsBridge bbid-prefixed refs e.g. "21091-12345"
         r'\b(21091-\d+)\b',
-        # "Booking ID:" — confirmed real format seen in NightsBridge's own
+        # "Booking ID:" - confirmed real format seen in NightsBridge's own
         # confirmation emails, e.g. "Booking ID: NB-120562673". Distinct from
         # "Booking Number"/"Booking Reference" below: NONE of those patterns
         # match the word "ID", so a genuine success on this exact label was
-        # previously undetected — reported as a failure (stuck polling on the
+        # previously undetected - reported as a failure (stuck polling on the
         # site) even though NightsBridge had already confirmed the booking.
         r'[Bb]ooking\s+[Ii][Dd][:\s#]+([A-Z0-9\-]{4,20})',
         # Explicit booking reference label

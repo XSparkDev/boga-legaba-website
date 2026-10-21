@@ -82,7 +82,7 @@ def perform_action(booking_ref: str | int, action: str) -> dict:
             if not _login(page):
                 return {
                     "ok": False,
-                    "error": "Login failed — check SITE_USER/SITE_PASS env vars",
+                    "error": "Login failed - check SITE_USER/SITE_PASS env vars",
                 }
 
             print(f"[manage_booking] Navigating to {booking_url}")
@@ -103,7 +103,7 @@ def perform_action(booking_ref: str | int, action: str) -> dict:
                     return {
                         "ok": False,
                         "error": (
-                            "Check In button not found — the guest may already be checked in, "
+                            "Check In button not found - the guest may already be checked in, "
                             "or the booking status doesn't allow check-in yet."
                         ),
                         "nbUrl": booking_url,
@@ -139,7 +139,7 @@ def perform_action(booking_ref: str | int, action: str) -> dict:
                     return {
                         "ok": False,
                         "error": (
-                            "Check Out button not found — the guest may not be checked in yet, "
+                            "Check Out button not found - the guest may not be checked in yet, "
                             "or they have already checked out."
                         ),
                         "nbUrl": booking_url,
@@ -174,7 +174,7 @@ def perform_action(booking_ref: str | int, action: str) -> dict:
                     return {
                         "ok": False,
                         "error": (
-                            "Confirm button not found — the booking may already be confirmed, "
+                            "Confirm button not found - the booking may already be confirmed, "
                             "or the NightsBridge dashboard layout has changed."
                         ),
                         "nbUrl": booking_url,

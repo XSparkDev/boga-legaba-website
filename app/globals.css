@@ -5,34 +5,34 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Boga Legaba Brand Guidelines — primary palette (dominant) */
+  /* Boga Legaba Brand Guidelines - primary palette (dominant) */
   --color-black: #000000;
   --color-white: #FFFFFF;
-  /* Very light neutral for subtle section separation — NOT the Soft Neutral
+  /* Very light neutral for subtle section separation - NOT the Soft Neutral
      accent below. Primary must stay black/white-led per the brand guide, so
      large backgrounds use this near-white tint rather than a saturated accent. */
   --color-sand: #F7F7F6;
   --color-body-text: #000000;
   --brand-text-muted: #6B6B6B;
 
-  /* Boga Legaba Brand Guidelines — secondary/accent palette (sparing use only:
-     buttons, highlights, callouts, subtle backgrounds — never the main base) */
+  /* Boga Legaba Brand Guidelines - secondary/accent palette (sparing use only:
+     buttons, highlights, callouts, subtle backgrounds - never the main base) */
   --color-soft-neutral: #C1C4C2;
   --color-teal-accent: #73CAC3;
   --color-olive-accent: #7A8850;
   --color-heritage: #996948;
 
-  /* CTA/button colors — brand guide: favor Heritage Highlight or black */
+  /* CTA/button colors - brand guide: favor Heritage Highlight or black */
   --color-gold: #996948;
   --color-gold-hover: #000000;
 
-  /* Property colors — remapped onto the approved accent palette */
+  /* Property colors - remapped onto the approved accent palette */
   --color-chababa: #C1C4C2;
   --color-interlaken: #73CAC3;
   --color-lantana: #7A8850;
   --color-transnet: #996948;
 
-  /* Fonts — Boga Legaba Brand Guidelines */
+  /* Fonts - Boga Legaba Brand Guidelines */
   --font-title: 'League Spartan', Arial, sans-serif;     /* Titles / hero headings */
   --font-heading: 'Montserrat', Arial, sans-serif;        /* Headings, subheadings, section headers */
   --font-body: 'Open Sans', Arial, sans-serif;            /* Body, captions, nav, supporting info */
@@ -124,10 +124,10 @@
 }
 
 @theme inline {
-  /* Boga Legaba Brand Guidelines — three approved typefaces, loaded via next/font
+  /* Boga Legaba Brand Guidelines - three approved typefaces, loaded via next/font
      in app/(main)/layout.tsx as --font-title (League Spartan), --font-heading
      (Montserrat), --font-body (Open Sans). font-serif/font-display both map to
-     the Heading font (Montserrat) — the existing site-wide "big heading" utility
+     the Heading font (Montserrat) - the existing site-wide "big heading" utility
      classes; true page-hero titles get League Spartan applied directly on the
      handful of hero/page-header components instead (see components/page-header.tsx,
      components/home/hero.tsx, components/stay/stay-page-header.tsx, book-now). */
@@ -198,7 +198,7 @@
   --spacing-section: 120px;
   --spacing-section-sm: 64px;
 
-  /* Brand guide: no drop shadows or glows — kept as no-op tokens so existing
+  /* Brand guide: no drop shadows or glows - kept as no-op tokens so existing
      shadow-card / shadow-gold-glow utility classes still resolve, just flat. */
   --shadow-card: none;
   --shadow-card-hover: none;
@@ -247,7 +247,7 @@
     }
   }
 
-  /* Legacy grain alias — brand guide wants clean/structured, no decorative
+  /* Legacy grain alias - brand guide wants clean/structured, no decorative
      texture effects, so this is neutralized (kept as a no-op so the class
      doesn't need removing from every component that still references it). */
   .grain-overlay::after {
@@ -266,7 +266,7 @@
 .font-body { font-family: var(--font-body); }
 .font-mono { font-family: var(--font-mono); }
 
-/* Section label — small caps eyebrow, Montserrat (Section header role) */
+/* Section label - small caps eyebrow, Montserrat (Section header role) */
 .section-label {
   font-family: var(--font-heading);
   font-weight: 600;
@@ -297,7 +297,7 @@
 }
 
 /* Gap above the home availability card. A short laptop screen has almost no
-   slack under the Search button, so the gap only opens up on taller viewports —
+   slack under the Search button, so the gap only opens up on taller viewports -
    that drops the card into the empty space instead of leaving it stranded high.
    Width-guarded so tall phones keep the tight mobile spacing. */
 .hero-widget-gap {
@@ -332,12 +332,12 @@
   color: #ffffff;
 }
 
-/* Boga Legaba Brand Guidelines — exact type scale (pt converted to px at
+/* Boga Legaba Brand Guidelines - exact type scale (pt converted to px at
    1pt = 1.333px). Base/max size is the literal spec value; clamp() only
    scales DOWN for narrow mobile viewports so text doesn't overflow, it
    never exceeds the spec size. Available for use across pages; the four
    true hero titles (font-title/.heading-hero, already applied) are the
-   only elements currently forced onto .text-title — the site's existing
+   only elements currently forced onto .text-title - the site's existing
    h2/h3 section headings keep their current responsive Tailwind sizes
    (already re-fonted to Montserrat Bold) rather than being force-resized,
    to avoid breaking existing card/section layouts in a restyle-only pass. */
@@ -389,13 +389,13 @@
   }
 }
 
-/* Grain texture overlay — neutralized (see .grain-overlay note above);
+/* Grain texture overlay - neutralized (see .grain-overlay note above);
    brand guide wants clean/structured, no decorative texture effects. */
 .grain::after {
   content: none;
 }
 
-/* Heritage CTA button — brand guide: buttons favor Heritage Highlight or black */
+/* Heritage CTA button - brand guide: buttons favor Heritage Highlight or black */
 .btn-gold {
   background-color: var(--color-gold);
   color: #FFFFFF;
@@ -416,7 +416,7 @@
   transform: translateY(-2px);
 }
 
-/* Outline button — for use on dark/image backgrounds. Flat, no blur/glass
+/* Outline button - for use on dark/image backgrounds. Flat, no blur/glass
    effect per brand guide (structured, not trendy/decorative). */
 .btn-glass {
   background: transparent;
@@ -439,7 +439,7 @@
   transform: translateY(-2px);
 }
 
-/* Card hover — flat, border-based feedback instead of drop shadows */
+/* Card hover - flat, border-based feedback instead of drop shadows */
 .card-lift {
   transition: border-color 0.25s ease, transform 0.25s ease;
   border: 1px solid transparent;
@@ -449,7 +449,7 @@
   border-color: var(--color-soft-neutral);
 }
 
-/* WhatsApp attention cue — neutralized. The old glow-ring pulse (a colored
+/* WhatsApp attention cue - neutralized. The old glow-ring pulse (a colored
    box-shadow animation) is both a banned "glow" effect and a flashy/attention-
    grabbing motion per the brand guide; removed rather than restyled. */
 .whatsapp-pulse {

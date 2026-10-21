@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     process.env.NODE_ENV === "development"
 
   if (!authorized) {
-    return NextResponse.json({ error: "Unauthorized — set ?key=NB_AUDIT_KEY" }, { status: 401 })
+    return NextResponse.json({ error: "Unauthorized - set ?key=NB_AUDIT_KEY" }, { status: 401 })
   }
 
   try {

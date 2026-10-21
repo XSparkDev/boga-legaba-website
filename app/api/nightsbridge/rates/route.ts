@@ -11,7 +11,7 @@ const BROWSER_HEADERS = {
 }
 
 // ---------------------------------------------------------------------------
-// Debug helpers — fetch raw responses from NightsBridge endpoints
+// Debug helpers - fetch raw responses from NightsBridge endpoints
 // ---------------------------------------------------------------------------
 
 async function rawFetch(url: string): Promise<{ status: number; contentType: string; body: string }> {
@@ -19,7 +19,7 @@ async function rawFetch(url: string): Promise<{ status: number; contentType: str
     const res = await fetch(url, {
       headers: BROWSER_HEADERS,
       signal: AbortSignal.timeout(15_000),
-      // No cache — debug should always be fresh
+      // No cache - debug should always be fresh
       cache: "no-store",
     })
     const body = await res.text()
@@ -40,10 +40,10 @@ async function rawFetch(url: string): Promise<{ status: number; contentType: str
 /**
  * GET /api/nightsbridge/rates?bbid=21091&arrive=YYYY-MM-DD&depart=YYYY-MM-DD
  *
- * Optional: &debug=raw      — fetch booking page, log length+sample, return first 5000 chars.
- *           &debug=1        — returns raw HTML/JSON from all probed endpoints as plain text.
- *           &debug=calendar — returns only the calendar.nightsbridge.com responses.
- *           &debug=booking  — returns only the book.nightsbridge.com HTML.
+ * Optional: &debug=raw      - fetch booking page, log length+sample, return first 5000 chars.
+ *           &debug=1        - returns raw HTML/JSON from all probed endpoints as plain text.
+ *           &debug=calendar - returns only the calendar.nightsbridge.com responses.
+ *           &debug=booking  - returns only the book.nightsbridge.com HTML.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "`arrive` must be before `depart`." }, { status: 400 })
   }
 
-  // ── debug=raw — minimal raw fetch, logs to server console ───────────────
+  // ── debug=raw - minimal raw fetch, logs to server console ───────────────
   if (debug === "raw") {
     const url = `https://book.nightsbridge.com/${bbid}?arrive=${arrive}&depart=${depart}`
     let html = ""
@@ -112,12 +112,12 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  // ── debug=1 / debug=booking / debug=calendar — multi-endpoint probe ─────
+  // ── debug=1 / debug=booking / debug=calendar - multi-endpoint probe ─────
   if (debug) {
     const probeUrls: string[] = []
 
     if (debug !== "calendar") {
-      // Booking widget — main source for prices
+      // Booking widget - main source for prices
       probeUrls.push(
         `https://book.nightsbridge.com/${bbid}?arrive=${arrive}&depart=${depart}`,
       )
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (debug !== "booking") {
-      // Calendar availability endpoints (speculative — check if they exist)
+      // Calendar availability endpoints (speculative - check if they exist)
       probeUrls.push(
         `https://calendar.nightsbridge.com/api/availability?bbid=${bbid}&arrive=${arrive}&depart=${depart}`,
       )
@@ -157,9 +157,9 @@ export async function GET(request: NextRequest) {
           `Content-Type: ${contentType}`,
           `Body length:  ${body.length} chars`,
           sep,
-          // Show up to 60 KB of body — enough to see the structure without killing the browser
+          // Show up to 60 KB of body - enough to see the structure without killing the browser
           body.slice(0, 60_000),
-          body.length > 60_000 ? `\n…[truncated — ${body.length} total chars]` : "",
+          body.length > 60_000 ? `\n…[truncated - ${body.length} total chars]` : "",
         ].join("\n"),
       )
     }

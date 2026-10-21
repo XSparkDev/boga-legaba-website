@@ -1,6 +1,6 @@
 """
-Book a room by automating NightsBridge's ADMIN Calendar → "Add Booking" flow —
-the same screen a staff member uses manually — instead of the public guest
+Book a room by automating NightsBridge's ADMIN Calendar → "Add Booking" flow -
+the same screen a staff member uses manually - instead of the public guest
 booking widget (book_nightsbridge.py, kept intact and unused by default).
 
 Selectors below were confirmed against the LIVE admin dashboard (calendar.
@@ -8,12 +8,12 @@ nightsbridge.com/add-booking) via direct DOM inspection, not guessed:
   - Dates: ngx-bootstrap `bs-datepicker` (`.bs-datepicker-head`, `td[role="gridcell"]
     span[bsdatepickerdaydecorator]`).
   - Room/Unit: a single native <select> (NOT a custom combobox). It DOES
-    appear to be date-filtered — a live test run against dates with zero
+    appear to be date-filtered - a live test run against dates with zero
     conflicts across the whole property showed all 26 units, which is
     consistent with "no unit was excluded because none were booked" rather
     than "the list is never filtered." Treat a candidate unit's absence from
     the list as a real signal that it's unavailable for the selected dates
-    (resolve_units_for_room_type() below already does this — it only chooses
+    (resolve_units_for_room_type() below already does this - it only chooses
     a unit that appears in the live dropdown). Availability is additionally
     gated upstream (checkRoomTypeAvailableLive in the website) before this
     script ever runs, so this is defense-in-depth, not the only check.
@@ -27,11 +27,11 @@ nightsbridge.com/add-booking) via direct DOM inspection, not guessed:
   - Per-room-card fields (Rate Plan + occupancy) only exist once a room is
     added, scoped to that room's own card via Angular's formcontrolname
     attributes: bbrateid (Rate Plan), noadults, child1, child2.
-  - Guest fields are on cui-drop-down (First Name, Surname, Company — real
+  - Guest fields are on cui-drop-down (First Name, Surname, Company - real
     autocomplete widgets with a "Type to search" empty state) and cui-input
     (Phone No, Email), addressed via formcontrolname.
   - The modal's submit button and the calendar page's OWN "Add Booking"
-    trigger button both have the text "Add Booking" — the modal submit is
+    trigger button both have the text "Add Booking" - the modal submit is
     distinguished by NOT having the addBookingBtn class.
 
 Usage:
@@ -41,7 +41,7 @@ Required params: checkin, checkout, roomTypeName, mealPlanName, firstname,
                   surname, phone, email
 Optional params: adults (default 2), children1 (0-5, default 0),
                   children2 (6-12, default 0), company, reference (used only
-                  for log correlation — NOT sent to NightsBridge)
+                  for log correlation - NOT sent to NightsBridge)
 
 Env: SITE_USER, SITE_PASS (NightsBridge ADMIN credentials)
 """
@@ -85,8 +85,8 @@ def _normalize_room_type(s: str) -> str:
     """Canonicalise a room-type label so the website's naming and the admin
     catalog's naming compare equal.
 
-    They differ ONLY in bathroom wording: NightsBridge's PUBLIC rates page —
-    which is where the website's roomTypeName originates (rate_cache.rtname) —
+    They differ ONLY in bathroom wording: NightsBridge's PUBLIC rates page -
+    which is where the website's roomTypeName originates (rate_cache.rtname) -
     says "(Shower)" / "(Bath)", while ROOM_CATALOG (matching the admin
     dropdown's room-card titles) says "(Shower only)" / "(Bath only)". The
     "(Bath & Shower)" variants already match verbatim. Without this, every
@@ -136,7 +136,7 @@ def _day_of(iso: str) -> int:
 def _shot(page, name: str) -> None:
     # Off by default: this runs ~17x per booking, and each full-page PNG
     # capture (page render + encode + disk write) is real memory/IO pressure
-    # on the worker's 512MB Render instance — pure debugging cost with no
+    # on the worker's 512MB Render instance - pure debugging cost with no
     # production value, since nothing ever reads /tmp/admin_booking_*.png on
     # a server with no way to retrieve files off it. Opt in locally with
     # DEBUG_SCREENSHOTS=true.
@@ -158,7 +158,7 @@ def _is_login_page(page) -> bool:
     Needed because the dashboard SPA can render its logged-in nav chrome
     (including the "Go to Calendar" link that auth._is_logged_in() checks)
     from cached client-side state before the server actually validates the
-    session — so a saved session can look valid at login-check time and still
+    session - so a saved session can look valid at login-check time and still
     get bounced to /login on the very next real navigation. Detected by URL
     host, not DOM text, since the login form's own copy can change."""
     if "login.nightsbridge.com" in page.url:
@@ -172,8 +172,8 @@ def _is_login_page(page) -> bool:
 
 
 def _open_add_booking(page) -> bool | str:
-    """Returns True (opened), False (couldn't open — real UI failure), or
-    "relogin" (bounced to the login page — the caller should re-authenticate
+    """Returns True (opened), False (couldn't open - real UI failure), or
+    "relogin" (bounced to the login page - the caller should re-authenticate
     and call this again once)."""
     try:
         page.click("a:has-text('Go to Calendar')", timeout=10_000)
@@ -198,7 +198,7 @@ def _open_add_booking(page) -> bool | str:
             page.click("button:has-text('Add Booking')", timeout=5_000)
         except Exception:
             return "relogin" if _is_login_page(page) else False
-    # Wait for the ACTUAL arrival-date input to be present — the exact element
+    # Wait for the ACTUAL arrival-date input to be present - the exact element
     # the next step drives. We match it by its Angular formcontrolname
     # ('fromdate'), NOT placeholder: NightsBridge now renders THREE inputs with
     # placeholder='Select Date' (an extra month-caption input, value "July 2026",
@@ -214,7 +214,7 @@ def _open_add_booking(page) -> bool | str:
 
 
 # ---------------------------------------------------------------------------
-# Step 2: Arrival / Departure dates — ngx-bootstrap bs-datepicker
+# Step 2: Arrival / Departure dates - ngx-bootstrap bs-datepicker
 # ---------------------------------------------------------------------------
 
 def _read_month_year(page) -> str:
@@ -284,7 +284,7 @@ def _read_nights(page) -> int | None:
 
 
 # ---------------------------------------------------------------------------
-# Step 3: Select Room / Unit — single native <select>, appears date-filtered
+# Step 3: Select Room / Unit - single native <select>, appears date-filtered
 # (a unit already booked for the selected dates is absent from the list).
 # ---------------------------------------------------------------------------
 
@@ -399,7 +399,7 @@ def _fill_guest_field(page, selector: str, value: str, field_label: str) -> bool
         _native_set(page, loc, value)
         time.sleep(0.4)
         # Autocomplete fields (firstname/surname/company) may open a
-        # suggestion panel — dismiss without selecting so our typed value
+        # suggestion panel - dismiss without selecting so our typed value
         # stays authoritative.
         has_panel = page.evaluate(
             """() => !!document.querySelector('[data-part="options"] [data-part]:not(.dropdown-empty)')"""
@@ -432,17 +432,17 @@ def _fill_guest_details(page, firstname: str, surname: str, phone: str, email: s
 def _pre_submit_checklist(page, unit_name: str, guest_field_results: dict) -> tuple[bool, str]:
     nights = _read_nights(page)
     if not nights or nights <= 0:
-        return False, f"Nights did not auto-calculate correctly (read: {nights!r}) — dates likely did not register"
+        return False, f"Nights did not auto-calculate correctly (read: {nights!r}) - dates likely did not register"
 
     card_count = _count_room_cards(page)
     if card_count == 0:
         return False, "No room card present after selection"
     if card_count > 1:
-        return False, f"{card_count} room cards present after cleanup attempt — refusing to submit with ambiguous room selection"
+        return False, f"{card_count} room cards present after cleanup attempt - refusing to submit with ambiguous room selection"
 
     titles = _room_card_titles(page)
     if titles and not titles[0].lower().startswith(unit_name.lower() + " -"):
-        return False, f"The one room card present does not match the requested unit ('{unit_name}') — card title: {titles[0]!r}"
+        return False, f"The one room card present does not match the requested unit ('{unit_name}') - card title: {titles[0]!r}"
 
     missing_fields = [k for k, ok in guest_field_results.items() if not ok]
     if missing_fields:
@@ -464,14 +464,14 @@ def _submit_booking(page) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Step 7: verification — hard gate on /booking-summary/{NBID}.
+# Step 7: verification - hard gate on /booking-summary/{NBID}.
 # ---------------------------------------------------------------------------
 
 def _verify_booking_summary(page, expected_unit: str, expected_firstname: str, expected_surname: str) -> dict:
     try:
         page.wait_for_url("**/booking-summary/**", timeout=20_000)
     except Exception:
-        return {"ok": False, "error": "Submit did not navigate to /booking-summary/{NBID} — the booking was NOT verified as created. Do not proceed to email/payment."}
+        return {"ok": False, "error": "Submit did not navigate to /booking-summary/{NBID} - the booking was NOT verified as created. Do not proceed to email/payment."}
 
     match = NBID_RE.search(page.url)
     nbid = match.group(1) if match else None
@@ -482,7 +482,7 @@ def _verify_booking_summary(page, expected_unit: str, expected_firstname: str, e
     # Include form-field VALUES, not just visible text. On the redesigned
     # booking-summary the guest name is shown INSIDE <input> boxes (the "Guest"
     # and "Booking Made By" fields), and element.value is NOT part of
-    # document.body.innerText — so a text-only scrape misses the name and
+    # document.body.innerText - so a text-only scrape misses the name and
     # false-negatives a perfectly good booking (confirmed live: NBID created,
     # name visibly correct on screen, yet firstname/surname "not found").
     page_text = page.evaluate(
@@ -502,7 +502,7 @@ def _verify_booking_summary(page, expected_unit: str, expected_firstname: str, e
     # Checked individually, not as one concatenated "firstname surname" string:
     # confirmed live that NightsBridge's own "Booking Made By"/Guest field
     # truncates long combined names in its display (an unusually long test
-    # name — "TEST AUTOMATION" + "DO NOT USE" — got cut to "...DO NOT"), so a
+    # name - "TEST AUTOMATION" + "DO NOT USE" - got cut to "...DO NOT"), so a
     # full-string match is too strict and would false-negative on a real,
     # successful booking. Firstname/surname individually are far less likely
     # to be truncated (they're the normal-length parts).
@@ -515,7 +515,7 @@ def _verify_booking_summary(page, expected_unit: str, expected_firstname: str, e
     if mismatches:
         return {
             "ok": False,
-            "error": f"Booking summary page does not confirm expected details ({', '.join(mismatches)}). NBID={nbid} was created but details don't match — flag for manual review, do NOT proceed to email/payment.",
+            "error": f"Booking summary page does not confirm expected details ({', '.join(mismatches)}). NBID={nbid} was created but details don't match - flag for manual review, do NOT proceed to email/payment.",
             "nbid": nbid,
             "bookingId": booking_id,
         }
@@ -554,14 +554,14 @@ def book_room(params: dict) -> dict:
         import os
         headless = os.environ.get("HEADLESS", "true").lower() == "true"
         # --disable-dev-shm-usage: Docker's default /dev/shm is only 64MB, far
-        # too small for Chromium's shared memory needs — without this flag the
+        # too small for Chromium's shared memory needs - without this flag the
         # browser can crash near-instantly on launch inside a container, with
         # no Python exception and no captured stderr (the OS just kills it),
         # which is exactly what an "ok": False with an empty error looks like
         # upstream. --no-sandbox is required because the worker container runs
         # as root, where Chromium's sandbox refuses to start at all.
         #
-        # The worker's Render instance is a 512MB Starter box — that flag alone
+        # The worker's Render instance is a 512MB Starter box - that flag alone
         # only avoids one specific crash mode (shm too small), it doesn't lower
         # Chromium's actual memory use, so it can still get OOM-killed under
         # cgroup pressure (same silent, no-stderr failure). The rest of these
@@ -596,7 +596,7 @@ def book_room(params: dict) -> dict:
 
             candidate_units = resolve_units_for_room_type(room_type)
             if not candidate_units:
-                # Not a category name — try it directly as a raw unit name
+                # Not a category name - try it directly as a raw unit name
                 # (useful for standalone/manual testing).
                 candidate_units = [room_type]
             print(f"[admin-booking] ref={reference} room type '{room_type}' resolves to candidate units: {candidate_units}", file=sys.stderr)
@@ -609,7 +609,7 @@ def book_room(params: dict) -> dict:
                 # server actually validates it), so we only discover the
                 # session is really dead here, on the first real navigation.
                 # Re-authenticate fresh and give it exactly one more try.
-                print(f"[admin-booking] ref={reference} bounced to login mid-flow — re-authenticating...", file=sys.stderr)
+                print(f"[admin-booking] ref={reference} bounced to login mid-flow - re-authenticating...", file=sys.stderr)
                 auth._perform_login(page)
                 context.storage_state(path=str(auth.config.STATE_FILE))
                 opened = _open_add_booking(page)
@@ -634,7 +634,7 @@ def book_room(params: dict) -> dict:
             print(f"[admin-booking] ref={reference} Nights auto-calculated: {nights}", file=sys.stderr)
             if not nights or nights <= 0:
                 _shot(page, "02_nights_not_calculated")
-                return {"ok": False, "error": f"Dates did not register — Nights read as {nights!r}, expected > 0"}
+                return {"ok": False, "error": f"Dates did not register - Nights read as {nights!r}, expected > 0"}
             _shot(page, "02_dates_set")
 
             visible_units = _list_room_options(page)
@@ -677,7 +677,7 @@ def book_room(params: dict) -> dict:
                 _shot(page, "05_pre_submit_check_failed")
                 return {"ok": False, "error": f"Pre-submit check failed: {reason}"}
 
-            print(f"[admin-booking] ref={reference} pre-submit checklist passed — submitting...", file=sys.stderr)
+            print(f"[admin-booking] ref={reference} pre-submit checklist passed - submitting...", file=sys.stderr)
             if not _submit_booking(page):
                 _shot(page, "06_submit_click_failed")
                 return {"ok": False, "error": "Could not find/click the Add Booking submit button"}
@@ -688,15 +688,15 @@ def book_room(params: dict) -> dict:
                 _shot(page, "07_verification_failed")
                 print(f"[admin-booking] ref={reference} VERIFICATION FAILED: {result.get('error')}", file=sys.stderr)
                 return result
-            # The exact physical room actually booked — e.g. "Red Room", not
+            # The exact physical room actually booked - e.g. "Red Room", not
             # the category ("Double Room (Bath only)"). Booking now goes
             # straight into the calendar for a specific unit, so we always
             # know this for real (unlike the old guest-widget flow, which
-            # only ever knew the category) — the website should show this,
+            # only ever knew the category) - the website should show this,
             # not the category, wherever the room is displayed to the guest.
             result["roomName"] = chosen_unit
             _shot(page, "07_verified")
-            print(f"[admin-booking] ref={reference} VERIFIED — NBID={result['nbid']} bookingId={result.get('bookingId')} room={chosen_unit}", file=sys.stderr)
+            print(f"[admin-booking] ref={reference} VERIFIED - NBID={result['nbid']} bookingId={result.get('bookingId')} room={chosen_unit}", file=sys.stderr)
             return result
 
         except Exception as exc:

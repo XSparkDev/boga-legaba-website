@@ -16,7 +16,7 @@ interface BookingWidgetProps {
   mealPlans: MealPlanRate[] | null
   available: boolean
   whatsappUrl: string
-  /** From NightsBridge room type — enforced in form and passed to bot */
+  /** From NightsBridge room type - enforced in form and passed to bot */
   maxAdults?: number | null
   maxOccupancy?: number | null
 }
@@ -51,7 +51,7 @@ export function BookingWidget({
   maxAdults: rawMaxAdults,
   maxOccupancy: rawMaxOccupancy,
 }: BookingWidgetProps) {
-  // NightsBridge limits — fall back to safe defaults when not provided
+  // NightsBridge limits - fall back to safe defaults when not provided
   const maxAdults = rawMaxAdults ?? 4
   const maxOccupancy = rawMaxOccupancy ?? maxAdults
   const sorted = mealPlans
@@ -76,7 +76,7 @@ export function BookingWidget({
 
   // If the guest leaves for Paystack and comes back via the browser's Back
   // button (declining to pay), the page can be restored from bfcache frozen
-  // mid-"paying" spinner — with no poll actually still running. Detect that
+  // mid-"paying" spinner - with no poll actually still running. Detect that
   // restore and drop back to the form so the UI doesn't look stuck forever.
   useEffect(() => {
     function handlePageShow(e: PageTransitionEvent) {
@@ -91,7 +91,7 @@ export function BookingWidget({
 
   // Keep the widget in view across step changes. Submitting collapses the tall
   // form into the short "Reserving…" spinner (or the error box), which shrinks
-  // the page by ~1000px while the scroll position stays put — leaving the new
+  // the page by ~1000px while the scroll position stays put - leaving the new
   // panel above the viewport so it LOOKS like the page jumped down. Re-centering
   // the panel keeps the guest looking at it instead of stranded further down.
   const panelRef = useRef<HTMLDivElement>(null)
@@ -101,7 +101,7 @@ export function BookingWidget({
     }
   }, [step])
 
-  // Form fields — every field NightsBridge collects
+  // Form fields - every field NightsBridge collects
   const [adults, setAdults] = useState(2)
   const [children1, setChildren1] = useState(0)  // Age 0–5 (free)
   const [children2, setChildren2] = useState(0)  // Age 6–12 (R150/night)
@@ -121,7 +121,7 @@ export function BookingWidget({
 
   // ── Draft persistence: don't lose typed details on an accidental refresh ────
   // Saved to sessionStorage (survives a refresh, auto-clears when the tab is
-  // closed — so a guest's contact details aren't left behind on a shared
+  // closed - so a guest's contact details aren't left behind on a shared
   // computer). Scoped to this exact room + dates so a draft only ever restores
   // in the same booking context, never on a different room. Every storage call
   // is best-effort: if storage is unavailable (private mode / blocked), the
@@ -130,7 +130,7 @@ export function BookingWidget({
   const draftHydratedRef = useRef(false)
 
   // Restore once on mount. Read in an effect (not during render) because
-  // sessionStorage doesn't exist during SSR — this keeps it hydration-safe.
+  // sessionStorage doesn't exist during SSR - this keeps it hydration-safe.
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(DRAFT_KEY)
@@ -152,18 +152,18 @@ export function BookingWidget({
           const plan = sorted.find((p) => p.mealplanid === d.mealplanid)
           if (plan) setSelectedPlan(plan)
         }
-        // Reopen the form if the guest had it open — but never restore into the
+        // Reopen the form if the guest had it open - but never restore into the
         // "paying"/"error" states, which no longer reflect reality after a reload.
         if (d.formOpen) setStep("form")
       }
     } catch {
-      // Corrupt or blocked storage — start fresh, never break the form.
+      // Corrupt or blocked storage - start fresh, never break the form.
     }
     draftHydratedRef.current = true
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Save on every change — but only AFTER the restore above has run, so the
+  // Save on every change - but only AFTER the restore above has run, so the
   // initial default values can never overwrite a saved draft (effect ordering).
   useEffect(() => {
     if (!draftHydratedRef.current) return
@@ -178,7 +178,7 @@ export function BookingWidget({
         }),
       )
     } catch {
-      // Storage full / blocked — saving is best-effort, never fatal.
+      // Storage full / blocked - saving is best-effort, never fatal.
     }
   }, [DRAFT_KEY, adults, children1, children2, firstname, surname, phone, email, emailVerify, arrivalTime, airline, flightno, notes, selectedPlan, step])
 
@@ -198,7 +198,7 @@ export function BookingWidget({
   const adultsOverLimit = adults > maxAdults
   const totalOverLimit = totalGuests > maxOccupancy
 
-  // Nights between arrive and depart — used to estimate the amount to charge
+  // Nights between arrive and depart - used to estimate the amount to charge
   function nightsBetween(a: string, b: string): number {
     const n = Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000)
     return n > 0 ? n : 1
@@ -270,7 +270,7 @@ export function BookingWidget({
 
     // ── PAY FIRST: /api/booking/start sets up payment immediately and fires the
     // NightsBridge booking off in the background. The guest goes straight to
-    // Paystack — no waiting for the ~50-90s NightsBridge job. ────────────────
+    // Paystack - no waiting for the ~50-90s NightsBridge job. ────────────────
     setStep("paying")
     try {
       const res = await fetch("/api/booking/start", {
@@ -313,7 +313,7 @@ export function BookingWidget({
 
   async function goToPayment(reference: string, amountRands: number, d: StatusResponse) {
     // The status endpoint pre-generates ONE Paystack session the moment the
-    // booking completes (same link it emailed the guest) — use it directly.
+    // booking completes (same link it emailed the guest) - use it directly.
     // Only fall back to generating a fresh session here if that failed, so we
     // still never create two sessions for the same booking unnecessarily.
     if (d.paymentUrl) {
@@ -353,19 +353,19 @@ export function BookingWidget({
 
   function pollBookingStatus(reference: string, amountRands: number, attempt = 0) {
     const POLL_MS = 3_000
-    const MAX_POLLS = 130 // ~6.5 min — the worker retries internally on ambiguous failures
+    const MAX_POLLS = 130 // ~6.5 min - the worker retries internally on ambiguous failures
 
     fetch(`/api/booking/status?reference=${encodeURIComponent(reference)}`, { cache: "no-store" })
       .then((res) => res.json().catch(() => ({})) as Promise<StatusResponse>)
       .then((d) => {
         if (cancelledRef.current) return
         // bookingStatus is the pipeline's single source of truth (see
-        // lib/booking-status.ts) — only proceed once it's actually reached
+        // lib/booking-status.ts) - only proceed once it's actually reached
         // AWAITING_PAYMENT (meaning the guest email step has run). Do NOT
         // also require d.paymentUrl here: the CONFIRMATION_EMAIL_SENT ->
         // AWAITING_PAYMENT transition is one-time and guarded, so if Paystack
         // pre-generation failed that one time, paymentUrl stays empty
-        // forever on every future poll — requiring it here would mean
+        // forever on every future poll - requiring it here would mean
         // goToPayment() never gets called at all, so its own fallback
         // (generate a fresh session via /api/payment/initiate) never gets a
         // chance to run either. Let goToPayment handle the empty case.
@@ -377,7 +377,7 @@ export function BookingWidget({
           setStep("error")
           return
         }
-        // Still earlier in the pipeline (or missing/unrecognised) — keep polling.
+        // Still earlier in the pipeline (or missing/unrecognised) - keep polling.
         if (cancelledRef.current) return
         if (attempt >= MAX_POLLS) {
           setErrorMsg("This is taking longer than expected. Please contact us on WhatsApp with your details.")
@@ -533,7 +533,7 @@ export function BookingWidget({
                 <div key={label}>
                   <label className="mb-1 block font-body text-[11px] text-gray-400">{label}</label>
                   <div className="flex items-center gap-1">
-                    {/* Minus button — fades out at minimum */}
+                    {/* Minus button - fades out at minimum */}
                     <button
                       type="button"
                       onClick={() => set(Math.max(min, value - 1))}
@@ -547,14 +547,14 @@ export function BookingWidget({
                       &minus;
                     </button>
 
-                    {/* Count — turns amber when at limit */}
+                    {/* Count - turns amber when at limit */}
                     <span className={`w-6 text-center font-body text-sm font-bold transition-colors ${
                       atMax && max > min ? "text-amber-500" : "text-gray-800"
                     }`}>
                       {value}
                     </span>
 
-                    {/* Plus button — turns amber and locks at maximum */}
+                    {/* Plus button - turns amber and locks at maximum */}
                     <button
                       type="button"
                       onClick={() => set(Math.min(max, value + 1))}
@@ -583,7 +583,7 @@ export function BookingWidget({
             {rawMaxAdults ? ` · Max ${maxAdults} adult${maxAdults === 1 ? "" : "s"}, ${maxOccupancy} total` : ""}
           </p>
 
-          {/* Real-time capacity warning — amber when full, red only on invalid submit */}
+          {/* Real-time capacity warning - amber when full, red only on invalid submit */}
           {totalGuests >= maxOccupancy && (
             <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
               <AlertTriangle className="size-3.5 shrink-0 text-amber-500" />

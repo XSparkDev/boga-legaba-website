@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 }
 
 // Admin-managed content (via /admin/dining, table `dining_sections`) with
-// built-in fallback — always renders, even before migration 019 is applied.
+// built-in fallback - always renders, even before migration 019 is applied.
 export const dynamic = "force-dynamic"
 
 export default async function DiningPage() {

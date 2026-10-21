@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
-import Link from "next/link"
 import { CheckCircle2, Loader2, AlertTriangle } from "lucide-react"
 import { Field, inputClass } from "@/components/forms/form-ui"
 import { PrivacyConsentCheckbox } from "@/components/forms/privacy-consent"
@@ -12,7 +11,7 @@ interface InterestFormProps {
   interestOptions?: string[]
   submitLabel?: string
   gaEvent?: string
-  /** Which page this form is on (e.g. "Specials", "Dining") — included in the staff email */
+  /** Which page this form is on (e.g. "Specials", "Dining") - included in the staff email */
   source?: string
 }
 
@@ -107,20 +106,17 @@ export function InterestForm({
           <AlertTriangle className="size-4 shrink-0" /> {submitError}
         </p>
       ) : null}
-      {/* Mailing-list consent: submitting subscribes you; agreement required. */}
+      {/* Mailing-list consent: submitting subscribes you; agreement required.
+          Privacy Notice stays unlinked for now (page content pending approval). */}
       <div className="rounded-xl border border-border bg-muted/40 p-4">
-        <PrivacyConsentCheckbox checked={consent} onChange={setConsent} error={errors.consent} />
+        <PrivacyConsentCheckbox checked={consent} onChange={setConsent} error={errors.consent} linkPrivacy={false} />
         <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
           We use your name and email only for the updates you signed up for. Every email carries
-          an unsubscribe link — or email{" "}
+          an unsubscribe link - or email{" "}
           <a href="mailto:info@bogalegaba.co.za" className="underline underline-offset-2">
             info@bogalegaba.co.za
           </a>{" "}
-          anytime to be removed. Details are stored securely and never sold. See our{" "}
-          <Link href="/privacy" className="underline underline-offset-2">
-            Privacy Notice
-          </Link>
-          .
+          anytime to be removed. Details are stored securely and never sold. See our Privacy Notice.
         </p>
       </div>
       <button

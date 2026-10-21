@@ -14,7 +14,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Notice"
-      subtitle="How we collect, use and protect your personal information — and your rights under South Africa's Protection of Personal Information Act (POPIA)."
+      subtitle="How we collect, use and protect your personal information - and your rights under South Africa's Protection of Personal Information Act (POPIA)."
       updated="October 2026"
     >
       <LegalSection title="Who we are">
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
           <li>Messages you send through our enquiry and contact forms</li>
         </ul>
         <p>
-          Card payments are processed on our payment provider&apos;s own secure pages — card
+          Card payments are processed on our payment provider&apos;s own secure pages - card
           details are never entered on, or stored by, this website.
         </p>
       </LegalSection>

@@ -5,12 +5,12 @@ export const dynamic = "force-dynamic"
 export const maxDuration = 60
 
 /**
- * ⚠️ BUILT & TESTED, BUT INTENTIONALLY DORMANT — NOT SCHEDULED (as of 2026-07-14).
+ * ⚠️ BUILT & TESTED, BUT INTENTIONALLY DORMANT - NOT SCHEDULED (as of 2026-07-14).
  *
  * This route works end-to-end (verified: fetch → upsert → idempotent re-run),
  * but it is deliberately NOT wired to any cron job or scheduled trigger yet.
  * Reason: the live Google Places API currently returns only 5 reviews for this
- * listing, and just 2 of them clear the 3-star display filter — running the
+ * listing, and just 2 of them clear the 3-star display filter - running the
  * sync would flip the homepage from the 13 curated `manual_seed` reviews to
  * only 2 live ones (getGuestReviews() prefers `live_api` rows once any exist),
  * making the section look sparse.
@@ -20,7 +20,7 @@ export const maxDuration = 60
  * reviews (enough ≥3-star ones to match or beat the curated set); at that point
  * add a scheduled trigger and let the live rows take over.
  *
- * POST /api/reviews/sync — server-only, CRON_SECRET protected.
+ * POST /api/reviews/sync - server-only, CRON_SECRET protected.
  *
  * Pulls the latest Google Places reviews for GOOGLE_PLACE_ID and upserts them
  * into the `google_reviews` table with source = 'live_api', so they can be
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
 
   const apiKey = process.env.GOOGLE_PLACES_API_KEY
   const placeId = process.env.GOOGLE_PLACE_ID
-  // Note: never echo apiKey — only report WHICH var is missing, not its value.
+  // Note: never echo apiKey - only report WHICH var is missing, not its value.
   if (!apiKey || !placeId) {
     return NextResponse.json(
       { error: "Reviews sync not configured, set GOOGLE_PLACES_API_KEY and GOOGLE_PLACE_ID." },
@@ -79,14 +79,14 @@ export async function POST(request: NextRequest) {
     })
     if (!res.ok) {
       // Google's error body describes the problem (e.g. API not enabled) and
-      // does NOT contain the key — but we still surface only a short, sanitized
+      // does NOT contain the key - but we still surface only a short, sanitized
       // message and the status code, never the request or its headers.
       let detail = ""
       try {
         const body = (await res.json()) as { error?: { message?: string } }
         detail = body?.error?.message ?? ""
       } catch {
-        /* non-JSON error body — ignore */
+        /* non-JSON error body - ignore */
       }
       return NextResponse.json(
         { error: `Google Places API returned ${res.status}`, detail: detail || undefined },
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
     payload = (await res.json()) as PlacesResponse
   } catch {
-    // Network/timeout — never include the URL+key context in the message.
+    // Network/timeout - never include the URL+key context in the message.
     return NextResponse.json({ error: "Could not reach the Google Places API." }, { status: 502 })
   }
 
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     // Drop anything unusable (Google occasionally returns rating-only reviews).
     .filter((r) => r.author_name && r.review_text && r.rating >= 1 && r.rating <= 5)
 
-  // How many of the fetched reviews clear the ≥3-star display threshold — i.e.
+  // How many of the fetched reviews clear the ≥3-star display threshold - i.e.
   // how many could actually appear on the homepage (see getGuestReviews()).
   const eligible = incoming.filter((r) => r.rating >= 3).length
 

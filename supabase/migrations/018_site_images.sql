@@ -5,7 +5,7 @@
 -- same key the code uses, e.g. 'conference', 'specials.extended-stay',
 -- 'gallery.chababa-reeds', 'hero.slide.1'). If no row exists for a key, the
 -- page falls back to its built-in default (see lib/site-image-slots.ts), so an
--- empty table changes nothing — this is purely additive.
+-- empty table changes nothing - this is purely additive.
 
 CREATE TABLE IF NOT EXISTS site_images (
   image_key  TEXT        PRIMARY KEY,
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS site_images (
 
 ALTER TABLE site_images ENABLE ROW LEVEL SECURITY;
 
--- Public read — these are marketing images shown publicly. Writes only ever
+-- Public read - these are marketing images shown publicly. Writes only ever
 -- happen server-side via the admin API route using the service role key
 -- (which bypasses RLS), so no anon/authenticated write policy is defined.
 DROP POLICY IF EXISTS "Public read site_images" ON site_images;

@@ -2,8 +2,8 @@
  * Registry of the fixed, admin-editable image slots on the marketing pages.
  *
  * This is the single source of truth shared by:
- *   - the public resolver (lib/site-images-live.ts) — for each slot's DEFAULT,
- *   - the admin editor (components/admin/site-images-client.tsx) — to list the
+ *   - the public resolver (lib/site-images-live.ts) - for each slot's DEFAULT,
+ *   - the admin editor (components/admin/site-images-client.tsx) - to list the
  *     slots grouped by page.
  *
  * A slot's `key` is the same string the page code resolves (e.g. "conference",
@@ -12,7 +12,7 @@
  * Home hero slideshow slots have hardcoded defaults (those live as an array in
  * the hero component, not in site-images.ts).
  *
- * No server-only imports here — the admin client component imports this too.
+ * No server-only imports here - the admin client component imports this too.
  */
 import { siteImages } from "@/data/site-images"
 
@@ -44,7 +44,7 @@ function slot(key: string, label: string, page: SiteImagePage, fallback?: { url:
 }
 
 // The Home hero is a 5-image slideshow whose defaults live as a hardcoded array
-// in components/home/hero.tsx — mirror them here so each slide is its own slot.
+// in components/home/hero.tsx - mirror them here so each slide is its own slot.
 const HERO_SLIDE_DEFAULTS = [
   "/boga_hero_/hero-1.jpg",
   "/boga_hero_/hero-2.jpg",

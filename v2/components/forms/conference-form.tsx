@@ -49,7 +49,7 @@ export function ConferenceForm() {
 
   if (submitted) {
     return (
-      <SuccessMessage message="Thank you — our conference team will be in touch shortly." />
+      <SuccessMessage message="Thank you - our conference team will be in touch shortly." />
     )
   }
 

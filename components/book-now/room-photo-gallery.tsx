@@ -4,12 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { ChevronLeft, ChevronRight, X, Maximize2, BedDouble, Users, Images } from "lucide-react"
 
 // ---------------------------------------------------------------------------
-// Room photo gallery — real per-room photos (from Supabase room_images).
+// Room photo gallery - real per-room photos (from Supabase room_images).
 //
 // Airbnb-style "lead photo + thumbnails": one large lead image with a 2×2 grid
 // of thumbnails beside it (sm+), collapsing to a single lead image with a
 // "View all photos" button on mobile. Clicking any photo (or the button) opens
-// a full-screen lightbox with prev/next arrows, keyboard nav and mobile swipe —
+// a full-screen lightbox with prev/next arrows, keyboard nav and mobile swipe -
 // the same interaction the /gallery page uses, kept consistent here.
 //
 // Only rendered when a room actually HAS real photos; the book-now page keeps
@@ -115,7 +115,7 @@ export function RoomPhotoGallery({
               />
             </button>
 
-            {/* Thumbnails — hidden on mobile (lead + "view all" button is enough) */}
+            {/* Thumbnails - hidden on mobile (lead + "view all" button is enough) */}
             {thumbs.map((p, i) => {
               const index = i + 1
               const isLastVisible = i === thumbs.length - 1 && extra > 0

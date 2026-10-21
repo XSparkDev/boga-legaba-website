@@ -1,4 +1,4 @@
-# Boga Legaba — Understanding the NightsBridge + Supabase Integration
+# Boga Legaba - Understanding the NightsBridge + Supabase Integration
 
 A single reference for what we built, why, how it works, and what you still need to do.
 
@@ -33,7 +33,7 @@ Your **deployed website** only talks to **Supabase**. It does not need your Mac 
 
 ---
 
-## Architecture (Option B — no Mac in production)
+## Architecture (Option B - no Mac in production)
 
 ```mermaid
 flowchart LR
@@ -56,7 +56,7 @@ flowchart LR
 |-------|----------------|---------------|
 | **Scraper** | Login, fetch calendar, save rooms/bookings/availability, scrape image URLs | Railway (or Mac for testing) |
 | **Supabase DB** | Stores all synced data | Supabase cloud |
-| **Edge Function** | Cron alarm — calls Railway every 10 min | Supabase cloud |
+| **Edge Function** | Cron alarm - calls Railway every 10 min | Supabase cloud |
 | **Next.js APIs** | Public read endpoints for the site | Your host (e.g. Vercel) |
 | **Stay UI** | Room cards, date search, live badges | Browser |
 
@@ -68,15 +68,15 @@ flowchart LR
 
 | Path | Purpose |
 |------|---------|
-| [`public/ScriptTestBLGH/`](public/ScriptTestBLGH/) | **Main sync script** — login, NB API, Supabase write, webview images |
-| [`services/sync-worker/`](services/sync-worker/) | **Railway Docker worker** — `POST /run` triggers full sync |
+| [`public/ScriptTestBLGH/`](public/ScriptTestBLGH/) | **Main sync script** - login, NB API, Supabase write, webview images |
+| [`services/sync-worker/`](services/sync-worker/) | **Railway Docker worker** - `POST /run` triggers full sync |
 | [`supabase/schema.sql`](supabase/schema.sql) | Base database tables |
 | [`supabase/migrations/002_nb_extended.sql`](supabase/migrations/002_nb_extended.sql) | `media_asset`, `nb_api_snapshot`, `calendar_event`, extra columns |
 | [`app/api/rooms/route.ts`](app/api/rooms/route.ts) | Public room catalog from DB |
 | [`app/api/availability/route.ts`](app/api/availability/route.ts) | Room-night availability + rates |
 | [`app/api/media/route.ts`](app/api/media/route.ts) | Image URLs from `media_asset` |
 | [`app/api/nightsbridge/audit/route.ts`](app/api/nightsbridge/audit/route.ts) | Full data audit JSON |
-| [`app/(main)/stay/`](app/(main)/stay/) | Stay page — synced rooms + date search |
+| [`app/(main)/stay/`](app/(main)/stay/) | Stay page - synced rooms + date search |
 | [`app/(main)/admin/nightsbridge/`](app/(main)/admin/nightsbridge/) | Visual debug dashboard |
 | [`lib/synced-rooms.ts`](lib/synced-rooms.ts) | Builds property groups from DB rows (no static fallback) |
 | [`docs/COMPLETION_CHECKLIST.md`](docs/COMPLETION_CHECKLIST.md) | Step-by-step to finish Option B |
@@ -92,7 +92,7 @@ flowchart LR
 - Property: `bbid`, `bbname`
 - Rooms: `bbroomid`, `roomname`, `bbrtid`, `orderby`
 - Room types: name, description, occupancy, size, rate scheme (in `room_type.raw`)
-- Bookings + guest stays (PII — service role only)
+- Bookings + guest stays (PII - service role only)
 - Closeouts, calendar events (stored; closeouts not yet applied to availability)
 
 ### Not in the API
@@ -136,7 +136,7 @@ flowchart LR
 
 ## Stay page (`/stay`) behaviour
 
-1. Loads rooms from `/api/rooms` (Supabase only — no static catalog fallback).
+1. Loads rooms from `/api/rooms` (Supabase only - no static catalog fallback).
 2. Auto-searches default dates via `/api/availability`.
 3. Hides rooms that are booked for the selected stay.
 4. Shows green **Live · Supabase** badges on rooms, availability, rates, and NB-sourced photos.
@@ -244,8 +244,8 @@ Production needs Supabase keys + optional `NB_AUDIT_KEY`. No `RUN_LOCAL_SYNC` in
 
 ## One-sentence summary
 
-**We mirror NightsBridge into Supabase with a cloud worker, and the website reads that database to show real rooms, availability, rates, and image URLs — without embedding NightsBridge on Stay.**
+**We mirror NightsBridge into Supabase with a cloud worker, and the website reads that database to show real rooms, availability, rates, and image URLs - without embedding NightsBridge on Stay.**
 
 ---
 
-*Last updated: June 2026 — Boga Legaba website integration*
+*Last updated: June 2026 - Boga Legaba website integration*

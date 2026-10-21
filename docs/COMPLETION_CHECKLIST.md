@@ -1,4 +1,4 @@
-# NightsBridge + Supabase — completion checklist (Option B)
+# NightsBridge + Supabase - completion checklist (Option B)
 
 Use this after the plan is approved. **No Mac required** once Railway + Supabase schedule are live.
 
@@ -10,7 +10,7 @@ Supabase Edge (every 10 min) → POST Railway/worker/run → Supabase DB → Web
 
 ---
 
-## Phase 1 — Database (you)
+## Phase 1 - Database (you)
 
 - [ ] Run [`supabase/schema.sql`](../supabase/schema.sql) in Supabase SQL Editor (skip if already synced)
 - [ ] Run [`supabase/migrations/002_nb_extended.sql`](../supabase/migrations/002_nb_extended.sql)
@@ -18,7 +18,7 @@ Supabase Edge (every 10 min) → POST Railway/worker/run → Supabase DB → Web
 
 ---
 
-## Phase 2 — Environment (you)
+## Phase 2 - Environment (you)
 
 - [ ] Copy [`.env.example`](../.env.example) → `.env.local` and fill:
 
@@ -29,11 +29,11 @@ Supabase Edge (every 10 min) → POST Railway/worker/run → Supabase DB → Web
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API (secret) |
 | `SITE_USER` / `SITE_PASS` | NightsBridge owner login |
 | `CRON_SECRET` | Generate a long random string |
-| `NB_AUDIT_KEY` | Optional — protects `/admin/nightsbridge` |
+| `NB_AUDIT_KEY` | Optional - protects `/admin/nightsbridge` |
 
 ---
 
-## Phase 3 — Local sync test (you or agent)
+## Phase 3 - Local sync test (you or agent)
 
 ```bash
 cd public/ScriptTestBLGH && ./run-sync.sh
@@ -48,7 +48,7 @@ If images fail: `HEADLESS=false ./run-sync.sh`
 
 ---
 
-## Phase 4 — Railway worker (you)
+## Phase 4 - Railway worker (you)
 
 See [`services/sync-worker/README.md`](../services/sync-worker/README.md)
 
@@ -64,7 +64,7 @@ curl -X POST https://YOUR-RAILWAY-URL/run \
 
 ---
 
-## Phase 5 — Supabase Edge Function (you)
+## Phase 5 - Supabase Edge Function (you)
 
 - [ ] `chmod +x scripts/deploy-edge-function.sh`
 - [ ] `SUPABASE_PROJECT_REF=xxx ./scripts/deploy-edge-function.sh`
@@ -76,7 +76,7 @@ curl -X POST https://YOUR-RAILWAY-URL/run \
 
 ---
 
-## Phase 6 — Deploy website (you)
+## Phase 6 - Deploy website (you)
 
 Production env needs:
 
@@ -89,11 +89,11 @@ Production env needs:
 
 ---
 
-## Phase 7 — Disable Mac sync (you)
+## Phase 7 - Disable Mac sync (you)
 
 After Phase 5 works:
 
-- [ ] `crontab -e` — remove any `run-sync.sh` or `nightsbridge-sync-cron` lines
+- [ ] `crontab -e` - remove any `run-sync.sh` or `nightsbridge-sync-cron` lines
 - [ ] Stop `npm run sync:nightsbridge:worker` if running locally
 
 ---

@@ -93,7 +93,7 @@ export function GalleryBrowser() {
         </div>
 
         <MultiCriteriaSearch
-          placeholder="Add filters — room name, property, conference, dining…"
+          placeholder="Add filters - room name, property, conference, dining…"
           suggestions={galleryFilterSuggestions}
           criteria={criteria}
           onCriteriaChange={setCriteria}

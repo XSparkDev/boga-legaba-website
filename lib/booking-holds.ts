@@ -5,12 +5,12 @@
  * initiated we place a hold; the availability gate refuses a second guest for an
  * overlapping stay while that hold is active. Holds carry an `expires_at` (default
  * 15 min) and are ignored once expired, so an abandoned checkout releases the room
- * automatically — no cron required. The hold is deleted explicitly once the
+ * automatically - no cron required. The hold is deleted explicitly once the
  * booking is created (or the payment/booking fails).
  *
  * Backed by the `booking_hold` table (supabase/migrations/008_booking_hold.sql).
  * If that table doesn't exist yet, these helpers fail OPEN (they never block a
- * real booking) and log a warning — the hold feature is simply inert until the
+ * real booking) and log a warning - the hold feature is simply inert until the
  * migration is applied.
  */
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
@@ -55,7 +55,7 @@ export async function hasActiveHold(
 
     const target = normalizeName(roomTypeName)
     const rows = data ?? []
-    // Exact match first — falling straight to substring matching risks a hold
+    // Exact match first - falling straight to substring matching risks a hold
     // on a differently-named-but-similar room (e.g. "Double Room (Bath)" vs
     // "Double Room (Bath & Shower)") wrongly blocking this booking.
     if (rows.some((h) => normalizeName(h.room_type_name as string) === target)) return true
@@ -71,7 +71,7 @@ export async function hasActiveHold(
 
 /**
  * Place a hold for this room/date range, keyed by the Paystack reference.
- * Expires in HOLD_MINUTES. Best-effort — never throws.
+ * Expires in HOLD_MINUTES. Best-effort - never throws.
  */
 export async function createHold(params: {
   reference: string
@@ -100,7 +100,7 @@ export async function createHold(params: {
   }
 }
 
-/** Release a hold by its Paystack reference. Best-effort — never throws. */
+/** Release a hold by its Paystack reference. Best-effort - never throws. */
 export async function releaseHold(reference: string): Promise<void> {
   if (!reference) return
   try {

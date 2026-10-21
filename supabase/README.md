@@ -38,18 +38,18 @@ curl "http://localhost:3000/api/rooms"
 curl "http://localhost:3000/api/availability?from=2026-06-18&to=2026-06-25"
 ```
 
-## 5. Production sync (Option B — no Mac)
+## 5. Production sync (Option B - no Mac)
 
 | Layer | Role |
 |-------|------|
 | **Supabase Postgres** | Rooms, availability, `media_asset` URLs |
-| **Railway worker** | [`services/sync-worker/`](../services/sync-worker/) — Playwright sync |
-| **Supabase Edge Function** | `trigger-nightsbridge-sync` — cron every 10 min → POST Railway |
+| **Railway worker** | [`services/sync-worker/`](../services/sync-worker/) - Playwright sync |
+| **Supabase Edge Function** | `trigger-nightsbridge-sync` - cron every 10 min → POST Railway |
 
 Deploy steps: [`docs/COMPLETION_CHECKLIST.md`](../docs/COMPLETION_CHECKLIST.md)
 
 ## Notes
 
-- Guest PII in `booking` / `guest` — RLS blocks anon.
+- Guest PII in `booking` / `guest` - RLS blocks anon.
 - Public site reads `room`, `room_type`, `availability_cache`, `media_asset`.
 - Disable Mac crontab after Railway + Edge schedule are confirmed.

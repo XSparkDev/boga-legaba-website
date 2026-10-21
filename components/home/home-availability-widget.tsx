@@ -11,7 +11,7 @@ import { NAV_STICKY_TOP_CLASS } from "@/lib/nav-shell"
 import { defaultCheckInOut } from "@/lib/room-availability"
 import { cn } from "@/lib/utils"
 
-/** Tallest fixed-nav height (xl: h-24) — the bar docks the moment the hero copy reaches it. */
+/** Tallest fixed-nav height (xl: h-24) - the bar docks the moment the hero copy reaches it. */
 const NAV_HEIGHT_PX = 96
 
 export function HomeAvailabilityWidget() {
@@ -30,7 +30,7 @@ export function HomeAvailabilityWidget() {
     reset(defaultCheckInOut())
   }, [reset])
 
-  // The bar takes over the instant the hero copy reaches the nav — from there on
+  // The bar takes over the instant the hero copy reaches the nav - from there on
   // the hero copy is hidden (its space is kept, so nothing reflows) and the two
   // are never on screen together.
   useEffect(() => {
@@ -57,7 +57,7 @@ export function HomeAvailabilityWidget() {
     reset(defaultCheckInOut())
   }
 
-  // Closing lasts for this page view only — deliberately NOT persisted. A guest
+  // Closing lasts for this page view only - deliberately NOT persisted. A guest
   // who dismissed it once should not lose the search for their whole visit with
   // no way to get it back.
   function handleClose() {

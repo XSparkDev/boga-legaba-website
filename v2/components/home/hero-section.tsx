@@ -35,7 +35,7 @@ export function HeroSection() {
           <div className="hero-rule mt-7 h-[3px] w-[60px] bg-terracotta" />
 
           <p className="mt-7 max-w-md text-lg leading-relaxed text-body-brown">
-            Three properties. 27 rooms. One team — looking after your stay across Mahikeng.
+            Three properties. 27 rooms. One team - looking after your stay across Mahikeng.
           </p>
 
           <div className="mt-7 flex w-full max-w-md flex-col gap-3 sm:mt-9 sm:max-w-none sm:flex-row sm:items-center sm:gap-4">

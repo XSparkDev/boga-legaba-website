@@ -45,7 +45,7 @@ export function FloatingWhatsApp() {
         </div>
       ) : null}
 
-      {/* Floating button stack — bottom-right corner */}
+      {/* Floating button stack - bottom-right corner */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-3">
 
         {/* WhatsApp button */}
@@ -58,7 +58,7 @@ export function FloatingWhatsApp() {
           <MessageCircle className="size-7 text-white" />
         </button>
 
-        {/* Admin login button — below WhatsApp */}
+        {/* Admin login button - below WhatsApp */}
         <Link
           href="/admin"
           aria-label="Admin login"

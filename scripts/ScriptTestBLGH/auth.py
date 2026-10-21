@@ -74,7 +74,7 @@ def get_authenticated_context(browser):
     if config.STATE_FILE.exists():
         context = browser.new_context(storage_state=str(config.STATE_FILE))
         page = context.new_page()
-        # domcontentloaded (not networkidle) — _is_logged_in() below does an
+        # domcontentloaded (not networkidle) - _is_logged_in() below does an
         # explicit wait_for_selector on the calendar link, so it already waits
         # for the real "logged in" signal. Waiting for network-idle first just
         # adds seconds of dead time on this always-busy SPA.

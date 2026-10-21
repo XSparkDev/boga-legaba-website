@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
  * Warms the client router cache for the main marketing routes shortly after the
  * landing page settles, so moving between pages feels instant. Runs on browser
  * idle and SKIPS entirely on data-saver / very slow (2g) connections, so it
- * never competes with a weak network — on those, pages just load on demand.
+ * never competes with a weak network - on those, pages just load on demand.
  */
 const ROUTES = [
   "/conference",

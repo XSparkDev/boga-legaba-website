@@ -13,7 +13,7 @@ async function isAuthenticated() {
 
 /**
  * Admin action for the "Website Bookings" table: re-push a paid-but-not-on-
- * NightsBridge booking to the worker. Pay-first flow — the guest already paid;
+ * NightsBridge booking to the worker. Pay-first flow - the guest already paid;
  * this only re-runs the background NightsBridge automation for that booking_job
  * row. Returns fast: it resets the row's NightsBridge track to "processing" and
  * fires triggerAsyncBooking (which returns as soon as the worker accepts, 202).
@@ -45,11 +45,11 @@ export async function POST(request: NextRequest) {
 
   // Refuse to re-run an already-confirmed booking. The admin UI hides the
   // Retry button once status is "completed", but that's a client-side guard
-  // only — nothing stopped this endpoint itself from being hit again (a race
+  // only - nothing stopped this endpoint itself from being hit again (a race
   // between two tabs, a double-click before the UI re-rendered, a stale page).
   // A second Playwright run for the same reference tries to book the SAME
   // room again, finds it already taken by the first successful run, and
-  // "fails" — silently overwriting status back to "failed" even though
+  // "fails" - silently overwriting status back to "failed" even though
   // booking_id already holds a real, live NightsBridge confirmation. That's
   // exactly the bug this guard closes: once booking_id is set, this endpoint
   // is a no-op that reports the existing success instead of touching anything.
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Reset the NightsBridge track so the admin UI shows it in-flight again.
-  // Best-effort — never block the retry on this write.
+  // Best-effort - never block the retry on this write.
   try {
     const sb = createSupabaseAdminClient()
     await sb.from("booking_job").update({ status: "processing", error: null }).eq("reference", reference)
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
 
   // Wake the worker BEFORE triggering the booking. Unlike /api/booking/start
   // (which fires this in the background while the guest's availability/hold
-  // checks run — those absorb the wake-up time), a retry has no other work to
+  // checks run - those absorb the wake-up time), a retry has no other work to
   // do while waiting, so this one is awaited directly. The worker sits on
   // Render's free tier and spins down after idle time; an admin retry usually
   // happens after exactly that idle window, so without this the /book call

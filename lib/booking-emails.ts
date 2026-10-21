@@ -1,11 +1,11 @@
 /**
- * Guest confirmation email — the SECOND, deliberately-delayed half of the
+ * Guest confirmation email - the SECOND, deliberately-delayed half of the
  * split done in the pay-first flow:
  *
  *   - Boga (admin) is emailed the instant Paystack confirms payment
  *     (sendAdminPaymentEmail, from /api/payment/{verify,webhook}).
  *   - The GUEST is emailed here, but only once their NightsBridge booking has
- *     RESOLVED — so the "Payment Confirmed" email shows the real, confirmed
+ *     RESOLVED - so the "Payment Confirmed" email shows the real, confirmed
  *     room (e.g. "Red Room") rather than a still-in-progress booking.
  *
  * The BOGA_NOTIFIED -> GUEST_CONFIRMED transition is the atomic, once-only
@@ -13,7 +13,7 @@
  * BOGA_NOTIFIED) and "NightsBridge resolved" first sends the email; every other
  * trigger finds the row already at GUEST_CONFIRMED and no-ops. That's why this
  * is safe to call from several places (payment verify, payment webhook, the
- * status poll, and the worker's completion ping) — whichever wins the race
+ * status poll, and the worker's completion ping) - whichever wins the race
  * sends exactly one email.
  */
 import { getBookingJob } from "@/lib/booking-job"

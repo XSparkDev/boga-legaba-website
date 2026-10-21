@@ -15,7 +15,7 @@ interface RoomCardProps {
   availability?: RoomAvailabilitySummary
   checkIn?: string
   checkOut?: string
-  /** Real photo of this exact room, admin-uploaded via room_images — takes
+  /** Real photo of this exact room, admin-uploaded via room_images - takes
    * priority over everything else since it's guaranteed to be the actual
    * room, not a generic NightsBridge room-type stock shot. */
   realImageUrl?: string | null
@@ -165,8 +165,8 @@ export function RoomCard({
           <div className="flex-1 mb-4" />
         )}
 
-        {/* Item 21: give guests a direct path to the full room detail — amenities,
-            meal plans (breakfast), cancellation terms and live rates — on the Book
+        {/* Item 21: give guests a direct path to the full room detail - amenities,
+            meal plans (breakfast), cancellation terms and live rates - on the Book
             Now room page, so they don't have to contact the property to understand
             the room. Display-only link; reuses the existing bookHref. No booking,
             availability, or NightsBridge-integration logic is changed here. */}

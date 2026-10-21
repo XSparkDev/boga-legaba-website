@@ -77,7 +77,7 @@ export function LocationSection() {
     <section className="relative overflow-hidden bg-deep-earth" aria-labelledby="v2-location-heading">
       <div className="relative h-[400px] w-full min-h-[350px] max-h-[450px] overflow-hidden sm:h-[420px]">
         <iframe
-          title="Boga Legaba location map — Riviera Park, Mahikeng"
+          title="Boga Legaba location map - Riviera Park, Mahikeng"
           src={LOCATION.mapEmbedUrl}
           className="absolute inset-0 h-full w-full scale-[1.02] border-0 [filter:saturate(0.65)_brightness(0.5)_contrast(1.12)_sepia(0.15)]"
           loading="lazy"

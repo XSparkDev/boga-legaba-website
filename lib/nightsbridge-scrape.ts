@@ -6,9 +6,9 @@
  * Use debug=1 on the API route first to inspect what fetch() actually returns.
  *
  * Extraction strategies (tried in order):
- *  A. Inline-script JSON scan — any <script> tag with room/price keywords
- *  B. <table> rates grid     — rows with room name + price/SOLD cells
- *  C. "From R" card anchors  — text pattern near price declarations
+ *  A. Inline-script JSON scan - any <script> tag with room/price keywords
+ *  B. <table> rates grid     - rows with room name + price/SOLD cells
+ *  C. "From R" card anchors  - text pattern near price declarations
  *
  * Availability overlay:
  *  After prices are extracted, calendar.nightsbridge.com is queried for
@@ -227,7 +227,7 @@ function parseScript(script: string): ScrapedRoom[] | null {
         const rooms = roomsFromJson(data)
         if (rooms?.length) return rooms
       } catch {
-        // Not valid JSON — try next match
+        // Not valid JSON - try next match
       }
     }
   }
@@ -458,7 +458,7 @@ function extractImages(html: string): Map<string, string> {
 }
 
 // ---------------------------------------------------------------------------
-// calendar.nightsbridge.com — availability overlay
+// calendar.nightsbridge.com - availability overlay
 //
 // Tries multiple endpoint patterns. We don't know the definitive format
 // so we attempt JSON and HTML and parse generically.
@@ -621,7 +621,7 @@ export async function scrapeNightsBridgeHtml(
 
   if (!ok || html.length < 3_000) {
     console.log(
-      `[NightsBridge Scrape] Page too short or failed (${html.length} chars) — page may be CSR-only. Use debug=1 to inspect.`,
+      `[NightsBridge Scrape] Page too short or failed (${html.length} chars) - page may be CSR-only. Use debug=1 to inspect.`,
     )
     return null
   }
@@ -670,7 +670,7 @@ async function overlayCalendarAvailability(
   return rooms.map((room) => {
     const calAvail = calendarAvail.get(room.rtname)
     if (calAvail === undefined) return room
-    // Calendar is the source of truth — if it says SOLD, it's SOLD
+    // Calendar is the source of truth - if it says SOLD, it's SOLD
     return { ...room, available: calAvail }
   })
 }

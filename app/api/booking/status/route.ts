@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic"
  *   NIGHTSBRIDGE_VERIFIED -> CONFIRMATION_EMAIL_SENT -> AWAITING_PAYMENT
  *
  * The transition INTO CONFIRMATION_EMAIL_SENT is the atomic claim on "send
- * the guest email + generate the Paystack session" — only the poll that wins
+ * the guest email + generate the Paystack session" - only the poll that wins
  * that compare-and-swap does it, so it happens exactly once no matter how
  * many times this endpoint is polled or if the process restarts mid-way
  * (the next poll just finds booking_status already past that point and skips
@@ -31,12 +31,12 @@ export async function GET(request: NextRequest) {
 
   if (dbError) {
     // A genuine DB read failure (bad credentials, RLS denial, connection
-    // issue) — NOT the same as "the job just hasn't resolved yet". Reported
+    // issue) - NOT the same as "the job just hasn't resolved yet". Reported
     // as "processing" on the wire (a transient blip shouldn't fail the guest's
     // booking), but logged loudly and distinctly so a PERSISTENT failure is
     // immediately visible in server logs instead of looking identical to a
     // slow-but-healthy booking.
-    console.error(`[booking/status] DB READ ERROR reference=${reference}: ${dbError} — reporting 'processing' to avoid failing on a transient blip`)
+    console.error(`[booking/status] DB READ ERROR reference=${reference}: ${dbError} - reporting 'processing' to avoid failing on a transient blip`)
     return NextResponse.json({ status: "processing" })
   }
 
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
   // The sync-worker service (services/sync-worker/server.py) is deployed
   // independently of this app. Until it's redeployed with the matching
-  // rename, it still writes the old "pending"/"booked" values — normalize
+  // rename, it still writes the old "pending"/"booked" values - normalize
   // those here so a real success/in-progress isn't misread as unresolved
   // regardless of which side has deployed the rename first.
   const rawStatus = job.status as string
@@ -62,25 +62,25 @@ export async function GET(request: NextRequest) {
   // `status` signal says the booking is genuinely done but booking_status
   // hasn't caught up, so a real, successful booking still reaches the guest
   // instead of hanging forever:
-  //  (a) booking_status is missing entirely — migration 014 hasn't been
+  //  (a) booking_status is missing entirely - migration 014 hasn't been
   //      applied yet, so the column doesn't exist and Supabase never
   //      returns it.
   //  (b) booking_status IS present (the migration ran, so it defaults to
   //      'PENDING') but stuck there or at NIGHTSBRIDGE_BOOKING_CREATED,
   //      because whichever worker process wrote status="completed" is still
   //      running OLD code that doesn't know about booking_status at all and
-  //      so never advances it. A plain `!bookingStatus` check misses this —
+  //      so never advances it. A plain `!bookingStatus` check misses this -
   //      the value is a real, present, non-empty string, just an early one.
   // Both are exactly the failure mode that caused the original "stuck on
   // Reserving your room, no email, no redirect" bug.
   const STAGES_BEFORE_VERIFIED: BookingStatus[] = ["PENDING", "NIGHTSBRIDGE_BOOKING_CREATED"]
   if (status === "completed" && job.booking_id && (!bookingStatus || STAGES_BEFORE_VERIFIED.includes(bookingStatus))) {
-    console.warn(`[booking/status] reference=${reference} booking_status is ${bookingStatus ?? "missing"} despite legacy status=completed (old worker code, or migration 014 not applied?) — bridging to NIGHTSBRIDGE_VERIFIED`)
+    console.warn(`[booking/status] reference=${reference} booking_status is ${bookingStatus ?? "missing"} despite legacy status=completed (old worker code, or migration 014 not applied?) - bridging to NIGHTSBRIDGE_VERIFIED`)
     bookingStatus = "NIGHTSBRIDGE_VERIFIED"
   }
 
   // The worker writes status=failed but doesn't know about booking_status
-  // (Python side transitions its own successful stages — see server.py — but
+  // (Python side transitions its own successful stages - see server.py - but
   // a hard failure there is simplest to catch here where we already read the
   // row). FAILED is a legal target from every non-terminal stage, so this
   // transition succeeds regardless of exactly where it died.
@@ -93,14 +93,14 @@ export async function GET(request: NextRequest) {
   // stage for far longer than a real booking should ever take, something
   // died silently (the worker's background thread was killed by a Render
   // restart/redeploy mid-flight, a crash before it could write anything,
-  // etc.) — treat it as failed so the guest gets an actionable error instead
+  // etc.) - treat it as failed so the guest gets an actionable error instead
   // of "Reserving your room…" forever, and no one contact-less waits on an
   // email/redirect that will never come.
   const STALE_MS = 6 * 60_000 // well past the ~50-90s typical booking duration
   const ageMs = Date.now() - new Date(job.created_at).getTime()
   if (bookingStatus && bookingStatus !== "FAILED" && bookingStatus !== "BOGA_NOTIFIED" && bookingStatus !== "GUEST_CONFIRMED" && bookingStatus !== "AWAITING_PAYMENT" && ageMs > STALE_MS) {
-    console.error(`[booking/status] reference=${reference} STALE (${Math.round(ageMs / 1000)}s in ${bookingStatus}) — marking FAILED so the guest isn't stuck loading forever`)
-    await transitionBookingStatus(reference, "FAILED", { reason: `Stale — stuck in ${bookingStatus} for ${Math.round(ageMs / 1000)}s` })
+    console.error(`[booking/status] reference=${reference} STALE (${Math.round(ageMs / 1000)}s in ${bookingStatus}) - marking FAILED so the guest isn't stuck loading forever`)
+    await transitionBookingStatus(reference, "FAILED", { reason: `Stale - stuck in ${bookingStatus} for ${Math.round(ageMs / 1000)}s` })
     bookingStatus = "FAILED"
   }
 
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
     })
     if (claimed.ok) {
       // Generate the ONE Paystack session for this booking here, server-side,
-      // so it can be embedded in the email AND returned for the redirect —
+      // so it can be embedded in the email AND returned for the redirect -
       // never two separate sessions for the same booking.
       const amountRands = job.amount ? Number(job.amount) : 0
       if (job.guest_email && amountRands > 0) {
@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // No pre-payment "reserved – complete payment" email here either — the
+      // No pre-payment "reserved – complete payment" email here either - the
       // guest gets exactly ONE email, "Payment Confirmed", once payment
       // actually succeeds (see /api/payment/verify + webhook).
 
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
 
   // Opportunistic guest-email settle: if payment is already confirmed
   // (BOGA_NOTIFIED) and the NightsBridge booking has since resolved, this poll
-  // sends the held-back guest email. Idempotent — no-ops otherwise.
+  // sends the held-back guest email. Idempotent - no-ops otherwise.
   if (bookingStatus === "BOGA_NOTIFIED") {
     const g = await settleGuestConfirmation(reference)
     if (g.sent) bookingStatus = "GUEST_CONFIRMED"

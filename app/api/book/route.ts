@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkRoomTypeAvailableLive } from "@/lib/nightsbridge-api"
 import { Resend } from "resend"
 import { buildGuestPendingEmail } from "@/lib/payment-utils"
+import { unsubscribeHeaders } from "@/lib/email-theme"
 
 // The worker now retries internally (up to 3 attempts) on ambiguous/transient
-// booking failures — allow enough time for that instead of aborting early
+// booking failures - allow enough time for that instead of aborting early
 // while the worker is still legitimately working.
 export const maxDuration = 350
 
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
   // ── Real-time availability gate ──────────────────────────────────────────
   // Ask NightsBridge directly, right now (no cache), whether a room of this type
   // is actually free for these exact dates. This catches the case where the
-  // browsed calendar was slightly stale and the room was taken in the meantime —
+  // browsed calendar was slightly stale and the room was taken in the meantime -
   // so the guest gets a clean message instead of a failed booking at the very end.
   // "unknown" (NB unreachable) does NOT block: Playwright + NightsBridge remain the
   // authoritative final gatekeeper and will reject a genuinely unavailable room.
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
 
   const baseUrl = workerUrl.replace(/\/run$/, "")
 
-  // Pre-warm the sync worker — fires an unauthenticated GET to /health which wakes
+  // Pre-warm the sync worker - fires an unauthenticated GET to /health which wakes
   // a sleeping Render free-tier service before we send the real booking request.
   fetch(`${baseUrl}/health`, { signal: AbortSignal.timeout(10_000) }).catch(() => {})
 
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
       // Must exceed the worker's own timeout (340s, including its internal
       // retries) so we never abort while a booking is still legitimately in
-      // progress — an abort here means an admin sees "failed" for a booking
+      // progress - an abort here means an admin sees "failed" for a booking
       // that actually succeeds a few seconds later.
       signal: AbortSignal.timeout(345_000),
     })
@@ -107,8 +108,10 @@ export async function POST(request: NextRequest) {
             from,
             to:      guestEmail,
             subject: "Your Boga Legaba booking is reserved – complete payment",
+            headers: unsubscribeHeaders(guestEmail),
             html:    buildGuestPendingEmail({
               guestName:      `${body.firstname ?? ""} ${body.surname ?? ""}`.trim(),
+              guestEmail,
               bookingRef:     String(data.bookingRef ?? conf.bookingId ?? ""),
               checkin:        String(body.checkin ?? ""),
               checkout:       String(body.checkout ?? ""),

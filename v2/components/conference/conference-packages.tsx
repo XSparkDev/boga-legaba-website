@@ -76,7 +76,7 @@ export function ConferencePackages() {
         </div>
 
         <MultiCriteriaSearch
-          placeholder="Filter packages — e.g. catering, accommodation, AV…"
+          placeholder="Filter packages - e.g. catering, accommodation, AV…"
           suggestions={conferenceFilterSuggestions}
           criteria={criteria}
           onCriteriaChange={setCriteria}

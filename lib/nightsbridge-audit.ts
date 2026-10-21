@@ -1,7 +1,7 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
-/** Field inventory for BookingCalendarRQ — used in audit UI. */
+/** Field inventory for BookingCalendarRQ - used in audit UI. */
 export const NB_FIELD_INVENTORY = {
   api: {
     endpoint: "POST https://bridgeit.nightsbridge.com/bridgeitapi",

@@ -2,7 +2,7 @@
 # See: https://supabase.com/docs/guides/functions/schedule-functions
 
 [functions.trigger-nightsbridge-sync]
-# Every 5 minutes — refreshes the availability_cache that powers the public
+# Every 5 minutes - refreshes the availability_cache that powers the public
 # calendar display. 5-min spacing is safe for the Playwright sync (a full run
 # takes ~2-5 min, so runs never overlap themselves).
 #

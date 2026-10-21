@@ -47,7 +47,7 @@ export default async function AdminDiningPage() {
         </p>
         <h1 className="mt-2 font-serif text-3xl font-bold text-gray-900">Dining page cards</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-gray-600">
-          Edit the cards visitors see on the Dining page — rename them, rewrite the descriptions,
+          Edit the cards visitors see on the Dining page - rename them, rewrite the descriptions,
           switch icons, mark a venue as open instead of coming soon, hide a card, reorder them, or
           add new ones. Changes appear on the site as soon as you save.
         </p>

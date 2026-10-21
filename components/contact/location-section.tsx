@@ -86,7 +86,7 @@ export function LocationSection() {
           tabIndex={-1}
         />
 
-        {/* Flat semi-transparent overlay for text legibility — brand guide: flat
+        {/* Flat semi-transparent overlay for text legibility - brand guide: flat
             color blocks, no gradients. */}
         <div className="pointer-events-none absolute inset-0 bg-[#000000]/55" aria-hidden />
       </div>

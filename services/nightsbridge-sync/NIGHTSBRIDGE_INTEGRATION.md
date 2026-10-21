@@ -1,4 +1,4 @@
-# NightsBridge Data Integration — Discovery & Live-Sync Design
+# NightsBridge Data Integration - Discovery & Live-Sync Design
 
 **Property:** Boga Legaba Guest House & Conference Centre (`bbid` 21091)
 **Prepared:** 2026-06-18
@@ -9,7 +9,7 @@
 > bridge** for when an official NightsBridge API integration is not available.
 > All data described here belongs to the guesthouse, which already holds it as
 > the responsible party. This is a private, authorised automation of the
-> property's own account — not third-party scraping.
+> property's own account - not third-party scraping.
 
 ---
 
@@ -36,7 +36,7 @@ NightsBridge's booking calendar is a JavaScript (Angular) web app. There is no
 public HTML to scrape; instead the app talks to a **private JSON endpoint**,
 `bridgeitapi`. By logging in with the property's normal credentials and then
 calling that endpoint the way the calendar does, we can pull **complete,
-structured booking data** — guests, dates, rooms, rates and status — without
+structured booking data** - guests, dates, rooms, rates and status - without
 parsing any visual grid.
 
 A working scraper already does this (`main.py` in this project). It currently
@@ -67,12 +67,12 @@ that keeps a **local database continuously in step** with NightsBridge.
   (`input[type=text]`, `input[type=password]`) and the `button.btn-primary`
   ("Login").
 - After login the browser lands on **`www.nightsbridge.com/dashboard/home`**, a
-  launcher page. Bookings are **not** here — they live in the separate
+  launcher page. Bookings are **not** here - they live in the separate
   **Calendar** app (`calendar.nightsbridge.com`), reachable via a "Go to
   Calendar" link whose URL embeds a `loginkey` token.
 - The calendar renders bookings as positioned DOM elements (no `<canvas>`), but
   it populates them by calling **`bridgeit.nightsbridge.com/bridgeitapi`**. That
-  API — not the DOM — is the clean data source.
+  API - not the DOM - is the clean data source.
 
 ```
 login.nightsbridge.com  ──login──►  www.nightsbridge.com/dashboard/home
@@ -85,7 +85,7 @@ login.nightsbridge.com  ──login──►  www.nightsbridge.com/dashboard/hom
 
 ## 3. Authentication flow
 
-The `bridgeitapi` is **stateless per call** — every request carries a
+The `bridgeitapi` is **stateless per call** - every request carries a
 `credentials.loginkey`. Cookies from the website login are *not* what authorise
 the API; the `loginkey` is. The flow:
 
@@ -173,7 +173,7 @@ the API; the `loginkey` is. The flow:
 
 | Field | Meaning |
 |-------|---------|
-| `bookingid` | Internal booking id (e.g. `119594721`) — stable primary key |
+| `bookingid` | Internal booking id (e.g. `119594721`) - stable primary key |
 | `bbbookingid` | Human-facing booking reference (e.g. `14448`) |
 | `status` | Status letter (see codes below) |
 | `bookingtype` | `P`, `N`, etc. (provisional / normal …) |
@@ -181,8 +181,8 @@ the API; the `loginkey` is. The flow:
 | `bookingdate` | When the booking was made (`YYYY-MM-DD HH:MM:SS`) |
 | `fromdate` / `todate` | Stay start / end (`YYYY-MM-DD`) |
 | `madeby`, `madebytext`, `madebyemail`, `madebyphoneno` | Who placed the booking |
-| `notes` | Free text — **may contain deposit/payment instructions** |
-| `rooms[]` | One entry per room occupied — the *room-stays* (see below) |
+| `notes` | Free text - **may contain deposit/payment instructions** |
+| `rooms[]` | One entry per room occupied - the *room-stays* (see below) |
 
 **Room-stay** (one element of a booking's `rooms[]`):
 
@@ -210,7 +210,7 @@ the API; the `loginkey` is. The flow:
 | `O` | Outstanding Account |
 | `U` | Unavailable |
 
-**`bookingnotificationsrq`** returns the latest bookings as a lightweight feed —
+**`bookingnotificationsrq`** returns the latest bookings as a lightweight feed -
 ideal for cheap "what changed?" polling:
 
 ```json
@@ -236,7 +236,7 @@ must be handled accordingly (see §11). What a sync captures, per booking/stay:
 - Average rate paid (`avgrate`) → financial information
 - NightsBridge identifiers (`guestid`, `bbguestid`, `clientid`)
 
-**Booker (may differ from guest — e.g. a travel agent)**
+**Booker (may differ from guest - e.g. a travel agent)**
 - Name (`madebytext`), email (`madebyemail`), phone (`madebyphoneno`)
 
 **Free-text `notes`**
@@ -246,7 +246,7 @@ must be handled accordingly (see §11). What a sync captures, per booking/stay:
   detail.
 
 > Real exported samples live in `output/` (git-ignored). They contain genuine
-> guest PII — secure or delete them when not needed (`rm output/*`).
+> guest PII - secure or delete them when not needed (`rm output/*`).
 
 ---
 
@@ -424,20 +424,20 @@ function full_window_sync(start, end):
 Key points:
 
 - **Idempotent upserts** keyed on `bookingid` (and `(bookingid, bbroomid)` for
-  stays) — safe to re-run any time.
+  stays) - safe to re-run any time.
 - **Cancellations** are inferred: a booking previously seen in a window that is
   no longer returned for that window is marked cancelled (not hard-deleted, so
   history is preserved).
 - **Change log** captures field-level diffs for auditing and for downstream
   triggers (e.g. "notify housekeeping when a booking is confirmed").
 - **Cheap tick** uses `bookingnotificationsrq`; only escalate to a full window
-  sync when the newest booking id/date changes — keeps API load minimal.
+  sync when the newest booking id/date changes - keeps API load minimal.
 
 ---
 
 ## 10. Operational concerns
 
-- **Secrets:** credentials only in `.env` / a secrets manager — never in code or
+- **Secrets:** credentials only in `.env` / a secrets manager - never in code or
   the DB. The repo already git-ignores `.env` and `storage_state.json`.
 - **Session handling:** persist `storage_state.json`; reuse it; auto-refresh on
   the empty-body `SessionExpired` signal. Don't log in every tick.
@@ -447,7 +447,7 @@ Key points:
   alert after N consecutive failures (often means a layout/API change or a
   password change).
 - **Scheduling:** cron, a systemd timer, or a small long-running scheduler
-  (APScheduler). Must run on a machine that's online — not inside Claude.
+  (APScheduler). Must run on a machine that's online - not inside Claude.
 - **Time zones:** store timestamps as UTC; the property operates in SAST
   (UTC+2). Convert on read.
 - **Monitoring:** dashboard off `sync_run` (last success, counts, error rate).
@@ -466,9 +466,9 @@ Key points:
   own data, confirm automated access is permitted, and prefer an official route
   if one exists (see Roadmap).
 
-**Data protection (POPIA — South Africa).**
+**Data protection (POPIA - South Africa).**
 - The guesthouse is the **responsible party** for this guest data; copying it to
-  a local DB does not reduce that responsibility — it increases your custody of
+  a local DB does not reduce that responsibility - it increases your custody of
   it.
 - Apply: a lawful basis & purpose limitation, **access control & encryption at
   rest** for the DB, retention limits (don't keep PII longer than needed),
@@ -476,7 +476,7 @@ Key points:
 - Treat `notes`, `email`, `phone`, and `avgrate` as sensitive.
 
 **Reliability.**
-- Poll-based, so there's inherent lag (minutes) and no guaranteed delivery —
+- Poll-based, so there's inherent lag (minutes) and no guaranteed delivery -
   the periodic full-window safety-net sync is what guarantees eventual
   consistency.
 

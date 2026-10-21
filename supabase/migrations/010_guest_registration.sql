@@ -1,6 +1,6 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 010_guest_registration.sql
--- Guest-facing digital registration ("check-in") submissions. Its OWN table —
+-- Guest-facing digital registration ("check-in") submissions. Its OWN table -
 -- links to a booking by bookingid and/or booking_ref, never stored on `booking`.
 --
 -- Fields mirror the "missing fields" list. Only full_name is required here; the

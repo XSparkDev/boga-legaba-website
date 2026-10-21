@@ -21,7 +21,7 @@ export function CorporateForm() {
     requirements: '',
   })
 
-  // Booking dates managed by centralized hook — guarantees checkout > checkin at all times.
+  // Booking dates managed by centralized hook - guarantees checkout > checkin at all times.
   const { checkIn, checkOut, setCheckIn, setCheckOut, minCheckIn, minCheckOut } = useBookingDates()
 
   function updateField(key: keyof typeof formData, value: string) {
@@ -58,7 +58,7 @@ export function CorporateForm() {
 
   if (submitted) {
     return (
-      <SuccessMessage message="Thank you — our accounts team will be in touch shortly." />
+      <SuccessMessage message="Thank you - our accounts team will be in touch shortly." />
     )
   }
 

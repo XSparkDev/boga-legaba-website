@@ -45,7 +45,7 @@ export const dynamic = "force-dynamic"
 const NB_BBID = 21091
 
 // ---------------------------------------------------------------------------
-// Auth guard (belt-and-suspenders — middleware already blocks, but good practice)
+// Auth guard (belt-and-suspenders - middleware already blocks, but good practice)
 // ---------------------------------------------------------------------------
 
 async function isAuthenticated() {
@@ -92,7 +92,7 @@ async function fetchSupabaseStats() {
         )
         .order("pay_id", { ascending: false })
         .limit(30),
-      // Real bookings overlapping the next 31 days — used for actual room occupancy
+      // Real bookings overlapping the next 31 days - used for actual room occupancy
       sb
         .from("booking")
         .select("from_date, to_date, raw")
@@ -186,7 +186,7 @@ function daysAhead(n: number) {
 }
 
 // ---------------------------------------------------------------------------
-// Availability calendar — proper month-grid view (replaces the old flat grid)
+// Availability calendar - proper month-grid view (replaces the old flat grid)
 // ---------------------------------------------------------------------------
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -357,7 +357,7 @@ export default async function AdminDashboardPage() {
     available: d.available,
   }))
 
-  // Rates per room type — latest cached rate wins (rateCache is ordered newest first)
+  // Rates per room type - latest cached rate wins (rateCache is ordered newest first)
   const rateByName = new Map<string, { single: number | null; double: number | null }>()
   for (const r of sbStats.rateCache as Array<{
     rtname: string

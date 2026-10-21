@@ -8,7 +8,7 @@ export function InterestForm({
   withInterest = false,
   interestOptions = [],
   buttonLabel = 'Join the List',
-  successMessage = 'Thank you — you’re on the list. We’ll be in touch.',
+  successMessage = 'Thank you - you’re on the list. We’ll be in touch.',
   inline = false,
 }: {
   withInterest?: boolean

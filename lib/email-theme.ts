@@ -8,8 +8,8 @@
  * --color-gold-hover #000000, --color-sand #F7F7F6, --color-body-text
  * #000000, --brand-text-muted #6B6B6B, --color-white #FFFFFF. Title font is
  * League Spartan (Arial fallback for email clients that drop web fonts);
- * body font is Open Sans (Arial fallback) — same fallback the site itself
- * uses. Keep this file as the single source of truth for email branding —
+ * body font is Open Sans (Arial fallback) - same fallback the site itself
+ * uses. Keep this file as the single source of truth for email branding -
  * new emails should build on emailShell()/emailInfoTable() rather than
  * hand-rolling HTML, so brand changes only need to happen once.
  */
@@ -25,11 +25,11 @@ export const EMAIL_BRAND = {
   website: "www.bogalegaba.co.za",
   websiteHref: "https://www.bogalegaba.co.za",
   whatsappHref: "https://wa.me/27828757018",
-  // WHITE version of the site logo (public/logo-email.png — the same mark as
+  // WHITE version of the site logo (public/logo-email.png - the same mark as
   // public/logo.png, pre-inverted to white). Emails sit it directly on the
   // dark header, so it stays visible no matter what a client's dark mode does
   // (unlike a dark logo on a white plate, which vanishes when dark mode
-  // inverts the plate — the old "logo looks darkened" bug).
+  // inverts the plate - the old "logo looks darkened" bug).
   //
   // The URL is configurable because the bare apex/www domain does not reliably
   // serve the app's static files. Set EMAIL_LOGO_URL to a guaranteed-public
@@ -59,6 +59,30 @@ const FONT_DISPLAY = "'League Spartan', Arial, sans-serif"
 const FONT_BODY = "'Open Sans', Arial, Helvetica, sans-serif"
 
 /**
+ * One-click unsubscribe URL for a recipient address. Used both as the visible
+ * footer link in guest emails and as the List-Unsubscribe header value (Gmail
+ * POSTs to this exact URL, email in the query string, for one-click
+ * unsubscribes - so the endpoint must accept a bodyless POST).
+ */
+export function unsubscribeUrl(email: string): string {
+  return `${EMAIL_BRAND.websiteHref}/unsubscribe?email=${encodeURIComponent(email.trim())}`
+}
+
+/**
+ * RFC 2369 / one-click (RFC 8058) headers for Resend sends. Gmail and other
+ * providers render a native "Unsubscribe" affordance from these - this is what
+ * makes "every email carries an unsubscribe link" true even where the reader
+ * never scrolls to the footer.
+ */
+export function unsubscribeHeaders(email: string): Record<string, string> {
+  const url = unsubscribeUrl(email)
+  return {
+    "List-Unsubscribe": `<${url}>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  }
+}
+
+/**
  * Full HTML document wrapper: header (logo + tagline), optional accent bar,
  * the caller's body content, and a consistent footer. Every email should be
  * built by passing its unique content as `bodyHtml`.
@@ -70,9 +94,14 @@ export function emailShell(opts: {
   accentBarColor?: string
   bodyHtml: string
   footerNote?: string
+  /** Recipient address - when set, the footer gains a working unsubscribe link. */
+  unsubscribeEmail?: string
 }) {
-  const { title, preheader, eyebrow, accentBarColor = EMAIL_COLORS.gold, bodyHtml, footerNote } = opts
+  const { title, preheader, eyebrow, accentBarColor = EMAIL_COLORS.gold, bodyHtml, footerNote, unsubscribeEmail } = opts
   const c = EMAIL_COLORS
+  const unsubscribeLine = unsubscribeEmail
+    ? `<br>Don&apos;t want these emails? <a href="${unsubscribeUrl(unsubscribeEmail)}" style="color:${EMAIL_COLORS.gold};text-decoration:underline;">Unsubscribe</a> &middot; or email <a href="mailto:${EMAIL_BRAND.email}" style="color:${c.muted};text-decoration:underline;">${EMAIL_BRAND.email}</a>`
+    : ""
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -80,7 +109,7 @@ export function emailShell(opts: {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <!-- Keep the email in light mode. The logo itself is now a WHITE mark placed
-     directly on the dark header, so it stays visible regardless — but this
+     directly on the dark header, so it stays visible regardless - but this
      still stops clients from muddying the body/plates. -->
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
@@ -119,7 +148,7 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;"
       &nbsp;&middot;&nbsp;
       <a href="mailto:${EMAIL_BRAND.email}" style="color:${c.muted};text-decoration:none;">${EMAIL_BRAND.email}</a>
     </p>
-    <p style="color:#5A5048;margin:10px 0 0;font-size:10px;line-height:1.7;">${footerNote ?? "This is an automated message. Please do not reply directly to this email."}<br>
+    <p style="color:#5A5048;margin:10px 0 0;font-size:10px;line-height:1.7;">${footerNote ?? "This is an automated message. Please do not reply directly to this email."}${unsubscribeLine}<br>
     <a href="${EMAIL_BRAND.websiteHref}" style="color:${c.gold};text-decoration:none;">${EMAIL_BRAND.website}</a></p>
   </td></tr>
 
@@ -145,14 +174,14 @@ export function emailHero(opts: { badgeSymbol?: string; eyebrow: string; heading
 
 export type InfoRow = { label: string; value: string; emphasis?: boolean }
 
-/** A zebra-striped info table — the workhorse for "Booking Reference / Room / Check-in" style blocks. */
+/** A zebra-striped info table - the workhorse for "Booking Reference / Room / Check-in" style blocks. */
 export function emailInfoTable(rows: InfoRow[], opts: { title?: string } = {}) {
   const c = EMAIL_COLORS
   const cells = rows
     .map((r, i) => {
       const bg = i % 2 === 0 ? c.white : c.sand
       // Emphasis uses the Heritage accent (c.gold) so it visually stands out
-      // from plain body text — c.goldHover is a button-hover value (black),
+      // from plain body text - c.goldHover is a button-hover value (black),
       // not a text color, and would be indistinguishable from bodyText here.
       const valueColor = r.emphasis ? c.gold : c.bodyText
       const valueSize = r.emphasis ? "18px" : "14px"

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, ChevronUp, Loader2, Trash2, Upload, ArrowUp, ArrowDown } from "lucide-react"
+import { ChevronDown, ChevronUp, Loader2, Trash2, Upload, ArrowUp, ArrowDown, RefreshCw } from "lucide-react"
 
 export type AdminRoom = { bbroomid: number; name: string; propertyName: string }
 
@@ -57,6 +57,7 @@ function RoomGallery({ bbroomid, allRooms }: { bbroomid: number; allRooms: Admin
   const [images, setImages] = useState<RoomImage[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [replacingId, setReplacingId] = useState<string | null>(null)
   const [error, setError] = useState("")
 
   async function load() {
@@ -77,16 +78,25 @@ function RoomGallery({ bbroomid, allRooms }: { bbroomid: number; allRooms: Admin
     load()
   }
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+  // Add one or more new photos (appended at the end of the gallery), or -
+  // when replaceId is set - swap a single photo's file in place, keeping its
+  // title, position and room.
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>, replaceId?: string) {
+    const picked = Array.from(e.target.files ?? [])
     e.target.value = ""
-    if (!file) return
-    setUploading(true)
+    if (!picked.length) return
+    if (replaceId && picked.length !== 1) {
+      setError("Choose exactly one file to replace a photo.")
+      return
+    }
+    if (replaceId) setReplacingId(replaceId)
+    else setUploading(true)
     setError("")
     try {
       const form = new FormData()
-      form.append("file", file)
+      for (const file of picked.slice(0, 10)) form.append("file", file)
       form.append("bbroomid", String(bbroomid))
+      if (replaceId) form.append("replaceId", replaceId)
       const res = await fetch("/api/admin/room-images", { method: "POST", body: form })
       const data = (await res.json()) as { ok: boolean; error?: string }
       if (!data.ok) setError(data.error ?? "Upload failed")
@@ -95,6 +105,7 @@ function RoomGallery({ bbroomid, allRooms }: { bbroomid: number; allRooms: Admin
       setError("Network error")
     } finally {
       setUploading(false)
+      setReplacingId(null)
     }
   }
 
@@ -139,7 +150,7 @@ function RoomGallery({ bbroomid, allRooms }: { bbroomid: number; allRooms: Admin
 
   async function moveToRoom(id: string, targetBbroomid: number) {
     if (targetBbroomid === bbroomid) return
-    // The image leaves THIS room's gallery once moved — drop it locally
+    // The image leaves THIS room's gallery once moved - drop it locally
     // rather than waiting on a refetch.
     setImages((prev) => prev?.filter((img) => img.id !== id) ?? null)
     await fetch("/api/admin/room-images", {
@@ -153,8 +164,8 @@ function RoomGallery({ bbroomid, allRooms }: { bbroomid: number; allRooms: Admin
     <div>
       <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-[11px] font-semibold text-gray-700 hover:bg-gray-100">
         {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
-        {uploading ? "Uploading…" : "Upload photo"}
-        <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
+        {uploading ? "Uploading…" : "Upload photos"}
+        <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => void handleUpload(e)} disabled={uploading} />
       </label>
       {error && <p className="mt-2 font-mono text-[10px] text-red-500">{error}</p>}
 
@@ -166,7 +177,7 @@ function RoomGallery({ bbroomid, allRooms }: { bbroomid: number; allRooms: Admin
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {images.map((img, i) => (
             <div key={img.id} className="overflow-hidden rounded-lg border border-gray-200">
-              {/* Admin-uploaded photos, unknown dimensions — plain img avoids
+              {/* Admin-uploaded photos, unknown dimensions - plain img avoids
                   next/image's required width/height for this dynamic set. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={img.image_url} alt={img.title ?? ""} className="h-32 w-full object-cover" />
@@ -192,16 +203,36 @@ function RoomGallery({ bbroomid, allRooms }: { bbroomid: number; allRooms: Admin
                 </select>
                 <div className="flex items-center justify-between">
                   <div className="flex gap-1">
-                    <button onClick={() => move(i, -1)} disabled={i === 0} className="rounded p-1 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
+                    <button onClick={() => move(i, -1)} disabled={i === 0} title="Move earlier" className="rounded p-1 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                       <ArrowUp className="size-3" />
                     </button>
-                    <button onClick={() => move(i, 1)} disabled={i === images.length - 1} className="rounded p-1 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
+                    <button onClick={() => move(i, 1)} disabled={i === images.length - 1} title="Move later" className="rounded p-1 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                       <ArrowDown className="size-3" />
                     </button>
                   </div>
-                  <button onClick={() => remove(img.id)} className="rounded p-1 text-red-400 hover:bg-red-50">
-                    <Trash2 className="size-3" />
-                  </button>
+                  <div className="flex gap-1">
+                    {/* Replace: swap just this photo's file, keeping its title and position. */}
+                    <label
+                      title="Replace photo (keeps title and position)"
+                      className="cursor-pointer rounded p-1 text-gray-400 hover:bg-gray-100"
+                    >
+                      {replacingId === img.id ? (
+                        <Loader2 className="size-3 animate-spin" />
+                      ) : (
+                        <RefreshCw className="size-3" />
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={replacingId !== null}
+                        onChange={(e) => void handleUpload(e, img.id)}
+                      />
+                    </label>
+                    <button onClick={() => remove(img.id)} title="Remove photo" className="rounded p-1 text-red-400 hover:bg-red-50">
+                      <Trash2 className="size-3" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

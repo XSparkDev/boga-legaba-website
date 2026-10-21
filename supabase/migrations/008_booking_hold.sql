@@ -3,7 +3,7 @@
 -- Short-lived "soft holds" placed on a room type + date range while a guest is
 -- paying, so a second guest can't pay for the same room in the same window.
 -- The hold auto-expires (expires_at) if payment isn't completed, releasing the
--- room without any cron — the availability check simply ignores expired rows.
+-- room without any cron - the availability check simply ignores expired rows.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS booking_hold (

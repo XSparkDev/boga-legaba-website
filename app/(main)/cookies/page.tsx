@@ -45,7 +45,7 @@ export default function CookiesPage() {
 
       <LegalSection title="Third-party services">
         <p>
-          Parts of the booking journey run on third-party platforms — NightsBridge (reservations
+          Parts of the booking journey run on third-party platforms - NightsBridge (reservations
           and availability), Paystack (card and EFT payments), WhatsApp (chat links), and embedded
           content such as Google reviews or TripAdvisor references. Those platforms may set their
           own cookies under their own policies once you use them. We do not control those cookies.

@@ -210,7 +210,7 @@ function RoomHero({
         </div>
       )}
 
-      {/* Flat semi-transparent overlay for text legibility — brand guide: flat
+      {/* Flat semi-transparent overlay for text legibility - brand guide: flat
           color blocks, no gradients. */}
       <div className="absolute inset-0 bg-black/55" />
 
@@ -414,7 +414,7 @@ function RoomDetailAndBooking({
         {/* ── LEFT: Room details (2/3 width) ────────────────── */}
         <div className="space-y-6 lg:col-span-2">
 
-          {/* Description — prefer the establishment description (richer text) */}
+          {/* Description - prefer the establishment description (richer text) */}
           {(detail?.description || rate.description) ? (
             <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="mb-3 font-body text-[13px] font-semibold tracking-normal text-gray-500">
@@ -443,7 +443,7 @@ function RoomDetailAndBooking({
             </div>
           ) : null}
 
-          {/* Booking widget — expands here when guest clicks "Book This Room" */}
+          {/* Booking widget - expands here when guest clicks "Book This Room" */}
           <BookingWidget
             roomTypeName={rate.rtname}
             arrive={arrive}
@@ -632,7 +632,7 @@ function AvailabilityTable({
         </span>
       </div>
 
-      {/* Table wrapper — horizontal scroll on mobile */}
+      {/* Table wrapper - horizontal scroll on mobile */}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
@@ -1086,7 +1086,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
   const propertyNameParam = params.property ?? null
   const bbroomid = params.bbroomid ? Number(params.bbroomid) : null
   const bbid = params.bbid ? Number(params.bbid) : NB_BBID
-  // bbrtid = NightsBridge room TYPE id — use it for direct lookup in establishment data
+  // bbrtid = NightsBridge room TYPE id - use it for direct lookup in establishment data
   const bbrtidParam = params.bbrtid ? Number(params.bbrtid) : null
   const todayUTC = new Date().toISOString().slice(0, 10)
   const rawFrom = params.from ?? null
@@ -1124,7 +1124,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
   const roomPhotos = await roomPhotosPromise
 
   // ── Resolve the room type detail ────────────────────────────────────
-  // Priority 1: direct bbrtid lookup (most reliable — survives stale roomTypeName)
+  // Priority 1: direct bbrtid lookup (most reliable - survives stale roomTypeName)
   const directDetail: NbRoomTypeDetail | null =
     estData && bbrtidParam ? (estData.roomTypes.get(bbrtidParam) ?? null) : null
 
@@ -1334,7 +1334,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
                 ) : null}
               </>
             ) : (
-              /* No specific room selected — show table only */
+              /* No specific room selected - show table only */
               <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="font-serif text-xl font-bold text-gray-900">Available rooms</h2>
@@ -1413,7 +1413,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
             ) : null}
           </>
         ) : (
-          /* No dates — show room detail from establishment API + date prompt */
+          /* No dates - show room detail from establishment API + date prompt */
           <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
 
             {/* If we know the room (via bbrtid or roomTypeName), show its detail */}
@@ -1518,7 +1518,7 @@ export default async function BookNowPage({ searchParams }: BookNowPageProps) {
                     className="group flex h-full flex-col rounded-xl border border-gray-200 border-l-4 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-[#996948]/40"
                     style={{ borderLeftColor: p.colorHex }}
                   >
-                    {/* Item 20: one coherent block — customer-facing label (name +
+                    {/* Item 20: one coherent block - customer-facing label (name +
                         descriptor) then address, with no duplicated bare-name fragment.
                         The WhatsApp href above (p.whatsapp) is unchanged. */}
                     <span className="font-serif text-lg text-gray-900">{p.tagline}</span>

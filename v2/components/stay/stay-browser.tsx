@@ -34,13 +34,13 @@ function roomSearchText(room: Room) {
 
 const banners: Record<string, string> = {
   chababa:
-    'Chababa is at 8 Interlaken Avenue — a different building to 6 Interlaken. Always confirm your arrival address when booking.',
+    'Chababa is at 8 Interlaken Avenue - a different building to 6 Interlaken. Always confirm your arrival address when booking.',
   'interlaken-a':
-    'Interlaken A is at 6 Interlaken Avenue — not the same building as 8 Interlaken (Chababa). Confirm your arrival address.',
+    'Interlaken A is at 6 Interlaken Avenue - not the same building as 8 Interlaken (Chababa). Confirm your arrival address.',
   lantana:
     'Lantana is at 10 Lantana Street, a separate address from the Interlaken properties.',
   transnet:
-    'The Transnet Portfolio rooms are confirmed at booking — please enquire for current addresses and availability.',
+    'The Transnet Portfolio rooms are confirmed at booking - please enquire for current addresses and availability.',
 }
 
 export function StayBrowser() {
@@ -98,7 +98,7 @@ export function StayBrowser() {
       <div className="border-b border-warm-sand/60 bg-cream">
         <div className="mx-auto max-w-7xl px-6 py-8 md:px-8">
           <MultiCriteriaSearch
-            placeholder="Filter rooms — twin, double, Chababa, bath & shower…"
+            placeholder="Filter rooms - twin, double, Chababa, bath & shower…"
             suggestions={stayFilterSuggestions}
             criteria={criteria}
             onCriteriaChange={setCriteria}

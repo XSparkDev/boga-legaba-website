@@ -26,7 +26,7 @@ export async function getRoomImagesByBbroomid(bbroomid: number): Promise<RoomIma
 }
 
 /**
- * Same lookup, but by the room's name (e.g. "Flutes") — the public booking
+ * Same lookup, but by the room's name (e.g. "Flutes") - the public booking
  * flow knows room names (from data/rooms.ts), not bbroomid, so this resolves
  * the id via the `room` table (kept in sync by the NightsBridge sync worker)
  * before reading images.
@@ -47,7 +47,7 @@ export async function getRoomImagesByRoomName(roomName: string): Promise<RoomIma
 }
 
 /**
- * Every room's images in one call, grouped by bbroomid — used by the /stay
+ * Every room's images in one call, grouped by bbroomid - used by the /stay
  * room-list page so it doesn't fire one request per room card (~24+ rooms).
  */
 export async function getAllRoomImagesGrouped(): Promise<Record<number, RoomImage[]>> {

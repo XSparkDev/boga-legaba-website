@@ -18,7 +18,7 @@ CREATE INDEX IF NOT EXISTS idx_room_images_bbroomid ON room_images (bbroomid, di
 
 ALTER TABLE room_images ENABLE ROW LEVEL SECURITY;
 
--- Public read — these are marketing photos, no sensitive data. Writes only
+-- Public read - these are marketing photos, no sensitive data. Writes only
 -- ever happen server-side via the admin API routes using the service role
 -- key (which bypasses RLS entirely), so no anon/authenticated write policy
 -- is defined here on purpose.

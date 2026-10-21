@@ -11,7 +11,7 @@ function authorized(request: NextRequest): boolean {
 }
 
 /**
- * POST /api/sync — triggered by cron or manual POST with CRON_SECRET.
+ * POST /api/sync - triggered by cron or manual POST with CRON_SECRET.
  *
  * Playwright runs on an external host. Set SYNC_WORKER_URL to a machine running
  * `public/ScriptTestBLGH/run-sync.sh`, or RUN_LOCAL_SYNC=true on a dev machine.

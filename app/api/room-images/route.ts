@@ -4,9 +4,9 @@ import { getAllRoomImagesGrouped, getRoomImagesByBbroomid, getRoomImagesByRoomNa
 export const dynamic = "force-dynamic"
 
 /**
- * Public read — the booking flow calls this once a guest selects a room, to
+ * Public read - the booking flow calls this once a guest selects a room, to
  * auto-display that room's photos. Accepts ?bbroomid=123, ?roomName=Flutes,
- * or no params at all (returns every room's images grouped by bbroomid —
+ * or no params at all (returns every room's images grouped by bbroomid -
  * used by the /stay room list so it isn't one request per room card).
  */
 export async function GET(request: NextRequest) {

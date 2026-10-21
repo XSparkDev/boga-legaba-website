@@ -4,7 +4,7 @@
 -- names were ambiguous about whether "booked" meant a real, confirmed
 -- NightsBridge booking or just "job started". It always meant the former
 -- (the worker only writes it after scraping a real booking_id from the
--- confirmation page) — this migration just makes that explicit.
+-- confirmation page) - this migration just makes that explicit.
 --   pending -> processing
 --   booked  -> completed
 -- ─────────────────────────────────────────────────────────────────────────────

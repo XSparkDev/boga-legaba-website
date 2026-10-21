@@ -4,7 +4,7 @@
  * Reads admin overrides from the `site_images` table once per render (deduped
  * via React cache) and layers them over the built-in defaults from
  * lib/site-image-slots.ts. FAILS OPEN: if the table is missing, empty, or the
- * DB errors, every slot resolves to its default — so pages can never break
+ * DB errors, every slot resolves to its default - so pages can never break
  * because of this layer.
  *
  * Server-only (imports the Supabase admin client). Client components that need
@@ -34,7 +34,7 @@ export const getSiteImageOverrides = cache(async (): Promise<Record<string, Reso
   }
 })
 
-/** Default (url+alt) for a slot key — registry first, then the static file. */
+/** Default (url+alt) for a slot key - registry first, then the static file. */
 function defaultFor(key: string): ResolvedImage {
   return SITE_IMAGE_DEFAULTS[key] ?? getStaticSiteImage(key)
 }
@@ -48,7 +48,7 @@ export async function resolveSiteImage(key: string): Promise<ResolvedImage> {
 }
 
 /**
- * Synchronous resolver against an already-fetched override map — for callers
+ * Synchronous resolver against an already-fetched override map - for callers
  * that resolve MANY keys in one render (loops, arrays) and don't want an await
  * per key. Fetch the map once with getSiteImageOverrides(), then call this.
  */

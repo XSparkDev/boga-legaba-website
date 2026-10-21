@@ -9,7 +9,7 @@
 -- keyed by the Paystack reference. The website polls this table so nothing ever
 -- waits on a long request.
 --
--- Own table, isolated from booking/bookings — same pattern as booking_hold (008).
+-- Own table, isolated from booking/bookings - same pattern as booking_hold (008).
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS booking_job (

@@ -4,7 +4,7 @@ import { MainSiteChrome } from "@/components/main-site-chrome"
 import { Toaster } from "sonner"
 import "../globals.css"
 
-// Boga Legaba Brand Guidelines — three approved typefaces.
+// Boga Legaba Brand Guidelines - three approved typefaces.
 const leagueSpartan = League_Spartan({
   subsets: ["latin"],
   weight: ["700", "800"],

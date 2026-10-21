@@ -17,7 +17,7 @@ const HERO_IMAGES_FALLBACK = [
 ]
 
 /**
- * `images`/`alt` are resolved on the server (admin-editable hero slots — see
+ * `images`/`alt` are resolved on the server (admin-editable hero slots - see
  * app/(main)/page.tsx). They fall back to the built-in images when not passed,
  * so this component is still safe to render on its own.
  */
@@ -29,13 +29,13 @@ export function HomeHero({ images, alt }: { images?: string[]; alt?: string }) {
   return (
     <section className="grain relative flex min-h-[100svh] flex-col overflow-x-clip">
       <HeroSlideshow images={heroImages} alt={heroAlt} />
-      {/* Flat semi-transparent overlay for text legibility — brand guide: flat
+      {/* Flat semi-transparent overlay for text legibility - brand guide: flat
           color blocks, no gradients. */}
       <div className="absolute inset-0 bg-black/55" />
 
       <div className="relative z-[2] mx-auto flex w-full max-w-7xl flex-1 flex-col justify-start px-4 pb-8 pt-[calc(4.5rem+1rem)] sm:justify-center sm:px-6 sm:pb-10 sm:pt-[calc(4.5rem+1rem)] xl:px-8 xl:pt-[calc(4.5rem+1.25rem)]">
         {/* max-w-5xl (not 3xl) so the larger hero title still lands on two
-            lines — three lines would push the availability widget below the
+            lines - three lines would push the availability widget below the
             fold. The paragraph and buttons keep their own narrower widths. */}
         <div className="max-w-5xl">
           <SiteLogo size="hero" className="mb-3 hidden sm:mb-4 sm:block" />

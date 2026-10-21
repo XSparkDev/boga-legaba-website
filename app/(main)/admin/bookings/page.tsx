@@ -28,7 +28,7 @@ export type BookingRow = {
   made_by_email: string | null
   made_by_phone: string | null
   notes: string | null
-  // extracted from raw JSON — room_name is the specific physical unit (e.g.
+  // extracted from raw JSON - room_name is the specific physical unit (e.g.
   // "Flutes"); room_type is the category (e.g. "Twin Room (Shower only)"),
   // kept only as a fallback for older synced rows that predate NightsBridge
   // returning a per-unit name on this endpoint.
@@ -43,7 +43,7 @@ export type BookingRow = {
 }
 
 /**
- * A booking made on the WEBSITE (booking_job table) — pay-first flow. These may
+ * A booking made on the WEBSITE (booking_job table) - pay-first flow. These may
  * not be on NightsBridge yet: `status`/`booking_id` are the NightsBridge track,
  * `booking_status` is the payment track. The admin uses these to spot paid
  * guests who still need to be pushed to NightsBridge (with a retry).
@@ -52,8 +52,8 @@ export type WebsiteBooking = {
   reference: string
   guest_name: string | null
   guest_email: string | null
-  guest_phone: string | null     // pulled from context — no dedicated column
-  notes: string | null           // pulled from context — no dedicated column
+  guest_phone: string | null     // pulled from context - no dedicated column
+  notes: string | null           // pulled from context - no dedicated column
   checkin: string | null
   checkout: string | null
   room_type_name: string | null
@@ -92,7 +92,7 @@ async function fetchBookings(): Promise<BookingRow[]> {
   try {
     const sb = createSupabaseAdminClient()
 
-    // Fetch bookings — 90 days back to 180 days ahead
+    // Fetch bookings - 90 days back to 180 days ahead
     const from = new Date()
     from.setDate(from.getDate() - 90)
     const to = new Date()
@@ -112,7 +112,7 @@ async function fetchBookings(): Promise<BookingRow[]> {
     // The raw NightsBridge booking JSON's per-stay entries reliably have
     // bbroomid (services/nightsbridge-sync/storage.py does a required
     // `stay["bbroomid"]` access when syncing) but NOT a consistent room-name
-    // field across API shapes — so resolve the specific room via the `room`
+    // field across API shapes - so resolve the specific room via the `room`
     // table (kept in sync from NightsBridge, bbroomid -> room_name) instead
     // of guessing at raw JSON key names.
     const { data: roomRows } = await sb.from("room").select("bbroomid, room_name")

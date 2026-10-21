@@ -23,7 +23,7 @@ import storage
 import transform
 
 # Local scraper .env (optional, git-ignored) then repo-root .env.local (SITE_USER + Supabase).
-# Do NOT put .env in public/ — Next.js serves static files from public/.
+# Do NOT put .env in public/ - Next.js serves static files from public/.
 load_dotenv()
 _root_env = Path(__file__).resolve().parents[2] / ".env.local"
 if _root_env.exists():
@@ -92,7 +92,7 @@ def main() -> None:
                 except Exception as exc:
                     print(f"Webview image scrape skipped: {exc}")
             else:
-                print("Supabase env not set — skipped DB sync (CSV/JSON only).")
+                print("Supabase env not set - skipped DB sync (CSV/JSON only).")
         finally:
             browser.close()
 

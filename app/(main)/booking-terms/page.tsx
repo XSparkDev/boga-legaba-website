@@ -41,7 +41,7 @@ export default function BookingTermsPage() {
         <p>
           Standard check-in is from 14:00 and check-out is by 10:00, unless a different time is
           agreed when you book. Guests arriving outside reception hours should arrange access in
-          advance. Our properties sit at different addresses — always confirm your arrival address
+          advance. Our properties sit at different addresses - always confirm your arrival address
           before travelling. <Todo>confirm standard times, late check-out charges and
           after-hours arrival procedure with Boga Legaba</Todo>
         </p>

@@ -1,5 +1,5 @@
 // =============================================================================
-// Boga Legaba — Room & Property data
+// Boga Legaba - Room & Property data
 // Update this file to manage room inventory. Used across Stay, Gallery, Book Now.
 // =============================================================================
 

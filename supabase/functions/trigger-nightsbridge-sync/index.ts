@@ -1,4 +1,4 @@
-// Supabase Edge Function — scheduled cron trigger for NightsBridge sync.
+// Supabase Edge Function - scheduled cron trigger for NightsBridge sync.
 //
 // Required secrets (set in Supabase Dashboard → Edge Functions → Secrets):
 //   SYNC_WORKER_URL   https://boga-nb-sync.onrender.com/run
@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ source: "supabase-edge-cron", at: startedAt }),
-      // 8-minute timeout — sync takes up to 5 min, give headroom
+      // 8-minute timeout - sync takes up to 5 min, give headroom
       signal: AbortSignal.timeout(480_000),
     })
 
@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       // Log the actual error so it appears in Supabase Function Logs tab
       console.error(`[sync] Worker returned ${res.status}:`, text.slice(0, 800))
     } else {
-      console.log(`[sync] OK — worker responded ${res.status}`)
+      console.log(`[sync] OK - worker responded ${res.status}`)
     }
 
     return new Response(
@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
       }),
       {
         // Always return 200 from the edge function itself so the cron chart
-        // shows green — check workerStatus/workerError in logs for sync failures.
+        // shows green - check workerStatus/workerError in logs for sync failures.
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       },

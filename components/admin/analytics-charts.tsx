@@ -17,7 +17,7 @@ import {
 } from "recharts"
 
 // ---------------------------------------------------------------------------
-// Types — all props are plain serialisable data passed from the server page
+// Types - all props are plain serialisable data passed from the server page
 // ---------------------------------------------------------------------------
 
 export type TrendPoint = { date: string; available: number; booked: number }
@@ -29,7 +29,7 @@ function ratesHeight(n: number) {
   return Math.max(180, n * 38 + 40)
 }
 
-// Boga Legaba brand palette — exact hex values from app/globals.css
+// Boga Legaba brand palette - exact hex values from app/globals.css
 // (heritage gold, lantana olive, soft-neutral). Charts use only these brand
 // accents per the brand guide; no generic black/placeholder series colours.
 const GOLD = "#996948" // --color-heritage / --color-gold
@@ -80,7 +80,7 @@ export function AnalyticsCharts({
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
-      {/* Rooms occupied trend — area chart */}
+      {/* Rooms occupied trend - area chart */}
       <CardShell title="Rooms occupied · next 30 days" className="lg:col-span-2">
         <div className="h-56 w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -120,7 +120,7 @@ export function AnalyticsCharts({
         </div>
       </CardShell>
 
-      {/* Today's occupancy — donut with centre label */}
+      {/* Today's occupancy - donut with centre label */}
       <CardShell title="Today · occupancy">
         <div className="relative h-56 w-full">
           {hasDonut ? (
@@ -165,7 +165,7 @@ export function AnalyticsCharts({
         </div>
       </CardShell>
 
-      {/* Rates by room type — HORIZONTAL bars (mobile-safe labels) */}
+      {/* Rates by room type - HORIZONTAL bars (mobile-safe labels) */}
       <CardShell title="Rates by room type · per night" className="lg:col-span-3">
         {hasRates ? (
           <div className="w-full" style={{ height: ratesHeight(rates.length) }}>

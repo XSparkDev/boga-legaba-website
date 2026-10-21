@@ -29,7 +29,7 @@ export default function TermsPage() {
         <p>
           This website lets you explore our rooms, conference venue, dining offering and local area,
           check availability and rates, submit enquiries, and make reservations through our booking
-          flow. Availability, rates and package details shown here can change — the confirmed
+          flow. Availability, rates and package details shown here can change - the confirmed
           details are those in your written quote, confirmation or reservation.
         </p>
       </LegalSection>
@@ -63,7 +63,7 @@ export default function TermsPage() {
       <LegalSection title="External links">
         <p>
           Links to WhatsApp, Google, TripAdvisor, NightsBridge, Paystack and social platforms leave
-          this site — their own terms and privacy policies apply there, and we are not responsible
+          this site - their own terms and privacy policies apply there, and we are not responsible
           for their content or practices.
         </p>
       </LegalSection>

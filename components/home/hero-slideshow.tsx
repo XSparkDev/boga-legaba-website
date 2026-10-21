@@ -12,7 +12,7 @@ interface HeroSlideshowProps {
   className?: string
 }
 
-/** Full-bleed background slideshow — crossfades between images, looping forever. */
+/** Full-bleed background slideshow - crossfades between images, looping forever. */
 export function HeroSlideshow({ images, alt, className }: HeroSlideshowProps) {
   const [active, setActive] = useState(0)
 

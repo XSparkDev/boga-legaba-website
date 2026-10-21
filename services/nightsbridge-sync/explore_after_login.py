@@ -3,7 +3,7 @@ One-off helper: log in with your .env credentials and map what's behind it.
 
 Prints the post-login URL, the page title, every navigation link (text + href),
 and saves a screenshot to output/after_login.png plus the rendered HTML to
-output/after_login.html — so we can pick the right DATA_URL and selectors.
+output/after_login.html - so we can pick the right DATA_URL and selectors.
 
 Run:  python explore_after_login.py
 Nothing here is destructive: it only reads pages.

@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/page-header"
 import { GalleryGrid } from "@/components/gallery/gallery-grid"
 import { buildGalleryBrowserItems } from "@/data/gallery-browser"
 import { getSiteImageOverrides, resolveSiteImageFrom } from "@/lib/site-images-live"
+import { getGalleryCustomPhotos } from "@/lib/gallery-custom"
 
 export const metadata: Metadata = {
   title: "Gallery | Boga Legaba Guest House & Conference Centre",
@@ -17,6 +18,21 @@ export const dynamic = "force-dynamic"
 export default async function GalleryPage() {
   const overrides = await getSiteImageOverrides()
   const items = buildGalleryBrowserItems((key) => resolveSiteImageFrom(overrides, key))
+
+  // Admin-added extra photos (table `gallery_custom`, managed under the
+  // Gallery tab in /admin/rooms) are appended after the fixed slots.
+  // imageKey uses a `custom:` prefix so admin slot overrides can never collide.
+  const custom = await getGalleryCustomPhotos()
+  for (const photo of custom) {
+    items.push({
+      id: `custom-${photo.id}`,
+      label: photo.label.trim() || `${photo.category} · Photo`,
+      category: photo.category as (typeof items)[number]["category"],
+      imageKey: `custom:${photo.id}`,
+      url: photo.image_url,
+      alt: photo.label.trim() || `Additional ${photo.category} photo at Boga Legaba`,
+    })
+  }
 
   return (
     <main>

@@ -4,7 +4,7 @@
 -- always fall through to the NightsBridge live fallback and show stale data.
 -- Also ensure room, room_type, and rate_cache are readable by the anon role.
 
--- availability_cache: allow public reads (no sensitive data — just dates + is_available)
+-- availability_cache: allow public reads (no sensitive data - just dates + is_available)
 do $$
 begin
   if not exists (

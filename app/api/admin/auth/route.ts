@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    // Verify credentials against Supabase Auth — the password is stored/hashed
+    // Verify credentials against Supabase Auth - the password is stored/hashed
     // by Supabase, never in this codebase or an env var. A successful sign-in is
     // all we need: the existing bl_admin_session cookie stays the session
     // mechanism, so every admin page and API route keeps authorising exactly as

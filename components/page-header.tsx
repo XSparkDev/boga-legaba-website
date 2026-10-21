@@ -5,7 +5,7 @@ interface PageHeaderProps {
   title: string
   subtitle?: string
   /** Optional darkened hero background photo. Size/layout/text stay identical
-   *  to the flat-black header — this only puts a dark image behind, matching
+   *  to the flat-black header - this only puts a dark image behind, matching
    *  the Stay page hero. */
   bgImage?: string
 }
@@ -24,7 +24,7 @@ export function PageHeader({ eyebrow, title, subtitle, bgImage }: PageHeaderProp
             decoding="async"
             className="absolute inset-0 h-full w-full object-cover object-center"
           />
-          {/* Flat dark overlay for legibility — kept dark like the Stay hero. */}
+          {/* Flat dark overlay for legibility - kept dark like the Stay hero. */}
           <div className="absolute inset-0 bg-black/75" />
         </>
       ) : null}

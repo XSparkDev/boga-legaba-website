@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic"
 export const maxDuration = 60
 
 /**
- * POST /api/admin/reviews-sync — the admin dashboard's "Refresh Reviews from
+ * POST /api/admin/reviews-sync - the admin dashboard's "Refresh Reviews from
  * Google" button posts here.
  *
  * Auth: the same `bl_admin_session` cookie that protects every other admin
@@ -14,7 +14,7 @@ export const maxDuration = 60
  * admin trigger the sync from the browser.
  *
  * It then calls the existing /api/reviews/sync route server-to-server with the
- * CRON_SECRET — exactly how the scheduled job would. The CRON_SECRET is read
+ * CRON_SECRET - exactly how the scheduled job would. The CRON_SECRET is read
  * from the environment here and never reaches the browser.
  */
 async function isAuthenticated() {

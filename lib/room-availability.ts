@@ -116,7 +116,7 @@ export function minCheckInDate(): string {
 
 /**
  * Latest date a guest may pick. Kept just inside the availability_cache
- * horizon (the sync fetches ~365 days ahead — see scripts/ScriptTestBLGH/
+ * horizon (the sync fetches ~365 days ahead - see scripts/ScriptTestBLGH/
  * config.py DEFAULT_DAYS_AHEAD) so every selectable date has ACCURATE
  * per-physical-room availability. Without this, a date beyond the cache would
  * fall back to a coarse room-TYPE check that can show an already-booked room

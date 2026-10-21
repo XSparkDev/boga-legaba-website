@@ -3,7 +3,7 @@
  * (see supabase/migrations/017_google_reviews.sql). Rows can come from two
  * sources, distinguished by the `source` column:
  *   - "live_api": synced from the Google Places API by /api/reviews/sync.
- *   - "manual_seed": curated by hand (the initial seed — see the migration).
+ *   - "manual_seed": curated by hand (the initial seed - see the migration).
  *
  * Priority: "live_api" rows take over the homepage ONLY once at least
  * MIN_LIVE_REVIEWS of them clear the star filter; otherwise the curated
@@ -12,7 +12,7 @@
  *
  * The overall rating/review-count shown above the cards is NOT derived from
  * this table (the seeded rows are a curated subset, not the full public
- * review count) — it's a fixed business figure, exported below.
+ * review count) - it's a fixed business figure, exported below.
  *
  * Fails open: a missing table or DB error resolves to an empty review list
  * so the home page never crashes because of reviews.

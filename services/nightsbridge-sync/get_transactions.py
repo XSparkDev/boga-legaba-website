@@ -161,7 +161,7 @@ def upsert_transactions(transactions: list[dict]) -> None:
         print("No valid transactions to upsert.")
         return
     if not _supa:
-        print("Supabase not configured — skipping upsert.")
+        print("Supabase not configured - skipping upsert.")
         return
 
     try:

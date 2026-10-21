@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
 import { saveEnquiry, buildEnquiryGuestEmail, buildEnquiryStaffEmail, type EnquiryInput, type EnquiryType } from "@/lib/enquiries"
+import { unsubscribeHeaders } from "@/lib/email-theme"
 
 export const dynamic = "force-dynamic"
 
 const VALID_TYPES: EnquiryType[] = ["conference", "corporate", "contact", "interest"]
 
 /**
- * Public enquiry submit — used by the conference, corporate, contact, and
+ * Public enquiry submit - used by the conference, corporate, contact, and
  * interest/subscribe forms. Saves the submission, then emails BOTH the person
  * who submitted (confirmation) and Boga Legaba staff (notification with full
- * details). Email failures never block the guest from seeing a success state —
+ * details). Email failures never block the guest from seeing a success state -
  * the submission is already saved by the time we attempt to send.
  */
 export async function POST(request: NextRequest) {
@@ -50,9 +51,17 @@ export async function POST(request: NextRequest) {
     const guest = buildEnquiryGuestEmail(input)
     const staff = buildEnquiryStaffEmail(input)
 
-    // Best-effort — the enquiry is already saved regardless of email outcome.
+    // Best-effort - the enquiry is already saved regardless of email outcome.
+    // The guest send carries List-Unsubscribe headers so every mail carries a
+    // working native unsubscribe (one-click where the provider supports it).
     await Promise.allSettled([
-      resend.emails.send({ from, to: input.email, subject: guest.subject, html: guest.html }),
+      resend.emails.send({
+        from,
+        to: input.email,
+        subject: guest.subject,
+        html: guest.html,
+        headers: unsubscribeHeaders(input.email),
+      }),
       resend.emails.send({ from, to: adminEmail, subject: staff.subject, html: staff.html }),
     ])
   }

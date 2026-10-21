@@ -13,7 +13,7 @@ The script:
     4. Saves output/rates_{arrive}_{depart}.json
     5. Upserts into the Supabase rate_cache table (if credentials are set)
 
-IMPORTANT — SELECTOR VERIFICATION:
+IMPORTANT - SELECTOR VERIFICATION:
     The NightsBridge booking widget is an Angular SPA. CSS class names below
     are best-effort guesses. Run with HEADLESS=false the first time, open
     DevTools (F12) → Elements tab, and update the SELECTORS dict below to
@@ -61,7 +61,7 @@ OUTPUT_DIR = Path(__file__).parent / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # ---------------------------------------------------------------------------
-# CSS SELECTORS — update after inspecting with HEADLESS=false
+# CSS SELECTORS - update after inspecting with HEADLESS=false
 #
 # Strategy: we try multiple selector candidates in order and use the first one
 # that finds elements on the page.
@@ -80,7 +80,7 @@ CARD_CANDIDATES = [
     "app-roomtype",
 ]
 
-# Within each card — selectors for individual fields
+# Within each card - selectors for individual fields
 FIELD_SELECTORS = {
     # Room-type name
     "name": [".room-name", ".roomtypename", "h2", "h3", ".title", "[class*='name']"],
@@ -91,7 +91,7 @@ FIELD_SELECTORS = {
         ".rate-single", ".single-rate", "[data-rate-single]",
         ".price-single", "[class*='single']",
     ],
-    # Price for 2 adults (double rate) — or the main price if single not shown
+    # Price for 2 adults (double rate) - or the main price if single not shown
     "rate_double": [
         ".rate-double", ".double-rate", "[data-rate-double]",
         ".price-double", ".price", ".rate", ".amount", "[class*='price']",
@@ -244,7 +244,7 @@ def scrape(arrive: str, depart: str) -> list[dict]:
             # Children policy
             children_policy = _first_text(card, FIELD_SELECTORS["children_policy"])
 
-            # Availability — sold-out element present = unavailable
+            # Availability - sold-out element present = unavailable
             sold_el = card.query_selector(" ,".join(FIELD_SELECTORS["sold_out"]))
             available = sold_el is None
 
@@ -296,14 +296,14 @@ def save_json(results: list[dict], arrive: str, depart: str) -> Path:
 
 def upsert_supabase(results: list[dict]) -> None:
     if not _supabase_available:
-        print("supabase package not installed — skipping upsert.")
+        print("supabase package not installed - skipping upsert.")
         return
 
     url = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "")
     key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 
     if not url or not key:
-        print("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set — skipping upsert.")
+        print("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set - skipping upsert.")
         return
 
     supabase = _create_client(url, key)
@@ -363,5 +363,5 @@ if __name__ == "__main__":
         save_json(data, arrive_arg, depart_arg)
         upsert_supabase(data)
     else:
-        print("No data scraped — see debug HTML file in output/ for troubleshooting.")
+        print("No data scraped - see debug HTML file in output/ for troubleshooting.")
         sys.exit(1)

@@ -40,7 +40,7 @@ for table, _ in required:
         res = sb.table(table).select("*").limit(1).execute()
         print(f"OK: `{table}` exists")
     except Exception as exc:
-        print(f"FAIL: table `{table}` — {exc}")
+        print(f"FAIL: table `{table}` - {exc}")
         ok = False
 
 if ok:

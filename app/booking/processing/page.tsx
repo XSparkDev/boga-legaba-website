@@ -34,7 +34,7 @@ function ProcessingContent() {
 
     const POLL_MS = 3_000
     // The worker now retries internally (up to 3 attempts) on ambiguous
-    // failures before giving up, which can take up to ~340s worst case —
+    // failures before giving up, which can take up to ~340s worst case -
     // keep polling comfortably beyond that instead of giving up early.
     const MAX_POLLS = 130 // ~6.5 min
 
@@ -84,9 +84,9 @@ function ProcessingContent() {
           setFailed(d.error || "We couldn't book this room. Please try again or contact us on WhatsApp.")
           return
         }
-        // status is "processing" (or missing/unrecognised) — keep polling.
+        // status is "processing" (or missing/unrecognised) - keep polling.
       } catch {
-        /* transient network error — keep polling */
+        /* transient network error - keep polling */
       }
       if (cancelled) return
       if (attempt >= MAX_POLLS) {

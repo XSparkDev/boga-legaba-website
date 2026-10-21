@@ -5,7 +5,7 @@ import { buildSyncedProperties, type SyncedRoomRow } from "@/lib/synced-rooms"
 export const dynamic = "force-dynamic"
 
 /**
- * GET /api/rooms — public room catalog from Supabase (NightsBridge sync only).
+ * GET /api/rooms - public room catalog from Supabase (NightsBridge sync only).
  */
 export async function GET() {
   try {
@@ -44,7 +44,7 @@ export async function GET() {
       .order("room_name", { ascending: true })
 
     if (error) {
-      // room_type join may fail if RLS blocks it — retry without join
+      // room_type join may fail if RLS blocks it - retry without join
       if (error.message.includes("room_type")) {
         const fallback = await supabase
           .from("room")

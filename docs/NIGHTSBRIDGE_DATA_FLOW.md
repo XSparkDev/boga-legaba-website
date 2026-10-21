@@ -43,9 +43,9 @@ Custom React UI (/stay, room cards)
 
 ### Not implemented (documented elsewhere)
 
-- `bookingnotificationsrq` — lightweight change feed
-- `DoubleBookingsRQ` — overlap detection
-- `availRQ` / `FromPriceRQ` — public webservice availability/pricing
+- `bookingnotificationsrq` - lightweight change feed
+- `DoubleBookingsRQ` - overlap detection
+- `availRQ` / `FromPriceRQ` - public webservice availability/pricing
 
 ### Not available from bridgeitapi
 
@@ -73,7 +73,7 @@ Custom React UI (/stay, room cards)
 
 ## 3. Is data saved to our database?
 
-Yes — when `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` are set and you run:
+Yes - when `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` are set and you run:
 
 ```bash
 cd public/ScriptTestBLGH && ./run-sync.sh
@@ -102,7 +102,7 @@ cd public/ScriptTestBLGH && ./run-sync.sh
 
 See the visual audit at **`/admin/nightsbridge`** or `GET /api/nightsbridge/audit`.
 
-Room rows also get **catalog enrichment** during sync (`room_catalog.py`): `property_name`, `address`, `configuration`, `bathroom_type` — these are not in the raw NB `rooms[]` payload but are stored on the `room` row.
+Room rows also get **catalog enrichment** during sync (`room_catalog.py`): `property_name`, `address`, `configuration`, `bathroom_type` - these are not in the raw NB `rooms[]` payload but are stored on the `room` row.
 
 ---
 
@@ -141,7 +141,7 @@ See [`docs/COMPLETION_CHECKLIST.md`](COMPLETION_CHECKLIST.md).
 
 1. Run migration `supabase/migrations/002_nb_extended.sql`
 2. After sync: `python images.py` (auto-runs webview scrape after sync in `main.py`)
-3. Image URLs only — stored in `media_asset.source_url`, not downloaded
+3. Image URLs only - stored in `media_asset.source_url`, not downloaded
 
 ---
 

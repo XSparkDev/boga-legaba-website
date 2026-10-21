@@ -4,7 +4,7 @@
 -- corporate/government booking enquiries, general contact messages, and
 -- "register your interest" subscriptions (specials/dining).
 --
--- Own table, isolated from booking/bookings — the same pattern as
+-- Own table, isolated from booking/bookings - the same pattern as
 -- guest_registration (010) and the booking_* extras (009).
 -- ─────────────────────────────────────────────────────────────────────────────
 

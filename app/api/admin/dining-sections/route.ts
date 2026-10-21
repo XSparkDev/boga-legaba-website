@@ -28,7 +28,7 @@ function isMissingTable(error: { message?: string; code?: string } | null): bool
   )
 }
 
-// GET — all rows (including hidden), ordered. Never 500s on a missing table.
+// GET - all rows (including hidden), ordered. Never 500s on a missing table.
 export async function GET() {
   if (!(await isAuthenticated())) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
@@ -47,7 +47,7 @@ export async function GET() {
   return NextResponse.json({ ok: true, sections: data ?? [], configured: true })
 }
 
-// POST { title, body?, icon?, status?, visible? } — create a card.
+// POST { title, body?, icon?, status?, visible? } - create a card.
 export async function POST(request: NextRequest) {
   if (!(await isAuthenticated())) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       {
         ok: false,
         error: isMissingTable(checkError)
-          ? "Table dining_sections does not exist yet — run migration 019_dining_sections.sql first."
+          ? "Table dining_sections does not exist yet - run migration 019_dining_sections.sql first."
           : checkError.message,
       },
       { status: isMissingTable(checkError) ? 503 : 502 },
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true, section: data })
 }
 
-// PATCH { id, title?, body?, icon?, status?, visible?, sort_order? } — edit.
+// PATCH { id, title?, body?, icon?, status?, visible?, sort_order? } - edit.
 export async function PATCH(request: NextRequest) {
   if (!(await isAuthenticated())) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
@@ -147,7 +147,7 @@ export async function PATCH(request: NextRequest) {
   return NextResponse.json({ ok: true })
 }
 
-// DELETE ?id=... — remove a card.
+// DELETE ?id=... - remove a card.
 export async function DELETE(request: NextRequest) {
   if (!(await isAuthenticated())) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })

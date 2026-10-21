@@ -1,4 +1,4 @@
-// Auto-generated Unsplash image URLs — do not edit by hand
+// Auto-generated Unsplash image URLs - do not edit by hand
 // Regenerate: node scripts/fetch-unsplash-images.mjs
 
 export type SiteImage = { url: string; alt: string }

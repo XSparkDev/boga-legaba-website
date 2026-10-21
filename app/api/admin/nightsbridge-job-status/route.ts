@@ -12,7 +12,7 @@ async function isAuthenticated() {
 /**
  * Polled by the admin "Retry to NightsBridge" button after it dispatches a
  * job. /api/admin/retry-nightsbridge only confirms the worker ACCEPTED the
- * job (HTTP 202) — the actual Playwright run takes up to a few minutes and
+ * job (HTTP 202) - the actual Playwright run takes up to a few minutes and
  * happens in a background thread on the worker. Without this poll the button
  * had no way to tell "accepted" apart from "actually booked", so it showed
  * "Sent" the instant the worker answered, even if the booking later failed.

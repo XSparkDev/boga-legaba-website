@@ -19,7 +19,7 @@ export interface BookingDatesState {
 //   - Rule 3 (override): if the user intentionally set a checkout that is
 //     still valid after a new check-in, keep it.
 // Without this flag the reducer can't distinguish "auto-set by defaults" from
-// "user-selected" — and incorrectly preserves stale auto-set dates.
+// "user-selected" - and incorrectly preserves stale auto-set dates.
 interface InternalState {
   checkIn: string
   checkOut: string
@@ -45,14 +45,14 @@ export interface UseBookingDatesResult extends BookingDatesState {
    */
   setCheckIn: (date: string) => void
   /**
-   * Set a new check-out date (Rule 2 — manual override).
+   * Set a new check-out date (Rule 2 - manual override).
    * - Marks the checkout as user-selected so it survives future check-in changes.
    * - If the supplied date is ≤ check-in it is automatically moved to check-in + 2.
    */
   setCheckOut: (date: string) => void
   /**
    * Replace both dates at once (e.g. from URL params or clear/reset flows).
-   * Clears the manual-checkout flag — the next check-in change will auto-set +2.
+   * Clears the manual-checkout flag - the next check-in change will auto-set +2.
    */
   reset: (opts?: { checkIn?: string; checkOut?: string }) => void
 }
@@ -77,7 +77,7 @@ function clampCheckIn(date: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Reducer — the single source of truth for booking date logic
+// Reducer - the single source of truth for booking date logic
 // ---------------------------------------------------------------------------
 
 function reducer(state: InternalState, action: Action): InternalState {
@@ -87,8 +87,8 @@ function reducer(state: InternalState, action: Action): InternalState {
       const autoCheckOut = addDays(checkIn, 2)
 
       // Only keep an existing checkout when the user explicitly chose it AND
-      // it is still valid after the new check-in. In every other case — including
-      // when the checkout was set by defaults or a previous auto-calculation —
+      // it is still valid after the new check-in. In every other case - including
+      // when the checkout was set by defaults or a previous auto-calculation -
       // we always set checkout = check-in + 2 (Rule 1).
       const keepManual = state.checkOutIsManual && !!state.checkOut && state.checkOut > checkIn
       const checkOut = keepManual ? state.checkOut : autoCheckOut
@@ -119,7 +119,7 @@ function reducer(state: InternalState, action: Action): InternalState {
  * Central hook for all booking date state across the application.
  *
  * Pass `{ checkIn: "", checkOut: "" }` (or no args) to start with empty values
- * and call `reset()` inside a `useEffect` — this is the correct pattern for
+ * and call `reset()` inside a `useEffect` - this is the correct pattern for
  * components that need to avoid SSR/client hydration mismatches (today's date
  * differs between the server's UTC clock and the browser's local time).
  */

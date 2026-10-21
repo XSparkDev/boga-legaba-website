@@ -27,7 +27,7 @@ export function CorporateForm() {
     requirements: "",
   })
 
-  // Booking dates are managed by the centralized hook — guarantees checkout > checkin at all times.
+  // Booking dates are managed by the centralized hook - guarantees checkout > checkin at all times.
   const { checkIn, checkOut, setCheckIn, setCheckOut, minCheckIn, minCheckOut } = useBookingDates()
   const [consent, setConsent] = useState(false)
   const [optIn, setOptIn] = useState(false)

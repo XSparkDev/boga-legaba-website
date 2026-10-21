@@ -1,7 +1,7 @@
 /**
  * Explicit, persisted state machine for the booking pipeline (migration 014).
  * booking_job.booking_status is the single source of truth for what stage a
- * booking is at — every stage transition goes through transitionBookingStatus()
+ * booking is at - every stage transition goes through transitionBookingStatus()
  * below, which is BOTH how the state advances AND how idempotency is
  * enforced (see the guard mechanism in its docstring). Nothing should write
  * booking_job.booking_status directly.
@@ -25,7 +25,7 @@ export const BOOKING_STATUSES = [
   // The BOGA_NOTIFIED -> GUEST_CONFIRMED transition is itself the atomic
   // once-only claim for sending that guest email. Terminal.
   "GUEST_CONFIRMED",
-  // Guest reached checkout but the payment did not succeed — Paystack sent a
+  // Guest reached checkout but the payment did not succeed - Paystack sent a
   // charge.failed (declined card, insufficient funds, etc.). DISTINCT from the
   // generic FAILED so the admin can see "tried to book but payment failed".
   // Not terminal: a guest who retries a declined card can still succeed, so
@@ -38,7 +38,7 @@ export type BookingStatus = (typeof BOOKING_STATUSES)[number]
 
 /**
  * The only legal forward transitions. Guards against a bug elsewhere
- * skipping a stage or moving backward — a transition not listed here is
+ * skipping a stage or moving backward - a transition not listed here is
  * rejected even if the caller asks for it, so the audit trail stays honest.
  * FAILED is reachable from every non-terminal stage (a booking can fail at
  * any point); GUEST_CONFIRMED and FAILED are terminal.
@@ -78,14 +78,14 @@ export type TransitionResult = { ok: boolean; reason?: string }
  * Atomically move a booking from its current stage to `to`, IF its current
  * stage is one of the allowed predecessors (or `opts.from` if given, to
  * narrow further). The UPDATE's WHERE clause includes the expected
- * predecessor state, so this is a single round-trip compare-and-swap — the
+ * predecessor state, so this is a single round-trip compare-and-swap - the
  * database, not application logic, decides who wins a race.
  *
  * THIS is the idempotency mechanism for the whole pipeline: a duplicate
  * trigger (Paystack retrying a webhook, the browser-redirect path AND the
  * webhook both reacting to the same payment, a re-run after a crash) will
  * find the row already moved past the expected predecessor and get
- * `{ok:false}` — the caller's job is to treat that as "someone already
+ * `{ok:false}` - the caller's job is to treat that as "someone already
  * handled this, skip the side effect" rather than an error.
  */
 export async function transitionBookingStatus(
@@ -119,12 +119,12 @@ export async function transitionBookingStatus(
 
     const won = Array.isArray(data) && data.length > 0
     if (!won) {
-      console.log(`[booking-status] reference=${reference} transition to ${to} REJECTED — current status was not in [${allowedFrom.join(", ")}] (already processed, or in an unexpected state)`)
+      console.log(`[booking-status] reference=${reference} transition to ${to} REJECTED - current status was not in [${allowedFrom.join(", ")}] (already processed, or in an unexpected state)`)
       return { ok: false, reason: "current status did not allow this transition" }
     }
 
     console.log(`[booking-status] reference=${reference} -> ${to}${opts.reason ? ` (${opts.reason})` : ""}`)
-    // Best-effort audit row — never block the pipeline on this failing.
+    // Best-effort audit row - never block the pipeline on this failing.
     sb.from("booking_status_history")
       .insert({ reference, to_status: to, reason: opts.reason ?? null })
       .then(({ error: histError }) => {

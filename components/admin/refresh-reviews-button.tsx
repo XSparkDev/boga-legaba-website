@@ -19,7 +19,7 @@ type SyncError = { ok: false; error: string; detail?: string }
  * Admin-only control that triggers the (otherwise dormant) Google review sync
  * on demand. Posts to /api/admin/reviews-sync, which is protected by the admin
  * session cookie and forwards to /api/reviews/sync with the CRON_SECRET
- * server-side — the secret is never exposed to this component.
+ * server-side - the secret is never exposed to this component.
  */
 export function RefreshReviewsButton() {
   const [loading, setLoading] = useState(false)

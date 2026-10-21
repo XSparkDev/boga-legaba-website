@@ -10,7 +10,7 @@
 -- independent external triggers (the guest's browser polling, and Paystack's
 -- webhook). Before this migration, "what stage is this booking at" was only
 -- inferable from a combination of booking_job.status (processing/completed/
--- failed — only covers the NightsBridge-booking phase) plus ad-hoc boolean
+-- failed - only covers the NightsBridge-booking phase) plus ad-hoc boolean
 -- flags (emails_sent) plus a separate dedup table (payment_email_sent,
 -- migration 014's original version, superseded here). That meant no single
 -- column answered "what stage is this booking at right now", and recovering
@@ -18,7 +18,7 @@
 -- multiple sources. booking_status is now that single source of truth, and
 -- every transition is guarded + logged so it's both resumable and auditable.
 --
--- booking_job.status (processing/completed/failed) is UNCHANGED and kept —
+-- booking_job.status (processing/completed/failed) is UNCHANGED and kept -
 -- it's specifically the worker's own job-acceptance signal, read by
 -- /api/booking/status to know whether to keep polling. booking_status is the
 -- broader pipeline state that subsumes and extends past it.
@@ -31,7 +31,7 @@ ALTER TABLE booking_job ADD COLUMN IF NOT EXISTS booking_status_updated_at TIMES
 CREATE INDEX IF NOT EXISTS idx_booking_job_booking_status ON booking_job (booking_status);
 
 -- Append-only audit trail: every successful transition, when, and why (or why
--- a failure happened). Lets a disputed booking be reconstructed exactly —
+-- a failure happened). Lets a disputed booking be reconstructed exactly -
 -- "the guest says they paid but got no confirmation" becomes a lookup, not a
 -- guess.
 CREATE TABLE IF NOT EXISTS booking_status_history (
@@ -51,7 +51,7 @@ CREATE POLICY "Service role only – booking_status_history"
 
 -- Superseded by booking_status's guarded transitions (AWAITING_PAYMENT ->
 -- PAYMENT_CONFIRMED is now itself the atomic idempotency claim for the
--- webhook/verify race) — drop the standalone dedup table from the original
+-- webhook/verify race) - drop the standalone dedup table from the original
 -- version of this migration file. Safe: nothing has been deployed against it
 -- yet.
 DROP TABLE IF EXISTS payment_email_sent;
@@ -65,9 +65,9 @@ ALTER TABLE booking_job DROP COLUMN IF EXISTS emails_sent;
 -- room_type_name (the category, e.g. "Double Room (Bath only)", used to
 -- resolve which units are candidates before booking). Booking now goes
 -- straight into NightsBridge's admin calendar for one specific unit, so
--- this is always known for real once a booking succeeds — emails and the
+-- this is always known for real once a booking succeeds - emails and the
 -- guest-facing UI should show this, not the category, wherever the room is
 -- displayed. NULL for jobs booked via the old guest-widget script, which
--- never learns the specific unit — callers should fall back to
+-- never learns the specific unit - callers should fall back to
 -- room_type_name in that case.
 ALTER TABLE booking_job ADD COLUMN IF NOT EXISTS room_name TEXT;

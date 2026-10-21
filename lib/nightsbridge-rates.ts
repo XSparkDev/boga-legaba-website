@@ -1,9 +1,9 @@
 /**
- * NightsBridge rates — public API.
+ * NightsBridge rates - public API.
  *
  * Source priority:
- *  1. callAvailGrid    — POST /bridge/api/5.0/availgrid          (primary, live)
- *  2. callAvailability — POST /bridge/api/5.0/availability/{bbid} (fallback, live)
+ *  1. callAvailGrid    - POST /bridge/api/5.0/availgrid          (primary, live)
+ *  2. callAvailability - POST /bridge/api/5.0/availability/{bbid} (fallback, live)
  *  3. rate_cache table in Supabase                                (stale cache)
  *  4. availability_cache + room_type in Supabase                  (no rack rates)
  */
@@ -19,7 +19,7 @@ export type RoomRate = {
   /** NightsBridge numeric room type ID (rtid). Present for live API results. */
   rtid?: number | null
   rtname: string
-  /** Physical room ID — present only when data comes from Supabase. */
+  /** Physical room ID - present only when data comes from Supabase. */
   bbroomid: number | null
   description: string | null
   maxGuests: number | null
@@ -204,7 +204,7 @@ async function fetchFromSupabase(
         maxGuests: rt?.max_occupancy ?? null,
         maxAdults: rt?.max_adults ?? null,
         childrenPolicy: null,
-        // avgrate from confirmed bookings only — NOT rack rates
+        // avgrate from confirmed bookings only - NOT rack rates
         rateSingle: avail.rate,
         rateDouble: avail.rate,
         available: avail.available,
@@ -246,14 +246,14 @@ export async function fetchNightsBridgeRates(
   arrive: string,
   depart: string,
 ): Promise<RatesResult> {
-  // 1. Live NightsBridge availgrid API — accurate per-night availability
+  // 1. Live NightsBridge availgrid API - accurate per-night availability
   const gridRates = await callAvailGrid(bbid, arrive, depart)
 
   if (gridRates?.length) {
     const hasRates = gridRates.some((r) => r.rateSingle != null || r.rateDouble != null)
     if (hasRates) return { rates: gridRates, source: "live" }
 
-    // New API: availgrid has availability but no rates — fetch rates separately and merge
+    // New API: availgrid has availability but no rates - fetch rates separately and merge
     const availRates = await callAvailability(bbid, arrive, depart)
     if (availRates?.length) {
       const rateMap = new Map(availRates.map((r) => [r.rtname.toLowerCase().trim(), r]))
@@ -265,7 +265,7 @@ export async function fetchNightsBridgeRates(
       })
       return { rates: merged, source: "live" }
     }
-    // No rates available from either endpoint — still return availability
+    // No rates available from either endpoint - still return availability
     return { rates: gridRates, source: "live" }
   }
 

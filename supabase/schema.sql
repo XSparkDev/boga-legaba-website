@@ -1,4 +1,4 @@
--- Boga Legaba — NightsBridge mirror schema (bbid 21091)
+-- Boga Legaba - NightsBridge mirror schema (bbid 21091)
 -- Run in Supabase SQL Editor. Service role bypasses RLS; anon reads availability_cache + room only.
 
 -- ---------------------------------------------------------------------------
@@ -41,7 +41,7 @@ CREATE INDEX IF NOT EXISTS idx_room_room_name ON room (room_name);
 CREATE INDEX IF NOT EXISTS idx_room_is_active ON room (is_active) WHERE is_active = true;
 
 -- ---------------------------------------------------------------------------
--- Guests & bookings (PII — service role only)
+-- Guests & bookings (PII - service role only)
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS guest (
   guestid     BIGINT PRIMARY KEY,

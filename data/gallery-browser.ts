@@ -53,7 +53,7 @@ export function getGalleryBrowserItems(): GalleryBrowserItem[] {
 
 /**
  * Same as getGalleryBrowserItems() but resolves each item's image through a
- * caller-supplied resolver instead of the static file — used server-side to
+ * caller-supplied resolver instead of the static file - used server-side to
  * apply admin overrides (see app/(main)/gallery/page.tsx). Kept dependency-free
  * (no server imports) so this module stays safe to import from the client grid.
  */

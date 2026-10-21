@@ -4,7 +4,7 @@
 -- card: title, body copy, icon key, status ('coming-soon' | 'open'), display
 -- order, and visibility. The Dining page shows visible rows ordered by
 -- sort_order, falling back to built-in defaults if this table is missing or
--- empty — so an empty table changes nothing until the admin saves content.
+-- empty - so an empty table changes nothing until the admin saves content.
 -- Run in Supabase SQL Editor (postgres role) after 018_site_images.sql.
 
 CREATE TABLE IF NOT EXISTS dining_sections (

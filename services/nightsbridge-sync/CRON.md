@@ -9,8 +9,8 @@ NightsBridge does **not** call your website when someone books on their engine, 
 | Piece | Status |
 |-------|--------|
 | **Credentials** | `SITE_USER` / `SITE_PASS` in `.env.local` (lines 12–13) and `services/nightsbridge-sync/.env` |
-| **Supabase** | URL + keys in `.env.local` (GA4 / Resend still placeholders — fine) |
-| **Scraper** | `public/ScriptTestBLGH/` — Playwright login + bridgeitapi + webview images |
+| **Supabase** | URL + keys in `.env.local` (GA4 / Resend still placeholders - fine) |
+| **Scraper** | `public/ScriptTestBLGH/` - Playwright login + bridgeitapi + webview images |
 | **Host cron** | `POST /api/sync` every **10–15 min** (via `SYNC_WORKER_URL`) |
 
 **Important:** Playwright must run on a host with a browser (Mac, VPS, Railway). Point `SYNC_WORKER_URL` at that worker, or run `run-sync.sh` via system cron.
@@ -25,13 +25,13 @@ NightsBridge does **not** call your website when someone books on their engine, 
 | **B. System cron** | **Every 10–15 min** | Same machine | Production on one server |
 | **C. Remote worker** | Every 10–15 min | VPS → `POST /api/sync` | Production with `SYNC_WORKER_URL` |
 
-**Why not “on every booking”?** NightsBridge would need to push to you. Without that, the fastest safe pattern is poll every **10–15 minutes** — stale data is at most one interval old. For a guest house, that is usually acceptable.
+**Why not “on every booking”?** NightsBridge would need to push to you. Without that, the fastest safe pattern is poll every **10–15 minutes** - stale data is at most one interval old. For a guest house, that is usually acceptable.
 
 Do **not** poll faster than every **5 minutes** (login + browser load stresses NightsBridge and may trip limits).
 
 ---
 
-## Option A — Keep worker running (easiest on your Mac)
+## Option A - Keep worker running (easiest on your Mac)
 
 ```bash
 npm run sync:nightsbridge:setup   # once
@@ -48,7 +48,7 @@ Leave a terminal open, or run under `tmux` / `screen`.
 
 ---
 
-## Option B — macOS / Linux cron (runs even when terminal closed)
+## Option B - macOS / Linux cron (runs even when terminal closed)
 
 1. Make the script executable:
 
@@ -72,7 +72,7 @@ Logs: `services/nightsbridge-sync/logs/sync-YYYYMMDD.log`
 
 ---
 
-## Option C — Remote worker + `/api/sync`
+## Option C - Remote worker + `/api/sync`
 
 1. Deploy `public/ScriptTestBLGH` to **Railway**, **Render**, or a **VPS** with Playwright.
 2. Expose an endpoint that runs `run-sync.sh` or `python main.py`.
@@ -107,7 +107,7 @@ NightsBridge login + Supabase are enough to sync availability for the website AP
 
 ---
 
-## Supabase cron (yes — but as a *trigger*, not the scraper)
+## Supabase cron (yes - but as a *trigger*, not the scraper)
 
 **What you asked:** run cron jobs in Supabase.
 
@@ -115,9 +115,9 @@ NightsBridge login + Supabase are enough to sync availability for the website AP
 
 | Supabase feature | Can it scrape NightsBridge? |
 |------------------|----------------------------|
-| **pg_cron** (SQL in Postgres) | No — only runs SQL inside your database |
-| **Edge Function + Schedule** | No Playwright — but can **HTTP POST** to your sync worker every 10 min |
-| **Database** | Yes — **stores** everything the scraper writes |
+| **pg_cron** (SQL in Postgres) | No - only runs SQL inside your database |
+| **Edge Function + Schedule** | No Playwright - but can **HTTP POST** to your sync worker every 10 min |
+| **Database** | Yes - **stores** everything the scraper writes |
 
 So: **Supabase is the database + the alarm clock**. The **scraper still runs elsewhere** (your Mac, Railway, VPS) because it needs a real browser to log in.
 
@@ -131,7 +131,7 @@ When `main.py` / `worker.py` runs, it already:
 4. Rebuilds **`availability_cache`** (what `/api/availability` reads)
 5. Logs the run in **`sync_run`**
 
-So yes — bookings from NightsBridge, LekkeSlaap, SafariNow, etc. all appear in **your** database after the next poll. We don’t need OTAs to notify you; we read NightsBridge’s calendar, which is the source of truth.
+So yes - bookings from NightsBridge, LekkeSlaap, SafariNow, etc. all appear in **your** database after the next poll. We don’t need OTAs to notify you; we read NightsBridge’s calendar, which is the source of truth.
 
 ### Set up Supabase-scheduled cron (after worker is hosted)
 
@@ -152,7 +152,7 @@ That still writes to the same Supabase project.
 
 ### Why not run the scraper *inside* Supabase?
 
-NightsBridge login uses an Angular website + Playwright + Chromium. Supabase Edge Functions are lightweight Deno sandboxes — no browser, no Python, no Playwright. That’s a hard platform limit, not a choice we made.
+NightsBridge login uses an Angular website + Playwright + Chromium. Supabase Edge Functions are lightweight Deno sandboxes - no browser, no Python, no Playwright. That’s a hard platform limit, not a choice we made.
 
-**Future option:** store a refreshed `loginkey` in Supabase (updated by the scraper daily); an Edge Function could call `bridgeitapi` directly without Playwright for quick polls — but when the key expires, something with a browser must log in again.
+**Future option:** store a refreshed `loginkey` in Supabase (updated by the scraper daily); an Edge Function could call `bridgeitapi` directly without Playwright for quick polls - but when the key expires, something with a browser must log in again.
 

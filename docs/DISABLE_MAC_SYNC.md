@@ -36,6 +36,6 @@ SELECT id, started_at, ok FROM sync_run ORDER BY started_at DESC LIMIT 5;
 
 New rows should appear without running anything on your Mac.
 
-## 4. Optional — remove from Next.js
+## 4. Optional - remove from Next.js
 
 Do **not** set `RUN_LOCAL_SYNC=true` in production.

@@ -1,4 +1,4 @@
-/* V2 site theme — scoped so it does not override the main site */
+/* V2 site theme - scoped so it does not override the main site */
 [data-site="v2"] {
   --cream: #fafafa;
   --deep-earth: #0a0a0a;

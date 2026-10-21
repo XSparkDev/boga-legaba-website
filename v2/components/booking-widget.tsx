@@ -19,7 +19,7 @@ export function BookingWidget() {
         </h3>
         <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-brown">
           We&apos;re setting up live availability and instant reservations for Chababa,
-          Interlaken A and Lantana — best rates, no third-party booking fees.
+          Interlaken A and Lantana - best rates, no third-party booking fees.
         </p>
       </div>
 

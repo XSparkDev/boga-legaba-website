@@ -22,7 +22,7 @@ async function isAuthenticated() {
 
 /**
  * data/rooms.ts is the static per-room content catalog (names, descriptions,
- * grouped by property) but has no bbroomid — that only exists in the `room`
+ * grouped by property) but has no bbroomid - that only exists in the `room`
  * table, kept in sync by the NightsBridge sync worker. Join by room_name to
  * get each room's bbroomid for the image upload/fetch API.
  */
@@ -35,7 +35,7 @@ async function getRoomsWithIds(): Promise<AdminRoom[]> {
   for (const property of properties) {
     for (const room of property.rooms) {
       const bbroomid = idByName.get(room.name)
-      if (bbroomid == null) continue // not yet synced from NightsBridge — nothing to attach images to yet
+      if (bbroomid == null) continue // not yet synced from NightsBridge - nothing to attach images to yet
       rooms.push({ bbroomid, name: room.name, propertyName: property.name })
     }
   }

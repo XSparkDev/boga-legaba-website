@@ -1,4 +1,4 @@
-# Boga Legaba — NightsBridge sync worker (Railway)
+# Boga Legaba - NightsBridge sync worker (Railway)
 
 Runs Playwright sync + Webview image URLs on a schedule triggered by Supabase Edge Function.
 

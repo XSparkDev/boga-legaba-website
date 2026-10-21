@@ -19,7 +19,7 @@ async function isAuthenticated() {
   return store.get("bl_admin_session")?.value === process.env.ADMIN_SECRET
 }
 
-// GET — current overrides as a map keyed by image_key.
+// GET - current overrides as a map keyed by image_key.
 export async function GET() {
   if (!(await isAuthenticated())) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
@@ -36,7 +36,7 @@ export async function GET() {
   return NextResponse.json({ ok: true, overrides })
 }
 
-// POST multipart { file, key, alt? } — upload a replacement image for a slot.
+// POST multipart { file, key, alt? } - upload a replacement image for a slot.
 export async function POST(request: NextRequest) {
   if (!(await isAuthenticated())) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true, override: { image_url, alt: resolvedAlt } })
 }
 
-// PATCH { key, alt } — edit only the caption/alt of a slot (keeps the image).
+// PATCH { key, alt } - edit only the caption/alt of a slot (keeps the image).
 export async function PATCH(request: NextRequest) {
   if (!(await isAuthenticated())) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
@@ -114,7 +114,7 @@ export async function PATCH(request: NextRequest) {
   return NextResponse.json({ ok: true })
 }
 
-// DELETE ?key=... — revert a slot to its built-in default (removes the override
+// DELETE ?key=... - revert a slot to its built-in default (removes the override
 // row; the underlying Storage file is best-effort cleaned up).
 export async function DELETE(request: NextRequest) {
   if (!(await isAuthenticated())) {

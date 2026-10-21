@@ -123,7 +123,7 @@ export function SiteFooter() {
             </div>
           ))}
 
-          {/* Legal column — same heading/link styling as the other columns,
+          {/* Legal column - same heading/link styling as the other columns,
               plus a visible keyboard-focus state. */}
           <div>
             <h3 className="font-mono text-xs uppercase tracking-widest text-gold">Legal</h3>
@@ -161,7 +161,7 @@ export function SiteFooter() {
               </span>
             </p>
           </div>
-          {/* Compact legal row — wraps without horizontal scroll on phones. */}
+          {/* Compact legal row - wraps without horizontal scroll on phones. */}
           <nav aria-label="Legal" className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:justify-start">
             {LEGAL_LINKS.map((link) => (
               <Link

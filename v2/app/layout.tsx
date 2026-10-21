@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Boga Legaba Guest House & Conference Centre',
     description:
-      'Mahikeng’s most welcoming address — three properties, 27 rooms, one team. Conference, corporate & government accommodation.',
+      'Mahikeng’s most welcoming address - three properties, 27 rooms, one team. Conference, corporate & government accommodation.',
     type: 'website',
     locale: 'en_ZA',
   },

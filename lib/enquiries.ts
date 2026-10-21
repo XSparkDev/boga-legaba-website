@@ -2,7 +2,7 @@
  * Lead-capture enquiries from the public site (conference, corporate, contact,
  * interest/subscribe forms). Saves to the `enquiry` table (migration 011) and
  * sends two emails per submission: a confirmation to the person who submitted,
- * and a notification to Boga Legaba staff — both built from the shared email
+ * and a notification to Boga Legaba staff - both built from the shared email
  * theme so they match the rest of the site.
  *
  * Fails soft if the table isn't applied yet (never blocks the guest-facing form).
@@ -78,7 +78,7 @@ function firstNameOf(name: string) {
   return (name || "").trim().split(/\s+/)[0] || "there"
 }
 
-/** Guest-facing acknowledgement email — copy tailored to the enquiry type. */
+/** Guest-facing acknowledgement email - copy tailored to the enquiry type. */
 export function buildEnquiryGuestEmail(input: EnquiryInput): { subject: string; html: string } {
   const first = firstNameOf(input.name)
   const d = input.details ?? {}
@@ -106,6 +106,7 @@ export function buildEnquiryGuestEmail(input: EnquiryInput): { subject: string; 
             "In the meantime, feel free to reach out directly if you have any urgent questions.",
           ) +
           emailButton("WhatsApp Us", EMAIL_BRAND.whatsappHref),
+        unsubscribeEmail: input.email,
       }),
     }
   }
@@ -134,6 +135,7 @@ export function buildEnquiryGuestEmail(input: EnquiryInput): { subject: string; 
             "If this is a government per diem booking, please have your official order/PO number ready. Our team will guide you through the rest.",
           ) +
           emailButton("WhatsApp Us", EMAIL_BRAND.whatsappHref),
+        unsubscribeEmail: input.email,
       }),
     }
   }
@@ -158,6 +160,7 @@ export function buildEnquiryGuestEmail(input: EnquiryInput): { subject: string; 
             { title: "What you sent us" },
           ) +
           emailButton("WhatsApp Us", EMAIL_BRAND.whatsappHref),
+        unsubscribeEmail: input.email,
       }),
     }
   }
@@ -178,11 +181,12 @@ export function buildEnquiryGuestEmail(input: EnquiryInput): { subject: string; 
             : "We'll be in touch with updates and new offers.",
         }) +
         emailParagraph("In the meantime, feel free to browse our latest specials and rooms on the website."),
+        unsubscribeEmail: input.email,
     }),
   }
 }
 
-/** Staff notification email — every field the guest submitted, all types. */
+/** Staff notification email - every field the guest submitted, all types. */
 export function buildEnquiryStaffEmail(input: EnquiryInput): { subject: string; html: string } {
   const d = input.details ?? {}
   const rows: InfoRow[] = [
@@ -218,7 +222,7 @@ export function buildEnquiryStaffEmail(input: EnquiryInput): { subject: string; 
   }
 
   if (d.marketingOptIn === true) {
-    rows.push({ label: "Mailing List Opt-in", value: "Yes — add to mailing list" })
+    rows.push({ label: "Mailing List Opt-in", value: "Yes - add to mailing list" })
   }
 
   return {

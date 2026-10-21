@@ -1,4 +1,4 @@
-# nextform111 — Deployment & ops checklist (from Part 4 onward)
+# nextform111 - Deployment & ops checklist (from Part 4 onward)
 
 > **Purpose:** Step-by-step guide from Supabase Edge Function cron through go-live verification.  
 > **Update this file** after each session until everything below is checked off.  
@@ -12,8 +12,8 @@
 | Area | Status | Notes |
 |------|--------|--------|
 | Supabase SQL schema | ⬜ / ✅ | Run `supabase/full_schema_combined.sql` if not done |
-| Render — sync worker (Docker) | ⬜ / ✅ | `services/sync-worker/Dockerfile` |
-| Render — website (Next.js) | ⬜ / ✅ | `npm run build` + `npm start` |
+| Render - sync worker (Docker) | ⬜ / ✅ | `services/sync-worker/Dockerfile` |
+| Render - website (Next.js) | ⬜ / ✅ | `npm run build` + `npm start` |
 | Supabase Edge Function + cron | ⬜ / ✅ | Part 4 below |
 | End-to-end verification | ⬜ / ✅ | Part 5 below |
 | Custom domain | ⬜ optional | Part 6 below |
@@ -28,7 +28,7 @@
 
 ---
 
-## Part 4 — Supabase Edge Function (automatic cron)
+## Part 4 - Supabase Edge Function (automatic cron)
 
 This pings your Render sync worker every **10 minutes**.
 
@@ -97,7 +97,7 @@ schedule = "*/10 * * * *"
 
 ---
 
-## Part 5 — Verify everything works
+## Part 5 - Verify everything works
 
 | Check | How | Done |
 |-------|-----|------|
@@ -129,7 +129,7 @@ Expected health response:
 
 ---
 
-## Part 6 — Custom domain (optional)
+## Part 6 - Custom domain (optional)
 
 1. **Render → website service → Settings → Custom Domains**
 2. Add e.g. `www.bogalegaba.co.za`
@@ -138,7 +138,7 @@ Expected health response:
 - [ ] Custom domain added for website
 - [ ] DNS propagated and HTTPS working
 
-**Sync worker:** `*.onrender.com` is fine for `SYNC_WORKER_URL` — custom domain not required.
+**Sync worker:** `*.onrender.com` is fine for `SYNC_WORKER_URL` - custom domain not required.
 
 ---
 
@@ -174,13 +174,13 @@ Every 10 min:
 | Problem | Fix |
 |---------|-----|
 | Sync worker build fails | Dockerfile path: `services/sync-worker/Dockerfile`, context: repo root |
-| `IndexError: 2` on deploy | Fixed in `server.py` — pull latest `qa` / `scrapping` |
-| `httpx` conflict on build | Fixed — removed pinned `httpx==0.27.2` from Dockerfile |
+| `IndexError: 2` on deploy | Fixed in `server.py` - pull latest `qa` / `scrapping` |
+| `httpx` conflict on build | Fixed - removed pinned `httpx==0.27.2` from Dockerfile |
 | `/run` returns **401** | `CRON_SECRET` mismatch between Render and Supabase |
 | `/run` times out | Normal on first run (Playwright login); check Render Logs |
-| Free tier slow / fails | Upgrade sync worker to **Starter** — free spins down after ~15 min idle |
+| Free tier slow / fails | Upgrade sync worker to **Starter** - free spins down after ~15 min idle |
 | Admin “Sync transactions” fails on live site | Expected on Render Next.js (no Python); run locally or wire to worker later |
-| Edge function **502** | Wrong `SYNC_WORKER_URL`, worker asleep, or worker crashed — check `/health` |
+| Edge function **502** | Wrong `SYNC_WORKER_URL`, worker asleep, or worker crashed - check `/health` |
 | Edge function **503** | `SYNC_WORKER_URL` or `CRON_SECRET` not set in Supabase secrets |
 | No data in Supabase after sync | Check Render logs for `SITE_USER` / `SITE_PASS` / `SUPABASE_SERVICE_ROLE_KEY` |
 

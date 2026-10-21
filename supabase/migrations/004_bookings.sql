@@ -38,6 +38,6 @@ CREATE INDEX IF NOT EXISTS bookings_synced_at_idx  ON bookings (synced_at DESC);
 -- Row-level security
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 
--- Only service role (backend) can read/write bookings — no public access
+-- Only service role (backend) can read/write bookings - no public access
 CREATE POLICY "Service role only" ON bookings
   USING (auth.role() = 'service_role');

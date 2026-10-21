@@ -8,21 +8,21 @@
  * PRIMARY:  POST https://www.nightsbridge.com/bridge/api/5.0/availgrid
  *   Body:   { bbid, startdate (arrive), enddate (depart), showroomcount:false, ... }
  *   Returns per-night entries per room type:
- *     roomtypes[].rtid             — numeric room type ID
- *     roomtypes[].rtname           — room type name
- *     roomtypes[].availability[]   — entries from startdate..enddate INCLUSIVE
+ *     roomtypes[].rtid             - numeric room type ID
+ *     roomtypes[].rtname           - room type name
+ *     roomtypes[].availability[]   - entries from startdate..enddate INCLUSIVE
  *                                    (nights+1 entries; only first `nights` are stay nights)
- *       .noroomsfree               — number of rooms free that night (showroomcount:false)
- *       .closeoutrs.closedout      — true = property has closed it out
- *       .rates[0].paxrate          — 1-adult per-night rate
- *       .rates[1].paxrate          — 2-adult per-night rate
- *       .rates[2].paxrate          — 3-adult per-night rate (family/triple rooms)
+ *       .noroomsfree               - number of rooms free that night (showroomcount:false)
+ *       .closeoutrs.closedout      - true = property has closed it out
+ *       .rates[0].paxrate          - 1-adult per-night rate
+ *       .rates[1].paxrate          - 2-adult per-night rate
+ *       .rates[2].paxrate          - 3-adult per-night rate (family/triple rooms)
  *
  * FALLBACK: POST https://www.nightsbridge.com/bridge/api/5.0/availability/{bbid}
  *   Returns TOTAL rates for the full stay (divide by nights for per-night display).
  *     roomtypes[].roomtypename
- *     roomtypes[].roomsfree        — number of rooms free across the stay (0 = sold)
- *     roomtypes[].mealplans[]      — defaultmealplan.rates = [total_1adult, total_2adult, ...]
+ *     roomtypes[].roomsfree        - number of rooms free across the stay (0 = sold)
+ *     roomtypes[].mealplans[]      - defaultmealplan.rates = [total_1adult, total_2adult, ...]
  * ─────────────────────────────────────────────────────────────────
  */
 
@@ -44,7 +44,7 @@ const NB_HEADERS = {
 // NightsBridge's CMS text (areainfo, attractions, directions, etc.) is stored
 // as Windows-1252 but served as if it were UTF-8. Smart quotes/dashes land as
 // raw C1 control bytes (e.g. 0x92 for a right single quote), which browsers
-// render as an invisible glyph — "Bethel's Rocks" shows up as "Bethel Rocks"
+// render as an invisible glyph - "Bethel's Rocks" shows up as "Bethel Rocks"
 // with a gap where the apostrophe should be. Map the known bytes back.
 const WIN1252_C1_MAP: Record<string, string> = {
   "\u0080": "\u20AC", "\u0082": "\u201A", "\u0083": "\u0192", "\u0084": "\u201E",
@@ -127,7 +127,7 @@ async function saveToRateCache(
  * Raw shape for /bridge/api/5.0/availgrid.
  * NightsBridge changed the per-night availability entry format:
  *   Old: { noroomsfree: number, closeoutrs: {...}, rates: [{paxrate}] }
- *   New: { roomsfree: boolean }  (no rates — fetch those from /availability)
+ *   New: { roomsfree: boolean }  (no rates - fetch those from /availability)
  */
 type AvailGridResponse = {
   success: boolean
@@ -144,7 +144,7 @@ type AvailGridResponse = {
       availability: Array<{
         // New format (boolean)
         roomsfree?: boolean
-        // Old format (number — kept for backward compat)
+        // Old format (number - kept for backward compat)
         noroomsfree?: number
         closeoutrs?: { closedout: boolean; bbrtid: number; closeouttype: string }
         rates?: Array<{ paxrate: number }>
@@ -183,7 +183,7 @@ export async function callAvailGrid(
         extbbid: "",
         clientloginkey: null,
         startdate: arrive,
-        enddate: depart,       // inclusive — array has nights+1 entries
+        enddate: depart,       // inclusive - array has nights+1 entries
         bbrtid: 0,
         rtgroupid: 0,
         nightsbridge: true,
@@ -220,7 +220,7 @@ export async function callAvailGrid(
           return (n.noroomsfree ?? 0) > 0 && !n.closeoutrs?.closedout
         })
 
-      // Rates from availgrid (old format only — new format omits them; caller merges from /availability)
+      // Rates from availgrid (old format only - new format omits them; caller merges from /availability)
       const singlePrices = stayNights
         .map((n) => n.rates?.[0]?.paxrate)
         .filter((v): v is number => typeof v === "number" && v > 0)
@@ -270,18 +270,18 @@ export async function callAvailGrid(
 export type LiveAvailability =
   | { status: "available" }
   | { status: "unavailable" }
-  | { status: "unknown" } // NB unreachable / room type not listed — let Playwright decide
+  | { status: "unknown" } // NB unreachable / room type not listed - let Playwright decide
 
 /**
  * Real-time availability gate used right before a booking is placed.
  *
- * Unlike callAvailGrid this NEVER reads the in-memory cache — a booking decision
+ * Unlike callAvailGrid this NEVER reads the in-memory cache - a booking decision
  * must reflect NightsBridge's state *right now*, not what it was up to 10 min ago.
  *
  * Returns:
- *   "available"   — at least one room of the type is free for EVERY stay night
- *   "unavailable" — NB lists the type but it is sold out on ≥1 night → block booking
- *   "unknown"     — NB unreachable or doesn't list the type → don't block (Playwright
+ *   "available"   - at least one room of the type is free for EVERY stay night
+ *   "unavailable" - NB lists the type but it is sold out on ≥1 night → block booking
+ *   "unknown"     - NB unreachable or doesn't list the type → don't block (Playwright
  *                   + NightsBridge remain the authoritative final gatekeeper)
  */
 export async function checkRoomTypeAvailableLive(
@@ -319,7 +319,7 @@ export async function checkRoomTypeAvailableLive(
 
     const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase()
     const target = norm(roomTypeName)
-    // Exact match first — this property has multiple room types whose names
+    // Exact match first - this property has multiple room types whose names
     // share a prefix (e.g. "Double Room (Shower)" vs "Double Room (Bath &
     // Shower)"); falling back to substring matching before checking for an
     // exact match risks reporting availability for the WRONG room type.
@@ -327,7 +327,7 @@ export async function checkRoomTypeAvailableLive(
       json.data.roomtypes.find((r) => norm(r.rtname) === target) ??
       json.data.roomtypes.find((r) => norm(r.rtname).includes(target) || target.includes(norm(r.rtname)))
 
-    // NB doesn't list this type for these dates — can't make a confident call.
+    // NB doesn't list this type for these dates - can't make a confident call.
     if (!rt) return { status: "unknown" }
 
     const stayNights = (rt.availability ?? []).slice(0, nights)
@@ -457,7 +457,7 @@ type AvailabilityResponse = {
 /**
  * Call /bridge/api/5.0/availability/{bbid} for the full stay range.
  *
- * Rates returned are TOTAL for the stay period — divide by `nights` to get
+ * Rates returned are TOTAL for the stay period - divide by `nights` to get
  * the per-night rate suitable for display.
  */
 export async function callAvailability(
@@ -509,7 +509,7 @@ export async function callAvailability(
       const mealplan =
         rt.mealplans.find((m) => m.defaultmealplan) ?? rt.mealplans[0] ?? null
 
-      // Rates are TOTALS for the stay — divide to get per-night
+      // Rates are TOTALS for the stay - divide to get per-night
       const totalSingle = mealplan?.rates?.[0] ?? null
       const totalDouble = mealplan?.rates?.[1] ?? null
       const rateSingle = totalSingle != null ? totalSingle / nights : null
@@ -623,7 +623,7 @@ export async function fetchMealPlanRates(
 }
 
 // ---------------------------------------------------------------------------
-// Establishment endpoint — images, amenities, room details, property info
+// Establishment endpoint - images, amenities, room details, property info
 // ---------------------------------------------------------------------------
 
 export type NbImage = {
@@ -679,7 +679,7 @@ export type EstablishmentData = {
 }
 
 const _establishmentCache = new Map<number, { data: EstablishmentData; ts: number }>()
-const ESTABLISHMENT_TTL_MS = 60 * 60 * 1000 // 1 hour — rarely changes
+const ESTABLISHMENT_TTL_MS = 60 * 60 * 1000 // 1 hour - rarely changes
 
 export async function fetchEstablishment(bbid: number): Promise<EstablishmentData | null> {
   const hit = _establishmentCache.get(bbid)
@@ -974,7 +974,7 @@ export async function fetchSpecials(bbid: number): Promise<NbSpecial[]> {
 }
 
 // ---------------------------------------------------------------------------
-// Occupancy overview — calls availgrid for every 7-day window in next N days
+// Occupancy overview - calls availgrid for every 7-day window in next N days
 // ---------------------------------------------------------------------------
 
 export type OccupancyDay = {

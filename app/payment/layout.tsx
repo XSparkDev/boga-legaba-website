@@ -14,7 +14,7 @@ const dmSans = DM_Sans({
   display: "swap",
 })
 
-// Boga Legaba Brand Guidelines — same three approved typefaces as the main
+// Boga Legaba Brand Guidelines - same three approved typefaces as the main
 // site (see app/(main)/layout.tsx), so payment pages stay on-brand.
 const leagueSpartan = League_Spartan({
   subsets: ["latin"],

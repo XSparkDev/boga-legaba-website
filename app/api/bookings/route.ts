@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic"
 
 /**
  * GET /api/bookings?from=YYYY-MM-DD&to=YYYY-MM-DD
- * Protected — requires Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>
+ * Protected - requires Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>
  */
 export async function GET(request: NextRequest) {
   const auth = request.headers.get("authorization")

@@ -81,7 +81,7 @@ def main() -> None:
                 )
                 storage.sync_to_supabase(data, start, end)
             else:
-                print("Supabase env not set — skipped DB sync (CSV/JSON only).")
+                print("Supabase env not set - skipped DB sync (CSV/JSON only).")
         finally:
             browser.close()
 

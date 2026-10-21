@@ -130,7 +130,7 @@ export function StayDateSearch({
   if (compact) {
     return (
       <div className={cn("flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between", className)}>
-        {/* The heading is decorative once the bar is docked — on phones the room
+        {/* The heading is decorative once the bar is docked - on phones the room
             count is the only line worth the vertical space. */}
         <div className={cn("min-w-0", !countLabel && "hidden sm:block")}>
           <p className="hidden items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-gold sm:flex">

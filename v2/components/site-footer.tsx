@@ -25,7 +25,7 @@ export function SiteFooter() {
               <SiteLogo variant="light" className="h-16 md:h-24" />
             </Link>
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-cream/60">
-              Mahikeng&apos;s most welcoming address. Three properties, 27 rooms, one team —
+              Mahikeng&apos;s most welcoming address. Three properties, 27 rooms, one team -
               built for business, designed for comfort.
             </p>
             <div className="mt-6 flex gap-3">

@@ -1,11 +1,11 @@
 /**
- * Paystack webhook handler — server-to-server event fired by Paystack regardless
+ * Paystack webhook handler - server-to-server event fired by Paystack regardless
  * of whether the guest's browser completes the redirect.
  *
  * BOOK-FIRST FLOW: the NightsBridge booking is created BEFORE payment is ever
  * requested (see /api/booking/start), so there's no booking-creation race to
  * guard against here. This IS, however, the authoritative, reliable trigger
- * for the guest-confirmation + admin (Boga) notification emails — gated on
+ * for the guest-confirmation + admin (Boga) notification emails - gated on
  * this verified server-to-server event rather than on the guest's browser
  * completing the redirect back to /api/payment/verify, which never fires if
  * they close the tab right after paying on Paystack's hosted page.
@@ -15,7 +15,7 @@
  * transition is the atomic claim. If Paystack retries this webhook, or the
  * guest's browser redirect (/api/payment/verify) also fires for the same
  * payment, whichever request wins the compare-and-swap sends the emails;
- * the other finds booking_status already past AWAITING_PAYMENT and skips —
+ * the other finds booking_status already past AWAITING_PAYMENT and skips -
  * checking current STATE, not just "have we seen this payment ID before".
  */
 import { NextRequest, NextResponse } from "next/server"
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
   const expected = createHmac("sha512", secretKey).update(body).digest("hex")
   if (sig !== expected) {
-    console.warn("[webhook] Invalid signature — possible spoofed request")
+    console.warn("[webhook] Invalid signature - possible spoofed request")
     return NextResponse.json({ ok: false, error: "Invalid signature" }, { status: 401 })
   }
 
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     console.log(`[webhook] charge.success paystackRef=${paystackReference} internalRef=${internalReference} amount=R${amountPaid}`)
 
     if (!internalReference) {
-      console.error(`[webhook] paystackRef=${paystackReference} has no internalReference in metadata — cannot drive the state machine, skipping (old/manual transaction?)`)
+      console.error(`[webhook] paystackRef=${paystackReference} has no internalReference in metadata - cannot drive the state machine, skipping (old/manual transaction?)`)
       return NextResponse.json({ ok: true })
     }
 
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       // Prefer the exact physical unit (e.g. "Beads") written to
       // booking_job.room_name by the NightsBridge worker once its background
       // job finishes, over whatever (if anything) made it into Paystack's
-      // metadata — see the matching comment in /api/payment/verify.
+      // metadata - see the matching comment in /api/payment/verify.
       const { job } = await getBookingJob(internalReference)
       const roomName = job?.room_name || meta.roomName || undefined
 
@@ -101,13 +101,13 @@ export async function POST(request: NextRequest) {
         roomName,
         amountPaid,
       }
-      // Boga is notified IMMEDIATELY on payment success — never gated on the
+      // Boga is notified IMMEDIATELY on payment success - never gated on the
       // NightsBridge booking, so they can act (e.g. Retry) if it hasn't landed.
       await sendAdminPaymentEmail(ctx)
       await transitionBookingStatus(internalReference, "BOGA_NOTIFIED", { from: ["PAYMENT_CONFIRMED"] })
       console.log(`[webhook] internalRef=${internalReference} admin notification email sent`)
     } else {
-      console.log(`[webhook] internalRef=${internalReference} PAYMENT_CONFIRMED transition rejected (${claimed.reason}) — already processed by webhook retry or /api/payment/verify, skipping admin email`)
+      console.log(`[webhook] internalRef=${internalReference} PAYMENT_CONFIRMED transition rejected (${claimed.reason}) - already processed by webhook retry or /api/payment/verify, skipping admin email`)
     }
 
     // Guest email is held until the NightsBridge booking has resolved. Attempt
@@ -120,9 +120,9 @@ export async function POST(request: NextRequest) {
   // ── Failed / declined payment ──────────────────────────────────────────────
   // Paystack fires charge.failed when a payment attempt is declined (bad card,
   // insufficient funds, etc.). We record it so the admin can see guests who
-  // tried to book but did not pay. NOT terminal — if the guest retries and
+  // tried to book but did not pay. NOT terminal - if the guest retries and
   // succeeds, a later charge.success recovers the booking to PAYMENT_CONFIRMED.
-  // (Abandoned checkouts, where the guest just closes the tab, fire NO event —
+  // (Abandoned checkouts, where the guest just closes the tab, fire NO event -
   // those stay at AWAITING_PAYMENT and the admin UI flags them as stale.)
   if (event.event === "charge.failed" || (event.event === "charge.success" && event.data?.status && event.data.status !== "success")) {
     const paystackReference = event.data?.reference ?? ""
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
         reason: `Paystack charge.failed (${gatewayReason}) ref=${paystackReference}`,
       })
       if (!marked.ok) {
-        console.log(`[webhook] internalRef=${internalReference} PAYMENT_FAILED transition skipped (${marked.reason}) — booking already advanced (e.g. a later attempt succeeded)`)
+        console.log(`[webhook] internalRef=${internalReference} PAYMENT_FAILED transition skipped (${marked.reason}) - booking already advanced (e.g. a later attempt succeeded)`)
       }
     }
   }

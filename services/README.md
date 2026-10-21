@@ -36,7 +36,7 @@ On a server, prefer **cron** or **systemd** calling the one-shot command:
 5 * * * * cd /path/to/boga-legaba-website/services/nightsbridge-sync && .venv/bin/python worker.py --once >> logs/sync.log 2>&1
 ```
 
-**Security:** `.env`, `storage_state.json`, and `output/` contain credentials and guest PII — never commit them.
+**Security:** `.env`, `storage_state.json`, and `output/` contain credentials and guest PII - never commit them.
 
 ### Supabase sync
 

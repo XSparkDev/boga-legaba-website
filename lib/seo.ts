@@ -1,6 +1,6 @@
 /**
  * Shared SEO constants + structured-data builder.
- * Additive only — nothing here changes existing routes or behaviour.
+ * Additive only - nothing here changes existing routes or behaviour.
  */
 import { BUSINESS, LOCATION } from "@/data/rooms"
 

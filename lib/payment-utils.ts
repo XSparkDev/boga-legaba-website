@@ -1,11 +1,11 @@
 /**
- * Shared utilities for the booking + payment flow: BOOK-FIRST — the guest's
+ * Shared utilities for the booking + payment flow: BOOK-FIRST - the guest's
  * room is created on NightsBridge before payment is ever requested (see
  * /api/booking/start + /api/booking/status), then Paystack only confirms
  * payment for an already-real booking.
  */
 import { Resend } from "resend"
-import { emailShell, emailHero, emailInfoTable, emailButton, emailCallout, emailParagraph, EMAIL_COLORS, EMAIL_BRAND, type InfoRow } from "@/lib/email-theme"
+import { emailShell, emailHero, emailInfoTable, emailButton, emailCallout, emailParagraph, unsubscribeHeaders, EMAIL_COLORS, EMAIL_BRAND, type InfoRow } from "@/lib/email-theme"
 
 // ── Paystack session creation ───────────────────────────────────────────────
 
@@ -18,9 +18,9 @@ export type InitiatePaymentArgs = {
   checkin?: string
   checkout?: string
   roomTypeName?: string
-  /** The exact physical room (e.g. "Red Room") — see PaymentContext.roomName. */
+  /** The exact physical room (e.g. "Red Room") - see PaymentContext.roomName. */
   roomName?: string
-  /** booking_job.reference (e.g. "BLJOB-...") — DIFFERENT from bookingRef,
+  /** booking_job.reference (e.g. "BLJOB-...") - DIFFERENT from bookingRef,
    * which is the NightsBridge booking id shown to guests. Threaded through
    * Paystack metadata so the webhook/verify callback (which only receives
    * Paystack's own transaction reference) can look up and transition the
@@ -34,9 +34,9 @@ export type InitiatePaymentResult =
 
 /**
  * Create ONE Paystack checkout session for a booking. Extracted so it can be
- * called from two places that must share the exact same session — the
+ * called from two places that must share the exact same session - the
  * guest's browser redirect AND the "booking reserved" email's fallback
- * link — without creating two separate Paystack transactions for one
+ * link - without creating two separate Paystack transactions for one
  * booking (a real double-charge risk if a guest used both links).
  */
 export async function initiatePaystackPayment(args: InitiatePaymentArgs): Promise<InitiatePaymentResult> {
@@ -145,14 +145,14 @@ export interface PaymentContext {
   checkout:     string
   roomTypeName: string
   /** The exact physical room booked (e.g. "Red Room"), known once the
-   * admin-calendar booking succeeds — prefer this over roomTypeName
+   * admin-calendar booking succeeds - prefer this over roomTypeName
    * wherever the room is shown to the guest. Absent for the old
    * guest-widget flow, which never learns the specific unit. */
   roomName?:    string
   amountPaid:   number
   /** Mailing-list opt-in ticked on the booking widget (optional, default false). */
   marketingOptIn?: boolean
-  // Full booking payload — used to CREATE the booking (book-first flow: this
+  // Full booking payload - used to CREATE the booking (book-first flow: this
   // happens BEFORE payment is requested, via /api/booking/start).
   mealPlanName?: string
   adults?:       number
@@ -198,7 +198,7 @@ function buildWorkerBookingPayload(ctx: PaymentContext, extra: Record<string, un
 /**
  * Fire the worker's ASYNC booking: the worker starts the ~50s booking in the
  * background, records the outcome in booking_job (keyed by the payment
- * reference), and returns 202 immediately. This call therefore returns fast —
+ * reference), and returns 202 immediately. This call therefore returns fast -
  * nothing waits on the booking. Returns true if the worker accepted the job.
  */
 export async function triggerAsyncBooking(ctx: PaymentContext): Promise<boolean> {
@@ -211,7 +211,7 @@ export async function triggerAsyncBooking(ctx: PaymentContext): Promise<boolean>
   const payload = buildWorkerBookingPayload(ctx, { async: true, reference: ctx.reference })
   // Guard against the worker's own required-field validation rejecting the
   // request server-side (e.g. an empty surname when guestName is a single
-  // word) — that would make triggerAsyncBooking return false, but by then
+  // word) - that would make triggerAsyncBooking return false, but by then
   // ensurePendingBookingJob has ALREADY written a "pending" row, so log the
   // exact payload shape sent so a rejection reason is traceable, not guessed.
   console.log(`[payment] triggerAsyncBooking reference=${ctx.reference} POST ${workerUrl}/book firstname="${payload.firstname}" surname="${payload.surname}" room="${payload.roomTypeName}"`)
@@ -220,13 +220,13 @@ export async function triggerAsyncBooking(ctx: PaymentContext): Promise<boolean>
       method:  "POST",
       headers: { Authorization: `Bearer ${cronSecret}`, "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      // Only kicking off the job — the worker returns 202 in well under a second.
+      // Only kicking off the job - the worker returns 202 in well under a second.
       signal: AbortSignal.timeout(30_000),
     })
     const data = (await res.json().catch(() => ({}))) as { ok?: boolean; accepted?: boolean; error?: string }
     const accepted = res.status === 202 || data.accepted === true || data.ok === true
     if (!accepted) {
-      console.error(`[payment] triggerAsyncBooking reference=${ctx.reference} REJECTED by worker: HTTP ${res.status} — ${data.error ?? "(no error message)"}`)
+      console.error(`[payment] triggerAsyncBooking reference=${ctx.reference} REJECTED by worker: HTTP ${res.status} - ${data.error ?? "(no error message)"}`)
     } else {
       console.log(`[payment] triggerAsyncBooking reference=${ctx.reference} ACCEPTED (HTTP ${res.status})`)
     }
@@ -246,11 +246,11 @@ function _resendClient(): { resend: Resend; from: string } | null {
 
 /**
  * Notify Boga (admin) that a payment succeeded. Sent the INSTANT Paystack
- * confirms payment — deliberately NOT gated on the NightsBridge booking, so
+ * confirms payment - deliberately NOT gated on the NightsBridge booking, so
  * Boga always hears about a paid booking immediately, even if the automated
  * NightsBridge registration is still running or failed. The email itself tells
  * them to open the admin page and click Retry if the booking isn't on
- * NightsBridge yet — which only works if it arrives promptly, hence the
+ * NightsBridge yet - which only works if it arrives promptly, hence the
  * decoupling from the guest email (see sendGuestConfirmationEmail).
  */
 export async function sendAdminPaymentEmail(ctx: PaymentContext): Promise<void> {
@@ -285,6 +285,7 @@ export async function sendGuestConfirmationEmail(ctx: PaymentContext): Promise<v
       to:      ctx.guestEmail,
       subject: "Payment Confirmed – Boga Legaba",
       html:    buildGuestConfirmEmail(ctx),
+      headers: unsubscribeHeaders(ctx.guestEmail),
     })
   } catch (err) {
     console.error("[payment] Guest confirmation email error:", err)
@@ -404,6 +405,7 @@ export function buildGuestConfirmEmail(ctx: PaymentContext) {
     preheader: `Your stay is confirmed. Booking reference ${ctx.bookingRef || ""} · ${amount} paid.`,
     accentBarColor: c.gold,
     footerNote: "Payment processed securely via Paystack &middot; Please keep this email as proof of payment.",
+    unsubscribeEmail: ctx.guestEmail || undefined,
     bodyHtml:
       emailHero({ eyebrow: "Payment Successful", heading: `Your stay is confirmed,<br><span style="color:${c.gold};">${firstname}</span>` }) +
       `<tr><td style="background:${c.sand};padding:32px 40px;text-align:center;">
@@ -424,6 +426,7 @@ export function buildGuestConfirmEmail(ctx: PaymentContext) {
 
 export function buildGuestPendingEmail({
   guestName,
+  guestEmail,
   bookingRef,
   checkin,
   checkout,
@@ -433,14 +436,16 @@ export function buildGuestPendingEmail({
   paymentUrl,
 }: {
   guestName:      string
+  /** Recipient address - feeds the footer unsubscribe link. */
+  guestEmail?:    string
   bookingRef:     string
   checkin:        string
   checkout:       string
   roomTypeName:   string
-  /** The exact physical room (e.g. "Red Room") — see resolveRoomLabel(). */
+  /** The exact physical room (e.g. "Red Room") - see resolveRoomLabel(). */
   roomName?:      string
   estimatedTotal: string
-  /** The SAME Paystack session used for the browser redirect — a fallback
+  /** The SAME Paystack session used for the browser redirect - a fallback
    * link in case the guest closed the tab or the redirect didn't fire.
    * Omitted entirely (no payment section) if pre-generation failed. */
   paymentUrl?:    string
@@ -471,6 +476,7 @@ export function buildGuestPendingEmail({
           )) +
       (paymentUrl ? emailButton("Complete Payment", paymentUrl) : emailButton("WhatsApp Us", EMAIL_BRAND.whatsappHref)),
     footerNote: "This is an automated notification. Please keep it for your records.",
+    unsubscribeEmail: guestEmail || undefined,
   })
 }
 

@@ -13,9 +13,9 @@ Run:
   python get_bookings.py 2026-06-01 2026-09-30   # custom range
 
 Env vars (in .env):
-  SITE_USER, SITE_PASS    — NightsBridge login credentials
-  SUPABASE_URL            — Supabase project URL
-  SUPABASE_SERVICE_ROLE_KEY — Supabase service role key
+  SITE_USER, SITE_PASS    - NightsBridge login credentials
+  SUPABASE_URL            - Supabase project URL
+  SUPABASE_SERVICE_ROLE_KEY - Supabase service role key
 """
 
 import json
@@ -91,7 +91,7 @@ def intercept_calendar_data(context, page, loginkey: str) -> list[dict[str, Any]
 
     print(f"  Calendar URL: {calendar_url[:90]}…")
     try:
-        # "commit" = fires as soon as response headers arrive — before JS runs.
+        # "commit" = fires as soon as response headers arrive - before JS runs.
         # We then wait explicitly for the XHRs the SPA fires.
         cal_page.goto(calendar_url, wait_until="commit", timeout=30_000)
     except Exception as e:
@@ -156,7 +156,7 @@ def upsert_bookings(bookings: list[dict[str, Any]]) -> None:
         ).execute()
         print(f"Supabase upsert: {len(valid)} bookings written.")
     except ImportError:
-        print("supabase-py not installed — saving to output/bookings.json only")
+        print("supabase-py not installed - saving to output/bookings.json only")
     except Exception as e:
         print(f"Supabase error: {e}")
 
@@ -168,7 +168,7 @@ with sync_playwright() as p:
     browser = p.chromium.launch(headless=headless, args=["--disable-dev-shm-usage", "--no-sandbox"])
 
     context, page = auth.get_authenticated_context(browser)
-    # auth already navigated to the dashboard — no need to goto again.
+    # auth already navigated to the dashboard - no need to goto again.
     # Just wait briefly for the Angular app to settle.
     page.wait_for_timeout(3_000)
 

@@ -5,8 +5,8 @@ export const dynamic = "force-dynamic"
 
 /**
  * Worker-completion hook. The NightsBridge worker POSTs here (best-effort,
- * authenticated with CRON_SECRET) the moment a booking RESOLVES — completed or
- * failed — so the guest's held-back "Payment Confirmed" email is sent as soon
+ * authenticated with CRON_SECRET) the moment a booking RESOLVES - completed or
+ * failed - so the guest's held-back "Payment Confirmed" email is sent as soon
  * as their booking settles, even in the rarer case where they finished paying
  * BEFORE the background NightsBridge job did (so no payment-time trigger, and
  * no browser poll, would otherwise have caught the completion).

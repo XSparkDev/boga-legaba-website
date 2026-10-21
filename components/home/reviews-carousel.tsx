@@ -51,7 +51,7 @@ export function ReviewsCarousel({ reviews }: { reviews: GuestReview[] }) {
 
   return (
     <div>
-      {/* Viewport — natural height, no scroll-jacking, no empty space. */}
+      {/* Viewport - natural height, no scroll-jacking, no empty space. */}
       <div className="overflow-hidden">
         <div
           className="flex transition-transform duration-500 ease-out"

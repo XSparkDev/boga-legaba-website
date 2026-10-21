@@ -15,7 +15,7 @@ playwright install chromium
 
 if [[ ! -f .env ]]; then
   cp .env.example .env
-  echo "Created .env — add your NightsBridge SITE_USER and SITE_PASS before running."
+  echo "Created .env - add your NightsBridge SITE_USER and SITE_PASS before running."
 fi
 
 echo "Setup complete. Run: npm run sync:nightsbridge:once"

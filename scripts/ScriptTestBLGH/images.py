@@ -198,7 +198,7 @@ def scrape_webview_images(browser) -> int:
 
         raw_images = _collect_image_urls(page)
         if not raw_images:
-            print("No images found on Web Info page — try HEADLESS=false to debug.")
+            print("No images found on Web Info page - try HEADLESS=false to debug.")
             return 0
 
         sb = _supabase()
@@ -234,7 +234,7 @@ def scrape_webview_images(browser) -> int:
                         "source": "nightsbridge",
                         "source_url": src,
                         "local_path": None,
-                        "alt_text": img.get("alt") or f"{room['room_name']} — NightsBridge",
+                        "alt_text": img.get("alt") or f"{room['room_name']} - NightsBridge",
                         "width": img.get("w"),
                         "height": img.get("h"),
                         "is_primary": True,

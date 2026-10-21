@@ -16,7 +16,7 @@ export type AvailabilityRow = {
 
 /**
  * GET /api/availability?from=YYYY-MM-DD&to=YYYY-MM-DD&room_name=Beads
- * Public — reads availability_cache joined with room (anon key + RLS).
+ * Public - reads availability_cache joined with room (anon key + RLS).
  * Falls back to live NightsBridge callAvailGrid when cache is stale.
  */
 export async function GET(request: NextRequest) {
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
 
     if (cacheError) throw cacheError
 
-    // Always prefer the cache — it has per-physical-room accuracy from BookingCalendarRQ.
+    // Always prefer the cache - it has per-physical-room accuracy from BookingCalendarRQ.
     // callAvailGrid only returns per-room-TYPE data (noroomsfree > 0 means some room is free,
     // not that THIS specific room is free), which causes false positives when one room in a
     // multi-room type is booked but others aren't.
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(rows)
     }
 
-    // No cache at all (e.g. fresh deployment before first sync) — fall back to live
+    // No cache at all (e.g. fresh deployment before first sync) - fall back to live
     // NightsBridge with per-night queries so each calendar cell is checked independently.
     const bbid = rooms[0]?.bbid
     if (bbid) {
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // NightsBridge also unavailable — return empty; UI will show all rooms (safe fallback)
+    // NightsBridge also unavailable - return empty; UI will show all rooms (safe fallback)
     return NextResponse.json([])
   } catch (err) {
     console.error("[api/availability]", err)

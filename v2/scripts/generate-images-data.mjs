@@ -9,15 +9,15 @@ const site = {
   },
   'property-chababa': {
     id: 'photo-1674758979141-4e3521ba7321',
-    alt: 'Chababa guest house — charming South African villa exterior in warm daytime light',
+    alt: 'Chababa guest house - charming South African villa exterior in warm daytime light',
   },
   'property-interlaken-a': {
     id: 'photo-1636301587190-88cbb412fea0',
-    alt: 'Interlaken A — residential guest house with green garden in sunny Stellenbosch-style setting',
+    alt: 'Interlaken A - residential guest house with green garden in sunny Stellenbosch-style setting',
   },
   'property-lantana': {
     id: 'photo-1687150416259-b48dd2260a7f',
-    alt: 'Lantana — cosy boutique accommodation exterior at golden hour in the South African countryside',
+    alt: 'Lantana - cosy boutique accommodation exterior at golden hour in the South African countryside',
   },
   'room-letimela': {
     id: 'photo-1776763018972-588e27bf6511',
@@ -102,7 +102,7 @@ for (const room of rooms) {
   const id = roomPool[poolIdx++ % roomPool.length]
   roomImages[key] = {
     id,
-    alt: `${room.name} room at Boga Legaba — ${room.configuration} accommodation in Mahikeng`,
+    alt: `${room.name} room at Boga Legaba - ${room.configuration} accommodation in Mahikeng`,
   }
 }
 

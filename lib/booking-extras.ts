@@ -1,7 +1,7 @@
 /**
  * Server-side data access for app-owned booking extras: department flag,
  * invoices, and invoice line items. All stored in the NEW tables from
- * migration 009 — the `booking` table is never written to, only read/joined.
+ * migration 009 - the `booking` table is never written to, only read/joined.
  *
  * Every function fails soft (returns null/empty and logs) if the tables don't
  * exist yet, so the rest of the app is unaffected until the migration is applied.

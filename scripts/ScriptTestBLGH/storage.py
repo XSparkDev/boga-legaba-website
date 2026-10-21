@@ -265,7 +265,7 @@ def sync_to_supabase(data: dict, window_from: str, window_to: str) -> dict[str, 
                     }).eq("bookingid", bid).execute()
                     stats["cancelled"] += 1
 
-        # Closeouts — replace window entries for synced rooms
+        # Closeouts - replace window entries for synced rooms
         sb.table("closeout").delete().in_("bbroomid", room_ids).execute()
         for c in data.get("closeouts") or []:
             sb.table("closeout").insert({

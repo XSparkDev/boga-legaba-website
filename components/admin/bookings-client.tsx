@@ -98,7 +98,7 @@ const EMPTY_FORM: BookingFormState = {
 }
 
 // The owner wants staff to pick the exact physical room a guest gets (e.g.
-// "Flutes"), not a room-type category — matches the site's own per-room
+// "Flutes"), not a room-type category - matches the site's own per-room
 // inventory in data/rooms.ts. book_nightsbridge_admin.py already supports
 // this: resolve_units_for_room_type() only matches category strings like
 // "Double Room (Shower only)"; anything else (a literal unit name) falls
@@ -261,7 +261,7 @@ function AddBookingModal({ onClose }: { onClose: () => void }) {
 }
 
 // ---------------------------------------------------------------------------
-// Action button — Check In / Check Out
+// Action button - Check In / Check Out
 // ---------------------------------------------------------------------------
 
 function ActionButton({
@@ -326,7 +326,7 @@ function ActionButton({
 }
 
 // ---------------------------------------------------------------------------
-// Guest info — full contact details behind an info icon, per booking row
+// Guest info - full contact details behind an info icon, per booking row
 // ---------------------------------------------------------------------------
 
 type GuestInfoField = { label: string; value: string | null }
@@ -379,7 +379,7 @@ function GuestInfoButton({ title, fields }: { title: string; fields: GuestInfoFi
 }
 
 // ---------------------------------------------------------------------------
-// Website bookings (pay-first pipeline) — payment badge + NightsBridge retry
+// Website bookings (pay-first pipeline) - payment badge + NightsBridge retry
 // ---------------------------------------------------------------------------
 
 const PAYMENT_STATUS: Record<string, { label: string; cls: string }> = {
@@ -420,10 +420,10 @@ function PaymentBadge({ status }: { status: string | null }) {
 }
 
 // The worker only confirms it ACCEPTED the job (HTTP 202) when retry-nightsbridge
-// returns — the real Playwright run happens in a background thread on the
+// returns - the real Playwright run happens in a background thread on the
 // worker and can take a few minutes. Poll nightsbridge-job-status until it
 // resolves to "completed" (real booking_id scraped) or "failed", instead of
-// trusting the 202 as proof the booking exists. 3s interval, ~6 min ceiling —
+// trusting the 202 as proof the booking exists. 3s interval, ~6 min ceiling -
 // matches the worker's own ~340s subprocess timeout plus lock-wait headroom.
 const POLL_INTERVAL_MS = 3000
 const POLL_MAX_ATTEMPTS = 120
@@ -438,7 +438,7 @@ function RetryNightsBridgeButton({ reference }: { reference: string }) {
       try {
         const res = await fetch(`/api/admin/nightsbridge-job-status?reference=${encodeURIComponent(reference)}`)
         const data = (await res.json()) as { ok: boolean; status?: string; booking_id?: string | null; error?: string }
-        if (!data.ok) continue // transient read error — keep polling, don't give up on a blip
+        if (!data.ok) continue // transient read error - keep polling, don't give up on a blip
         if (data.status === "completed" && data.booking_id) {
           setPhase("done")
           return
@@ -448,9 +448,9 @@ function RetryNightsBridgeButton({ reference }: { reference: string }) {
           setPhase("idle")
           return
         }
-        // status === "processing" — still running, keep polling
+        // status === "processing" - still running, keep polling
       } catch {
-        // network blip — keep polling
+        // network blip - keep polling
       }
     }
     setError("Still processing on NightsBridge, check back or refresh before retrying again.")
@@ -474,7 +474,7 @@ function RetryNightsBridgeButton({ reference }: { reference: string }) {
         return
       }
       if (data.alreadyConfirmed) {
-        // Nothing was triggered — the booking was already confirmed on
+        // Nothing was triggered - the booking was already confirmed on
         // NightsBridge before this click landed. No job to poll for.
         setPhase("done")
         return
@@ -729,7 +729,7 @@ export function BookingsClient({ bookings, websiteBookings }: { bookings: Bookin
           ))}
         </div>
 
-        {/* Website bookings (pay-first pipeline) — paid guests who may not be on NightsBridge yet */}
+        {/* Website bookings (pay-first pipeline) - paid guests who may not be on NightsBridge yet */}
         <WebsiteBookingsSection rows={websiteBookings} />
 
         {/* Tab bar */}

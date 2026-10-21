@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic"
 /**
  * Public guest self-registration submit. No admin auth (guest-facing), but the
  * only thing it can do is insert one registration row via the server-side
- * service-role client — it cannot read or modify anything else.
+ * service-role client - it cannot read or modify anything else.
  */
 export async function POST(request: NextRequest) {
   let body: Record<string, unknown>
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
           }),
         )
       }
-      // Best-effort — the registration is already saved regardless of email outcome.
+      // Best-effort - the registration is already saved regardless of email outcome.
       await Promise.allSettled(sends)
     }
   }

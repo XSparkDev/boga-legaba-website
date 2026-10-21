@@ -4,7 +4,7 @@ import { Reveal } from "@/components/reveal"
 export function StayPageHeader() {
   return (
     <section className="relative overflow-hidden bg-black pb-14 pt-28 text-white lg:pb-20 lg:pt-36">
-      {/* Background hero image — next/image with `priority` so it is preloaded
+      {/* Background hero image - next/image with `priority` so it is preloaded
           and served in an optimized, compressed format. */}
       <Image
         src="/Organized/Property%201/Interlaken/IMG_2485-HDR.jpg"
@@ -15,7 +15,7 @@ export function StayPageHeader() {
         sizes="100vw"
         className="scale-95 object-cover object-center"
       />
-      {/* Flat semi-transparent overlay for text legibility — brand guide: flat
+      {/* Flat semi-transparent overlay for text legibility - brand guide: flat
           color blocks, no gradients. Kept dark so the hero reads in dark mode. */}
       <div className="absolute inset-0 bg-black/75" />
 
