@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import { LegalPage, LegalSection, Todo } from "@/components/legal/legal-page"
 import { SITE_URL } from "@/lib/seo"
 
@@ -8,6 +7,9 @@ export const metadata: Metadata = {
   description:
     "The terms governing use of the Boga Legaba website: acceptable use, content ownership, availability and rates, and limitation of liability.",
   alternates: { canonical: `${SITE_URL}/terms` },
+  // Placeholder wording ([TODO] markers) - keep out of search results until
+  // the client approves the content.
+  robots: { index: false, follow: false },
 }
 
 export default function TermsPage() {
@@ -53,10 +55,8 @@ export default function TermsPage() {
 
       <LegalSection title="Bookings, payments and cancellations">
         <p>
-          Reservations, payments and cancellations are governed separately by our{" "}
-          <Link href="/booking-terms" className="underline underline-offset-2">Booking Terms</Link>{" "}
-          and <Link href="/cancellation-policy" className="underline underline-offset-2">Cancellation
-          Policy</Link>, which form part of every reservation made through this site.
+          Reservations, payments and cancellations are governed separately by our Booking Terms
+          and Cancellation Policy, which form part of every reservation made through this site.
         </p>
       </LegalSection>
 
@@ -79,8 +79,7 @@ export default function TermsPage() {
 
       <LegalSection title="Privacy">
         <p>
-          How we handle your personal information is set out in our{" "}
-          <Link href="/privacy" className="underline underline-offset-2">Privacy Notice</Link>.
+          How we handle your personal information is set out in our Privacy Notice.
         </p>
       </LegalSection>
     </LegalPage>

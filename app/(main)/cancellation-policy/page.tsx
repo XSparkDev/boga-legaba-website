@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import { LegalPage, LegalSection, Todo } from "@/components/legal/legal-page"
 import { SITE_URL } from "@/lib/seo"
 
@@ -8,6 +7,9 @@ export const metadata: Metadata = {
   description:
     "Boga Legaba cancellation policy: cancellation deadlines, refunds, no-shows and deposits for accommodation and conference bookings.",
   alternates: { canonical: `${SITE_URL}/cancellation-policy` },
+  // Placeholder wording ([TODO] markers) - keep out of search results until
+  // the client approves the content.
+  robots: { index: false, follow: false },
 }
 
 export default function CancellationPolicyPage() {
@@ -69,8 +71,7 @@ export default function CancellationPolicyPage() {
 
       <LegalSection title="Related terms">
         <p>
-          This policy forms part of our{" "}
-          <Link href="/booking-terms" className="underline underline-offset-2">Booking Terms</Link>.
+          This policy forms part of our Booking Terms.
         </p>
       </LegalSection>
     </LegalPage>

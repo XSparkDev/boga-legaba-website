@@ -7,12 +7,15 @@ import { SiteLogo } from "@/components/site-logo"
 import { BUSINESS } from "@/data/rooms"
 import { useBookingModal } from "@/hooks/useBookingModal"
 
+// Legal pages currently hold placeholder content with visible [TODO] markers,
+// so these render as PLAIN TEXT (not links) until the client approves the
+// wording. Re-enable by rendering <Link href=...> again in the two spots below.
 const LEGAL_LINKS = [
-  { href: "/privacy", label: "Privacy Notice" },
-  { href: "/terms", label: "Terms of Use" },
-  { href: "/booking-terms", label: "Booking Terms" },
-  { href: "/cancellation-policy", label: "Cancellation Policy" },
-  { href: "/cookies", label: "Cookie Notice" },
+  { label: "Privacy Notice" },
+  { label: "Terms of Use" },
+  { label: "Booking Terms" },
+  { label: "Cancellation Policy" },
+  { label: "Cookie Notice" },
 ]
 
 const COLUMNS = [
@@ -130,12 +133,7 @@ export function SiteFooter() {
             <ul className="mt-4 space-y-3">
               {LEGAL_LINKS.map((link) => (
                 <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="rounded-sm text-sm text-white/65 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-                  >
-                    {link.label}
-                  </Link>
+                  <span className="text-sm text-white/45">{link.label}</span>
                 </li>
               ))}
             </ul>
@@ -164,13 +162,9 @@ export function SiteFooter() {
           {/* Compact legal row - wraps without horizontal scroll on phones. */}
           <nav aria-label="Legal" className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:justify-start">
             {LEGAL_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="rounded-sm font-mono tracking-wider text-white/50 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-              >
+              <span key={link.label} className="font-mono tracking-wider text-white/35">
                 {link.label}
-              </Link>
+              </span>
             ))}
           </nav>
         </div>

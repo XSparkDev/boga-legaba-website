@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import { LegalPage, LegalSection, Todo } from "@/components/legal/legal-page"
 import { SITE_URL } from "@/lib/seo"
 
@@ -8,6 +7,9 @@ export const metadata: Metadata = {
   description:
     "Boga Legaba booking terms: payment, check-in and check-out times, inclusions, rates and how reservations are confirmed.",
   alternates: { canonical: `${SITE_URL}/booking-terms` },
+  // Placeholder wording ([TODO] markers) - keep out of search results until
+  // the client approves the content.
+  robots: { index: false, follow: false },
 }
 
 export default function BookingTermsPage() {
@@ -68,9 +70,8 @@ export default function BookingTermsPage() {
 
       <LegalSection title="Changes and cancellations">
         <p>
-          Date changes, cancellations, refunds, no-shows and deposits are governed by our{" "}
-          <Link href="/cancellation-policy" className="underline underline-offset-2">Cancellation
-          Policy</Link>, which forms part of these Booking Terms.
+          Date changes, cancellations, refunds, no-shows and deposits are governed by our
+          Cancellation Policy, which forms part of these Booking Terms.
         </p>
       </LegalSection>
     </LegalPage>

@@ -729,25 +729,9 @@ export function BookingWidget({
         <label className="flex items-start gap-2 text-xs text-gray-500">
           <input type="checkbox" required className="mt-0.5 accent-[#996948]" />
           <span>
-            I have read and accepted the{" "}
-            <a
-              href="/terms"
-              target="_blank"
-              rel="noreferrer"
-              className="text-[#996948] underline"
-            >
-              terms and conditions
-            </a>{" "}
-            including the{" "}
-            <a
-              href="/cancellation-policy"
-              target="_blank"
-              rel="noreferrer"
-              className="text-[#996948] underline"
-            >
-              cancellation policy
-            </a>
-            .
+            I have read and accepted the terms and conditions including the
+            cancellation policy. (Links coming back once the legal wording is
+            approved.)
           </span>
         </label>
 
@@ -761,16 +745,8 @@ export function BookingWidget({
             className="mt-0.5 accent-[#996948]"
           />
           <span>
-            By submitting this booking you agree to our{" "}
-            <a
-              href="/privacy"
-              target="_blank"
-              rel="noreferrer"
-              className="text-[#996948] underline"
-            >
-              Privacy Notice
-            </a>
-            .
+            By submitting this booking you agree to our Privacy Notice. (Link
+            coming back once the legal wording is approved.)
           </span>
         </label>
         <label className="flex items-start gap-2 text-xs text-gray-500">

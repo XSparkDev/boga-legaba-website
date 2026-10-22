@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import { LegalPage, LegalSection, Todo } from "@/components/legal/legal-page"
 import { SITE_URL } from "@/lib/seo"
 
@@ -8,6 +7,9 @@ export const metadata: Metadata = {
   description:
     "What cookies and analytics the Boga Legaba website actually uses: no advertising cookies, privacy-friendly production analytics, and third-party services.",
   alternates: { canonical: `${SITE_URL}/cookies` },
+  // Placeholder wording ([TODO] markers) - keep out of search results until
+  // the client approves the content.
+  robots: { index: false, follow: false },
 }
 
 export default function CookiesPage() {
@@ -62,8 +64,7 @@ export default function CookiesPage() {
 
       <LegalSection title="Related notices">
         <p>
-          How we handle personal information more broadly is set out in our{" "}
-          <Link href="/privacy" className="underline underline-offset-2">Privacy Notice</Link>.
+          How we handle personal information more broadly is set out in our Privacy Notice.
         </p>
       </LegalSection>
     </LegalPage>

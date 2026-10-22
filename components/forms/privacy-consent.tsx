@@ -9,13 +9,22 @@ import Link from "next/link"
 const privacyLinkClass =
   "underline underline-offset-2 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold focus-visible:rounded-sm"
 
+// The legal pages still carry visible [TODO] placeholders, so "Privacy Notice"
+// renders as plain text everywhere until the client approves the wording.
+// Flip this back to true to restore every link at once.
+const SHOW_LEGAL_LINKS = false
+
 export function PrivacyConsentText() {
   return (
     <p className="text-xs leading-relaxed text-muted-foreground">
       By submitting this form you agree to our{" "}
-      <Link href="/privacy" className={privacyLinkClass}>
-        Privacy Notice
-      </Link>
+      {SHOW_LEGAL_LINKS ? (
+        <Link href="/privacy" className={privacyLinkClass}>
+          Privacy Notice
+        </Link>
+      ) : (
+        "Privacy Notice"
+      )}
       .
     </p>
   )
@@ -26,7 +35,7 @@ export function PrivacyConsentCheckbox({
   checked,
   onChange,
   error,
-  linkPrivacy = true,
+  linkPrivacy = SHOW_LEGAL_LINKS,
 }: {
   checked: boolean
   onChange: (v: boolean) => void

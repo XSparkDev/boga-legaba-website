@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   description:
     "How Boga Legaba collects, uses, stores and protects your personal information, your rights under POPIA, and how to contact us or lodge a complaint.",
   alternates: { canonical: `${SITE_URL}/privacy` },
+  // Placeholder wording ([TODO] markers) - keep out of search results until
+  // the client approves the content.
+  robots: { index: false, follow: false },
 }
 
 export default function PrivacyPage() {
@@ -119,9 +122,7 @@ export default function PrivacyPage() {
 
       <LegalSection title="Related notices">
         <p>
-          See also our <Link href="/cookies" className="underline underline-offset-2">Cookie
-          Notice</Link> and <Link href="/terms" className="underline underline-offset-2">Terms of
-          Use</Link>.
+          See also our Cookie Notice and Terms of Use.
         </p>
       </LegalSection>
     </LegalPage>

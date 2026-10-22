@@ -31,6 +31,21 @@ export const SEO_ROUTES = [
   "cookies",
 ] as const
 
+/**
+ * Legal pages that still hold placeholder wording (visible [TODO] markers).
+ * They stay reachable by direct URL for client review, but they are marked
+ * noindex and excluded from the sitemap so no customer meets the placeholder
+ * copy through search. Remove a route from this list once its content is
+ * approved (and drop the noindex robots meta on that page).
+ */
+export const PENDING_LEGAL_ROUTES = [
+  "privacy",
+  "terms",
+  "booking-terms",
+  "cancellation-policy",
+  "cookies",
+] as const
+
 /** schema.org LodgingBusiness JSON-LD for the guest house. */
 export function lodgingBusinessJsonLd() {
   return {
